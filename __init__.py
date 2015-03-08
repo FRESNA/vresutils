@@ -2,83 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-import scipy as sp
-import networkx as nx
-from itertools import izip
 from functools import wraps
-
 import cPickle
 from warnings import warn
 import time, sys
 import os.path, string
-
-def positive(a):
-    if hasattr(a, "multiply"):
-        if sp.sparse.isspmatrix_csc(a) or sp.sparse.isspmatrix_csr(a):
-            m = a.__class__((positive(a.data), a.indices.copy(), a.indptr.copy()),
-                            shape=a.shape, dtype=a.dtype)
-            m.eliminate_zeros()
-            return m
-        else:
-            return - a.multiply(a<0)
-    else:
-        return a * (a>0)
-
-def negative(a):
-    if hasattr(a, "multiply"):
-        if sp.sparse.isspmatrix_csc(a) or sp.sparse.isspmatrix_csr(a):
-            m = a.__class__((negative(a.data), a.indices.copy(), a.indptr.copy()),
-                            shape=a.shape, dtype=a.dtype)
-            m.eliminate_zeros()
-            return m
-        else:
-            return - a.multiply(a<0)
-    else:
-        return - a * (a<0)
-
-def spdiag(v, k=0):
-    if k == 0:
-        N = len(v)
-        inds = np.arange(N+1, dtype=np.int32)
-        return sp.sparse.csc_matrix((v, inds[:-1], inds), (N, N))
-    else:
-        return sp.sparse.diags((v,),(k,))
-
-def densify(a):
-    """Return a dense array version of a """
-    if sp.sparse.issparse(a):
-        a = a.todense()
-    return np.asarray(a)
-
-class timer(object):
-    def __init__(self, name=""):
-        self.name = name
-
-    def __enter__(self):
-        if len(self.name) > 0:
-            sys.stdout.write(self.name + ": ")
-            sys.stdout.flush()
-
-        self.start = time.time()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is None:
-            stop = time.time()
-            usec = (stop - self.start) * 1e6
-            if usec < 1000:
-                print "%.1f usec" % usec
-            else:
-                msec = usec / 1000
-                if msec < 1000:
-                    print "%.1f msec" % msec
-                else:
-                    sec = msec / 1000
-                    print "%.1f sec" % sec
-        else:
-            print "failed"
-
-        return False
 
 def indicator(N, indices):
     m = np.zeros(N)
@@ -100,19 +28,6 @@ def rank(G, P=None):
     flowtracer = flow.FlowTracer(G, P, F)
 
     return np.linalg.matrix_rank(densify(flowtracer.M))
-
-def disable_sparse_safety_checks():
-    import scipy.sparse, scipy.sparse.compressed
-
-    def _check_format(s, full_check=True): pass
-    scipy.sparse.compressed._cs_matrix.check_format = _check_format
-
-    def _get_index_dtype(arrays=[], maxval=None, check_contents=False):
-        return np.int32
-    scipy.sparse.csc.get_index_dtype = _get_index_dtype
-    scipy.sparse.csr.get_index_dtype = _get_index_dtype
-    scipy.sparse.compressed.get_index_dtype = _get_index_dtype
-
 
 def format_filename(s):
     """
@@ -188,6 +103,36 @@ def cachable(func=None, version=None, cache_dir="/tmp/compcache", verbose=True):
         return deco(func)
     else:
         return deco
+
+class timer(object):
+    def __init__(self, name=""):
+        self.name = name
+
+    def __enter__(self):
+        if len(self.name) > 0:
+            sys.stdout.write(self.name + ": ")
+            sys.stdout.flush()
+
+        self.start = time.time()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is None:
+            stop = time.time()
+            usec = (stop - self.start) * 1e6
+            if usec < 1000:
+                print "%.1f usec" % usec
+            else:
+                msec = usec / 1000
+                if msec < 1000:
+                    print "%.1f msec" % msec
+                else:
+                    sec = msec / 1000
+                    print "%.1f sec" % sec
+        else:
+            print "failed"
+
+        return False
 
 class optional(object):
     def __init__(self, variable, contextman):
