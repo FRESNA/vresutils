@@ -147,3 +147,19 @@ class optional(object):
         if self.variable:
             return self.contextman.__exit__(exc_type, exc_val, exc_tb)
         return False
+
+def make_toModDir(modulefilename):
+    """
+    Returns a function which translates relative names to a path
+    starting from modulefilename.
+
+    The idea is to start a module with
+    toModDir = make_toModDir(__file__)
+
+    Then a call like toModDir('data/file') will return the full path
+    from the directory of the module instead of the working directory.
+    """
+    modDir = os.path.realpath(os.path.dirname(modulefilename))
+    return lambda fn: os.path.join(modDir, fn) \
+        if not (os.path.isabs(fn) or fn[0] == '.') \
+        else fn
