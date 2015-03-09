@@ -65,7 +65,7 @@ def cachable(func=None, version=None, cache_dir="/tmp/compcache", verbose=True):
         (it would be better to use np.save/np.load for numpy arrays)
         """
 
-        cache_fn = cache_dir + "/" + func.__name__ + "_"
+        cache_fn = cache_dir + "/" + func.__module__ + "." + func.__name__ + "_"
         if version is not None:
             cache_fn += format_filename("ver" + str(version) + "_")
 
