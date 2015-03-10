@@ -163,3 +163,15 @@ def make_toModDir(modulefilename):
     return lambda fn: os.path.join(modDir, fn) \
         if not (os.path.isabs(fn) or fn[0] == '.') \
         else fn
+
+def staticvars(**vars):
+    def deco(fn):
+        fn.__dict__.update(vars)
+        return fn
+    return deco
+
+class Singleton(object):
+    def __new__(cls, *p, **k):
+        if not '_the_instance' in cls.__dict__:
+            cls._the_instance = object.__new__(cls)
+        return cls._the_instance
