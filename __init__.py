@@ -22,7 +22,7 @@ def rank(G, P=None):
 
     if P is None or len(P) != N:
         P = 2*np.random.random(N) - 1
-        P[-1] = - P[:-1].sum()
+        P -= P.sum()/N
 
     F = flower(P)
     flowtracer = flow.FlowTracer(G, P, F)
@@ -46,7 +46,7 @@ def cachable(func=None, version=None, cache_dir="/tmp/compcache", verbose=True):
 
     Arguments:
     func      - Shouldn't be supplied, but instead contains the function,
-                if no arguments are supplied to the decorator
+                if the decorator is used without arguments
     version   - if given it is saved together with the arguments and
                 must be the same as the cache to be valid.
     cache_dir - where to save the cached files, if it does not exist
