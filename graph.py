@@ -6,6 +6,9 @@ import networkx as nx
 from itertools import izip
 
 def to_directed(G):
+    """ Returns directed version of graph G, with randomly assigned directions.
+    """
+
     G2 = G.to_directed()
 
     # remove symmetric edges
@@ -17,6 +20,10 @@ def to_directed(G):
     return G2
 
 def subgraph(G, lat, lon, size):
+    """ Returns cutout of G with node positions inside a rectangle described by 
+    lat, lon with tolerance (e.g. grid cell width) size.
+    """
+
     g = G.copy()
     pos = np.array((lon, lat))
     g.remove_nodes_from(n
@@ -25,9 +32,10 @@ def subgraph(G, lat, lon, size):
     return next(nx.connected_component_subgraphs(g))
 
 def BreadthFirstLevels(G, root):
-    """Generator of sets of 1-neighbours, 2-neighbours, ... k-neighbours
+    """ Generator of sets of 1-neighbours, 2-neighbours, ... k-neighbours
     of node `root` in topology of `G`.
     """
+
     visited = set()
     currentLevel = set((root,))
     while currentLevel:
@@ -39,6 +47,9 @@ def BreadthFirstLevels(G, root):
                            if w not in visited)
 
 def NodeListBFS(G, root, depth=10):
+    """ Return list of 1, 2, ..., <depth>th neighbours of root node <root> 
+    in graph <G>.
+    """
     levels = []
     nodes = []
     if G.nodes() != range(G.number_of_nodes()):
