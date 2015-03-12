@@ -4,6 +4,7 @@
 import numpy as np
 import networkx as nx
 from itertools import izip
+from scipy.spatial import Voronoi
 
 def to_directed(G):
     """ Returns directed version of graph G, with randomly assigned directions.
@@ -47,9 +48,10 @@ def BreadthFirstLevels(G, root):
                            if w not in visited)
 
 def NodeListBFS(G, root, depth=10):
-    """ Return list of 1, 2, ..., <depth>th neighbours of root node <root> 
+    """ Return array of 1, 2, ..., <depth>th neighbours of root node <root> 
     in graph <G>.
     """
+
     levels = []
     nodes = []
     if G.nodes() != range(G.number_of_nodes()):
@@ -61,3 +63,17 @@ def NodeListBFS(G, root, depth=10):
         nodes  += nodesoflevel
 
     return np.array(levels), np.array(nodes)
+
+def voronoi_partition(G):
+    """ For 2D-embedded graph <G>, returns the shapes of the Voronoi cells 
+    corresponding to each node.
+    """
+
+    if G.nodes() != range(G.number_of_nodes()):
+        G = nx.convert_node_labels_to_integers(G)
+
+    pointdict = nx.get_node_attributes(G, 'pos')
+    points = [pointdict[i] for i in range(G.number_of_nodes())]
+    vor = Voronoi(points)
+
+    return vor, G
