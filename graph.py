@@ -61,7 +61,7 @@ def polygon_subgraph(G, polygon, nneighbours=0):
                         for n in G.nodes()
                         if not n in nodelist)
 
-    return next(nx.connected_component_subgraphs(g))
+    return nx.connected_component_subgraphs(g)[0]
 
 def BreadthFirstLevels(G, root):
     """ Generator of sets of 1-neighbours, 2-neighbours, ... k-neighbours
@@ -97,7 +97,9 @@ def NodeListBFS(G, root, depth=10):
 
 def voronoi_partition(G):
     """ For 2D-embedded graph <G>, returns the shapes of the Voronoi cells 
-    corresponding to each node.
+    corresponding to each node. Strips the Graph off nodes that are not interior
+    to any Voronoi cell and returns the remainder of <G> with the Voronoi cell 
+    region as an additional node attribute.
     """
 
     if G.nodes() != range(G.number_of_nodes()):
@@ -107,4 +109,14 @@ def voronoi_partition(G):
     points = [pointdict[i] for i in range(G.number_of_nodes())]
     vor = Voronoi(points)
 
-    return vor, G
+    # convert Voronoi output to Polygons as additional node attribute
+    # exclude the nodes which are not interior to any Voronoi region
+    G.remove_nodes_from(n 
+                        for n in G.nodes()
+                        if vor.point_region[n] == -1)
+
+    for n in G.nodes():
+        region = Polygon(vor.vertices[vor.regions[vor.point_region[n]]])
+        G.node[n]['region'] = region
+
+    return G
