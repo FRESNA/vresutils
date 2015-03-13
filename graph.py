@@ -10,7 +10,8 @@ from scipy.spatial import distance
 from scipy import sparse
 
 def to_directed(G):
-    """ Returns directed version of graph G, with randomly assigned directions.
+    """
+    Returns directed version of graph G, with randomly assigned directions.
     """
 
     G2 = G.to_directed()
