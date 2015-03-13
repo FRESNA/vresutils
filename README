@@ -1,0 +1,6 @@
+To run example.py, links to 
+
+germany.npy (German outline as sequence of points)
+entsoe_2009_final.gpickle (Tue's graph of the ENTSO-E grid)
+
+need to be present in data folder.
