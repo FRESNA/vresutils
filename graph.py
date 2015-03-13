@@ -21,6 +21,13 @@ def to_directed(G):
 
     return G2
 
+def largest_connected_component(G, copy=True):
+    g = G.subgraph(sorted(nx.connected_components(G), key=len, reverse=True)[0])
+    if copy:
+        return g.copy()
+    else:
+        return g
+
 def cell_subgraph(G, lat, lon, size):
     """ Returns cutout of G with node positions around a point described by 
     lat, lon with tolerance (e.g. grid cell width) size.
@@ -31,7 +38,7 @@ def cell_subgraph(G, lat, lon, size):
     g.remove_nodes_from(n
                         for n, p in nx.get_node_attributes(G, 'pos').iteritems()
                         if np.abs(p - pos).max() > size/2)
-    return next(nx.connected_component_subgraphs(g))
+    return largest_connected_component(g)
 
 def polygon_subgraph(G, polygon, nneighbours=0):
     """ Cut out portion of graph <G>'s nodes contained in shapely.geometry.Polygon <polygon>
@@ -61,7 +68,7 @@ def polygon_subgraph(G, polygon, nneighbours=0):
                         for n in G.nodes()
                         if not n in nodelist)
 
-    return nx.connected_component_subgraphs(g)[0]
+    return largest_connected_component(g)
 
 def BreadthFirstLevels(G, root):
     """ Generator of sets of 1-neighbours, 2-neighbours, ... k-neighbours
