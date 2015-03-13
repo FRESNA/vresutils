@@ -6,6 +6,8 @@ import networkx as nx
 from itertools import izip
 from shapely.geometry import Point, Polygon
 from scipy.spatial import Voronoi
+from scipy.spatial import distance
+from scipy import sparse
 
 def to_directed(G):
     """ Returns directed version of graph G, with randomly assigned directions.
@@ -21,12 +23,37 @@ def to_directed(G):
 
     return G2
 
-def largest_connected_component(G, copy=True):
+def giant_component(G, copy=True):
     g = G.subgraph(sorted(nx.connected_components(G), key=len, reverse=True)[0])
     if copy:
         return g.copy()
     else:
         return g
+
+def minimum_spanning_tree(G):
+    """ Given a spatially embedded graph <G>, find the minimum spanning tree
+    using the node distances as link weights.
+    """
+    
+    if G.nodes() != range(G.number_of_nodes()):
+        G = nx.convert_node_labels_to_integers(G)
+
+    pos = nx.get_node_attribute(G, 'pos')
+    pos = [pos[i] for i in range(G.number_of_nodes())]
+
+    # calculate distances
+    distance_matrix = distance.pdist(pos, metric='euclidean')
+    distance_matrix = distance.squareform(distance_matrix)
+
+    # calculate minimum spanning tree
+    span_tree = sparse.csgraph(distance_matrix, overwrite=True)
+
+    # translate back to graph edges and add them to G, store distance in edge weight
+    span_tree = sparse.coo_matrix(span_tree)
+    G.add_weighted_edges_from((n, m, weight)
+                              for n, m, weight in zip(span_tree.row, span_tree.col, span_tree.data))
+
+    return G
 
 def cell_subgraph(G, lat, lon, size):
     """ Returns cutout of G with node positions around a point described by 
@@ -38,7 +65,7 @@ def cell_subgraph(G, lat, lon, size):
     g.remove_nodes_from(n
                         for n, p in nx.get_node_attributes(G, 'pos').iteritems()
                         if np.abs(p - pos).max() > size/2)
-    return largest_connected_component(g)
+    return giant_component(g)
 
 def polygon_subgraph(G, polygon, nneighbours=0):
     """ Cut out portion of graph <G>'s nodes contained in shapely.geometry.Polygon <polygon>
@@ -68,7 +95,7 @@ def polygon_subgraph(G, polygon, nneighbours=0):
                         for n in G.nodes()
                         if not n in nodelist)
 
-    return largest_connected_component(g)
+    return giant_component(g)
 
 def BreadthFirstLevels(G, root):
     """ Generator of sets of 1-neighbours, 2-neighbours, ... k-neighbours
