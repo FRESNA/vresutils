@@ -8,8 +8,8 @@ from vresutils.graph import *
 
 # adjust the data paths as necessary
 
-entsoe_file = '../EUnetwork/fromTue/ENTSOeGrid/entsoe_2009_final.gpickle'
-germany_file = '../Germany_shapes/germany.npy'
+entsoe_file = 'data/entsoe_2009_final.gpickle'
+germany_file = 'data/germany.npy'
 
 G = nx.read_gpickle(entsoe_file)
 coor = np.load(germany_file)
