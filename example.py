@@ -20,16 +20,16 @@ g = polygon_subgraph(G, polygon, nneighbours=3)
 vor = voronoi_partition(g)
 
 # cut off neighbours for plotting
-vor = polygon_subgraph(vor, polygon, nneighbours=0)
+vor = polygon_subgraph(vor, polygon, nneighbours=0, copy=False)
 pos = nx.get_node_attributes(vor, 'pos')
 
 cl = []
-for n,dat in vor.nodes(data=True):
+for i,(n,dat) in enumerate(vor.nodes(data=True)):
     polyg = dat['region']
     x,y = polyg.exterior.coords.xy
-    if min(x) < 6 or max(x) > 14.5 or min(y) < 47 or max(y) > 55: 
+    if min(x) < 6 or max(x) > 14.5 or min(y) < 47 or max(y) > 55:
         continue
-    color = plt.get_cmap('jet')(n)
+    color = plt.get_cmap('jet')(i)
     plt.plot(x,y, color=color)
     cl.append(color)
 

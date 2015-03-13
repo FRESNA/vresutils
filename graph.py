@@ -113,27 +113,23 @@ def BreadthFirstLevels(G, root):
                            if w not in visited)
 
 def voronoi_partition(G):
-    """ For 2D-embedded graph <G>, returns the shapes of the Voronoi cells 
+    """
+    For 2D-embedded graph `G`, returns the shapes of the Voronoi cells
     corresponding to each node. Strips the Graph off nodes that are not interior
-    to any Voronoi cell and returns the remainder of <G> with the Voronoi cell 
+    to any Voronoi cell and returns the remainder of `G` with the Voronoi cell
     region as an additional node attribute.
     """
 
-    if G.nodes() != range(G.number_of_nodes()):
-        G = nx.convert_node_labels_to_integers(G)
-
-    pointdict = nx.get_node_attributes(G, 'pos')
-    points = [pointdict[i] for i in range(G.number_of_nodes())]
+    points = nx.get_node_attributes(G, 'pos').values()
     vor = Voronoi(points)
 
     # convert Voronoi output to Polygons as additional node attribute
     # exclude the nodes which are not interior to any Voronoi region
-    G.remove_nodes_from(n 
-                        for n in G.nodes()
-                        if vor.point_region[n] == -1)
-
-    for n in G.nodes():
-        region = Polygon(vor.vertices[vor.regions[vor.point_region[n]]])
-        G.node[n]['region'] = region
+    for i,n in enumerate(G.nodes()):
+        if vor.point_region[i] == -1:
+            G.remove_node(n)
+        else:
+            region = Polygon(vor.vertices[vor.regions[vor.point_region[i]]])
+            G.node[n]['region'] = region
 
     return G
