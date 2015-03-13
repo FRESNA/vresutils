@@ -4,6 +4,7 @@
 import numpy as np
 import networkx as nx
 from itertools import izip
+from shapely.geometry import Point, Polygon
 from scipy.spatial import Voronoi
 
 def to_directed(G):
@@ -20,8 +21,8 @@ def to_directed(G):
 
     return G2
 
-def subgraph(G, lat, lon, size):
-    """ Returns cutout of G with node positions inside a rectangle described by 
+def cell_subgraph(G, lat, lon, size):
+    """ Returns cutout of G with node positions around a point described by 
     lat, lon with tolerance (e.g. grid cell width) size.
     """
 
@@ -30,6 +31,36 @@ def subgraph(G, lat, lon, size):
     g.remove_nodes_from(n
                         for n, p in nx.get_node_attributes(G, 'pos').iteritems()
                         if np.abs(p - pos).max() > size/2)
+    return next(nx.connected_component_subgraphs(g))
+
+def polygon_subgraph(G, polygon, nneighbours=0):
+    """ Cut out portion of graph <G>'s nodes contained in shapely.geometry.Polygon <polygon>
+    and their <nneighbours>th neighbours (which are partly outside of polygon).
+    """
+    
+    # if that's not done here, the BFS will do it later and mess the node labels up
+    if G.nodes() != range(G.number_of_nodes()):
+        G = nx.convert_node_labels_to_integers(G)
+
+    g = G.copy()
+    # core graph inside polygon
+    g.remove_nodes_from(n
+                        for n, p in nx.get_node_attributes(G, 'pos').iteritems()
+                        if not polygon.contains(Point(p)) )
+
+    # core graph + nneighbours neighbours
+    nodelist = g.nodes()
+    for n in g.nodes():
+        levels, neighbours = NodeListBFS(G, n, depth=nneighbours)
+        nodelist.extend(neighbours)
+
+    nodelist = set(nodelist)
+
+    g = G.copy()
+    g.remove_nodes_from(n
+                        for n in G.nodes()
+                        if not n in nodelist)
+
     return next(nx.connected_component_subgraphs(g))
 
 def BreadthFirstLevels(G, root):
