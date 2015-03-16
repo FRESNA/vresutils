@@ -32,7 +32,9 @@ def giant_component(G, copy=True):
 
 def minimum_spanning_tree(G):
     """ Given a spatially embedded graph <G>, find the minimum spanning tree
-    using the node distances as link weights.
+    using the node distances as link weights. Returns the minimum spanning tree
+    graph g with node distances as link weights. If returndist=True, also returns 
+    distance matrix (as dense array) between all nodes.
     """
     
     if G.nodes() != range(G.number_of_nodes()):
@@ -41,19 +43,23 @@ def minimum_spanning_tree(G):
     pos = nx.get_node_attribute(G, 'pos')
     pos = [pos[i] for i in range(G.number_of_nodes())]
 
-    # calculate distances
+    # calculate distances 
+    # TODO these matrix formats are probably inefficient
     distance_matrix = distance.pdist(pos, metric='euclidean')
     distance_matrix = distance.squareform(distance_matrix)
 
     # calculate minimum spanning tree
     span_tree = sparse.csgraph(distance_matrix, overwrite=True)
 
-    # translate back to graph edges and add them to G, store distance in edge weight
+    # translate back to graph edges and add them to g, store distance in edge weight
     span_tree = sparse.coo_matrix(span_tree)
-    G.add_weighted_edges_from((n, m, weight)
+
+    g = nx.Graph()
+    g.add_nodes_from(G.nodes())
+    g.add_weighted_edges_from((n, m, weight)
                               for n, m, weight in zip(span_tree.row, span_tree.col, span_tree.data))
 
-    return G
+    return g
 
 def cell_subgraph(G, lat, lon, size):
     """ Returns cutout of G with node positions around a point described by 
