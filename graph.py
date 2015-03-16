@@ -3,14 +3,15 @@
 
 import numpy as np
 import networkx as nx
-from itertools import izip
+from itertools import izip, islice
 from shapely.geometry import Point, Polygon
 from scipy.spatial import Voronoi
 from scipy.spatial import distance
 from scipy import sparse
 
 def to_directed(G):
-    """ Returns directed version of graph G, with randomly assigned directions.
+    """
+    Returns directed version of graph G, with randomly assigned directions.
     """
 
     G2 = G.to_directed()
@@ -24,19 +25,23 @@ def to_directed(G):
     return G2
 
 def giant_component(G, copy=True):
-    g = G.subgraph(sorted(nx.connected_components(G), key=len, reverse=True)[0])
+    g = G.subgraph(max(nx.connected_components(G), key=len))
     if copy:
         return g.copy()
     else:
         return g
 
 def BreadthFirstLevels(G, root):
-    """ Generator of sets of 1-neighbours, 2-neighbours, ... k-neighbours
-    of node `root` in topology of `G`.
+    """
+    Generator of sets of 1-neighbours, 2-neighbours, ... k-neighbours
+    of node or list of nodes `root` in topology of `G`.
     """
 
     visited = set()
-    currentLevel = set((root,))
+    if type(root) in (set, list):
+        currentLevel = set(root)
+    else:
+        currentLevel = set((root,))
     while currentLevel:
         yield currentLevel
         visited.update(currentLevel)
@@ -66,7 +71,7 @@ def get_distance_matrix(G):
     """ Given a spatially embedded graph <G>, get the node positions and
     calculate the pairwise euclidean distance of all nodes.
     """
-    
+
     if G.nodes() != range(G.number_of_nodes()):
         G = nx.convert_node_labels_to_integers(G)
 
@@ -79,7 +84,6 @@ def get_distance_matrix(G):
     distance_matrix = distance.squareform(distance_matrix)
 
     return distance_matrix
-
 
 def minimum_spanning_tree(G, distance_matrix=None):
     """ Given a graph <G> and some underlying metric encoded in
@@ -134,70 +138,54 @@ def find_N_minus_one_critical_links(G, edges=None):
 
     return critical_links
 
-def cell_subgraph(G, lat, lon, size):
-    """ Returns cutout of G with node positions around a point described by 
-    lat, lon with tolerance (e.g. grid cell width) size.
+def cell_subgraph(G, lat, lon, size, copy=True):
+    """
+    Returns cutout of G with node positions around a point described
+    by lat, lon with tolerance (e.g. grid cell width) size.
     """
 
-    g = G.copy()
     pos = np.array((lon, lat))
-    g.remove_nodes_from(n
-                        for n, p in nx.get_node_attributes(G, 'pos').iteritems()
-                        if np.abs(p - pos).max() > size/2)
-    return giant_component(g)
+    nodes = (n
+             for n, p in nx.get_node_attributes(G, 'pos').iteritems()
+             if np.abs(p - pos).max() <= size/2)
+    return giant_component(G.subgraph(nodes), copy=copy)
 
-def polygon_subgraph(G, polygon, nneighbours=0):
-    """ Cut out portion of graph <G>'s nodes contained in shapely.geometry.Polygon <polygon>
-    and their <nneighbours>th neighbours (which are partly outside of polygon).
+def polygon_subgraph(G, polygon, nneighbours=0, copy=True):
     """
-    
-    # if that's not done here, the BFS will do it later and mess the node labels up
-    if G.nodes() != range(G.number_of_nodes()):
-        G = nx.convert_node_labels_to_integers(G)
+    Cut out portion of graph `G`s nodes contained in
+    shapely.geometry.Polygon `polygon` and their `nneighbours`th
+    neighbours (which are partly outside of polygon).
+    """
 
-    g = G.copy()
-    # core graph inside polygon
-    g.remove_nodes_from(n
-                        for n, p in nx.get_node_attributes(G, 'pos').iteritems()
-                        if not polygon.contains(Point(p)) )
+    nodes = set(n
+                for n, p in nx.get_node_attributes(G, 'pos').iteritems()
+                if polygon.contains(Point(p)))
 
-    # core graph + nneighbours neighbours
-    nodelist = g.nodes()
-    for n in g.nodes():
-        levels, neighbours = NodeListBFS(G, n, depth=nneighbours)
-        nodelist.extend(neighbours)
+    if nneighbours > 0:
+        # extend by nneighbours layers of neighbours
+        nodes.update(reduce(set.union, islice(BreadthFirstLevels(G, nodes),
+                                              1, 1+nneighbours)))
 
-    nodelist = set(nodelist)
-
-    g = G.copy()
-    g.remove_nodes_from(n
-                        for n in G.nodes()
-                        if not n in nodelist)
-
-    return giant_component(g)
+    return giant_component(G.subgraph(nodes), copy=copy)
 
 def voronoi_partition(G):
-    """ For 2D-embedded graph <G>, returns the shapes of the Voronoi cells 
+    """
+    For 2D-embedded graph `G`, returns the shapes of the Voronoi cells
     corresponding to each node. Strips the Graph off nodes that are not interior
-    to any Voronoi cell and returns the remainder of <G> with the Voronoi cell 
+    to any Voronoi cell and returns the remainder of `G` with the Voronoi cell
     region as an additional node attribute.
     """
 
-    if G.nodes() != range(G.number_of_nodes()):
-        G = nx.convert_node_labels_to_integers(G)
-
-    pointdict = nx.get_node_attributes(G, 'pos')
-    points = [pointdict[i] for i in range(G.number_of_nodes())]
+    points = nx.get_node_attributes(G, 'pos').values()
     vor = Voronoi(points)
 
     # convert Voronoi output to Polygons as additional node attribute
     # exclude the nodes which are not interior to any Voronoi region
-    G.remove_nodes_from(n 
-                        for n in G.nodes()
-                        if vor.point_region[n] == -1)
-
-    for n in G.nodes():
-        region = Polygon(vor.vertices[vor.regions[vor.point_region[n]]])
-        G.node[n]['region'] = region
+    for i,n in enumerate(G.nodes()):
+        if vor.point_region[i] == -1:
+            G.remove_node(n)
+        else:
+            region = Polygon(vor.vertices[vor.regions[vor.point_region[i]]])
+            G.node[n]['region'] = region
 
     return G
