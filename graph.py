@@ -25,7 +25,7 @@ def to_directed(G):
     return G2
 
 def giant_component(G, copy=True):
-    g = G.subgraph(sorted(nx.connected_components(G), key=len, reverse=True)[0])
+    g = G.subgraph(max(nx.connected_components(G), key=len))
     if copy:
         return g.copy()
     else:
