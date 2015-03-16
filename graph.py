@@ -3,7 +3,7 @@
 
 import numpy as np
 import networkx as nx
-from itertools import izip
+from itertools import izip, islice
 from shapely.geometry import Point, Polygon
 from scipy.spatial import Voronoi
 from scipy.spatial import distance
@@ -31,19 +31,21 @@ def giant_component(G, copy=True):
         return g
 
 def minimum_spanning_tree(G):
-    """ Given a spatially embedded graph <G>, find the minimum spanning tree
-    using the node distances as link weights. Returns the minimum spanning tree
-    graph g with node distances as link weights. If returndist=True, also returns 
-    distance matrix (as dense array) between all nodes.
     """
-    
+    Given a spatially embedded graph `G`, find the minimum spanning
+    tree using the node distances as link weights. Returns the minimum
+    spanning tree graph g with node distances as link weights. If
+    returndist=True, also returns distance matrix (as dense array)
+    between all nodes.
+    """
+
     if G.nodes() != range(G.number_of_nodes()):
         G = nx.convert_node_labels_to_integers(G)
 
     pos = nx.get_node_attribute(G, 'pos')
     pos = [pos[i] for i in range(G.number_of_nodes())]
 
-    # calculate distances 
+    # calculate distances
     # TODO these matrix formats are probably inefficient
     distance_matrix = distance.pdist(pos, metric='euclidean')
     distance_matrix = distance.squareform(distance_matrix)
@@ -61,55 +63,47 @@ def minimum_spanning_tree(G):
 
     return g
 
-def cell_subgraph(G, lat, lon, size):
-    """ Returns cutout of G with node positions around a point described by 
-    lat, lon with tolerance (e.g. grid cell width) size.
+def cell_subgraph(G, lat, lon, size, copy=True):
+    """
+    Returns cutout of G with node positions around a point described
+    by lat, lon with tolerance (e.g. grid cell width) size.
     """
 
-    g = G.copy()
     pos = np.array((lon, lat))
-    g.remove_nodes_from(n
-                        for n, p in nx.get_node_attributes(G, 'pos').iteritems()
-                        if np.abs(p - pos).max() > size/2)
-    return giant_component(g)
+    nodes = (n
+             for n, p in nx.get_node_attributes(G, 'pos').iteritems()
+             if np.abs(p - pos).max() <= size/2)
+    return giant_component(G.subgraph(nodes), copy=copy)
 
-def polygon_subgraph(G, polygon, nneighbours=0):
-    """ Cut out portion of graph <G>'s nodes contained in shapely.geometry.Polygon <polygon>
-    and their <nneighbours>th neighbours (which are partly outside of polygon).
+def polygon_subgraph(G, polygon, nneighbours=0, copy=True):
     """
-    
-    # if that's not done here, the BFS will do it later and mess the node labels up
-    if G.nodes() != range(G.number_of_nodes()):
-        G = nx.convert_node_labels_to_integers(G)
+    Cut out portion of graph `G`s nodes contained in
+    shapely.geometry.Polygon `polygon` and their `nneighbours`th
+    neighbours (which are partly outside of polygon).
+    """
 
-    g = G.copy()
-    # core graph inside polygon
-    g.remove_nodes_from(n
-                        for n, p in nx.get_node_attributes(G, 'pos').iteritems()
-                        if not polygon.contains(Point(p)) )
+    nodes = set(n
+                for n, p in nx.get_node_attributes(G, 'pos').iteritems()
+                if polygon.contains(Point(p)))
 
-    # core graph + nneighbours neighbours
-    nodelist = g.nodes()
-    for n in g.nodes():
-        levels, neighbours = NodeListBFS(G, n, depth=nneighbours)
-        nodelist.extend(neighbours)
+    if nneighbours > 0:
+        # extend by nneighbours layers of neighbours
+        nodes.update(reduce(set.union, islice(BreadthFirstLevels(G, nodes),
+                                              1, 1+nneighbours)))
 
-    nodelist = set(nodelist)
-
-    g = G.copy()
-    g.remove_nodes_from(n
-                        for n in G.nodes()
-                        if not n in nodelist)
-
-    return giant_component(g)
+    return giant_component(G.subgraph(nodes), copy=copy)
 
 def BreadthFirstLevels(G, root):
-    """ Generator of sets of 1-neighbours, 2-neighbours, ... k-neighbours
-    of node `root` in topology of `G`.
+    """
+    Generator of sets of 1-neighbours, 2-neighbours, ... k-neighbours
+    of node or list of nodes `root` in topology of `G`.
     """
 
     visited = set()
-    currentLevel = set((root,))
+    if type(root) in (set, list):
+        currentLevel = set(root)
+    else:
+        currentLevel = set((root,))
     while currentLevel:
         yield currentLevel
         visited.update(currentLevel)
@@ -117,23 +111,6 @@ def BreadthFirstLevels(G, root):
                            for v in currentLevel
                            for w in G[v]
                            if w not in visited)
-
-def NodeListBFS(G, root, depth=10):
-    """ Return array of 1, 2, ..., <depth>th neighbours of root node <root> 
-    in graph <G>.
-    """
-
-    levels = []
-    nodes = []
-    if G.nodes() != range(G.number_of_nodes()):
-        root = G.nodes().index(root)
-        G = nx.convert_node_labels_to_integers(G)
-
-    for level, nodesoflevel in izip(xrange(depth), BreadthFirstLevels(G, root)):
-        levels += [level] * len(nodesoflevel)
-        nodes  += nodesoflevel
-
-    return np.array(levels), np.array(nodes)
 
 def voronoi_partition(G):
     """ For 2D-embedded graph <G>, returns the shapes of the Voronoi cells 
