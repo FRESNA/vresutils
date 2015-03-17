@@ -9,6 +9,7 @@ from scipy.spatial import Voronoi
 from scipy.spatial import distance
 from scipy import sparse
 
+
 def to_directed(G):
     """
     Returns directed version of graph G, with randomly assigned directions.
@@ -24,12 +25,14 @@ def to_directed(G):
 
     return G2
 
+
 def giant_component(G, copy=True):
     g = G.subgraph(max(nx.connected_components(G), key=len))
     if copy:
         return g.copy()
     else:
         return g
+
 
 def BreadthFirstLevels(G, root):
     """
@@ -50,6 +53,7 @@ def BreadthFirstLevels(G, root):
                            for w in G[v]
                            if w not in visited)
 
+
 def NodeListBFS(G, root, depth=10):
     """ Return array of 1, 2, ..., <depth>th neighbours of root node <root> 
     in graph <G>.
@@ -66,6 +70,7 @@ def NodeListBFS(G, root, depth=10):
         nodes  += nodesoflevel
 
     return np.array(levels), np.array(nodes)
+
 
 def get_distance_matrix(G):
     """ Given a spatially embedded graph <G>, get the node positions and
@@ -89,6 +94,7 @@ def get_distance_matrix(G):
 
     return distance_matrix
 
+
 def get_hop_distance(G):
     """ Given a graph <G>, find the hop distance between all pairs of
     nodes and return it as a matrix. Will only work properly if matrix
@@ -109,6 +115,7 @@ def get_hop_distance(G):
             hop_distance[key2,key1] = dist
 
     return hop_distance
+
 
 def minimum_spanning_tree(G, distance_matrix=None):
     """ Given a graph <G> and some underlying metric encoded in
@@ -140,6 +147,7 @@ def minimum_spanning_tree(G, distance_matrix=None):
 
     return g
 
+
 def find_N_minus_one_critical_links(G, edges=None):
     """ Given a graph <G>, find the critical links whose removal leads to 
     network decomposition into multiple components.
@@ -163,6 +171,7 @@ def find_N_minus_one_critical_links(G, edges=None):
 
     return critical_links
 
+
 def cell_subgraph(G, lat, lon, size, copy=True):
     """
     Returns cutout of G with node positions around a point described
@@ -174,6 +183,7 @@ def cell_subgraph(G, lat, lon, size, copy=True):
              for n, p in nx.get_node_attributes(G, 'pos').iteritems()
              if np.abs(p - pos).max() <= size/2)
     return giant_component(G.subgraph(nodes), copy=copy)
+
 
 def polygon_subgraph(G, polygon, nneighbours=0, copy=True):
     """
@@ -192,6 +202,7 @@ def polygon_subgraph(G, polygon, nneighbours=0, copy=True):
                                               1, 1+nneighbours)))
 
     return giant_component(G.subgraph(nodes), copy=copy)
+
 
 def voronoi_partition(G):
     """
