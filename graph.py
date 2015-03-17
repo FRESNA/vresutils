@@ -74,16 +74,41 @@ def get_distance_matrix(G):
 
     if G.nodes() != range(G.number_of_nodes()):
         G = nx.convert_node_labels_to_integers(G)
-
+    
     pos = nx.get_node_attributes(G, 'pos')
-    pos = [pos[i] for i in range(G.number_of_nodes())]
+    pos = [pos[i] 
+           for i in range(G.number_of_nodes())]
+    pos = np.array(pos)
 
     # TODO these matrix formats are probably inefficient 
     # (but at least understood across different packages!)
     distance_matrix = distance.pdist(pos, metric='euclidean')
     distance_matrix = distance.squareform(distance_matrix)
 
+    distance_matrix[np.diag_indices_from(distance_matrix)] = 1.e-12
+
     return distance_matrix
+
+def get_hop_distance(G):
+    """ Given a graph <G>, find the hop distance between all pairs of
+    nodes and return it as a matrix. Will only work properly if matrix
+    nodes are labelled with integer range, otherwise, the matrix entries 
+    end up in random places.
+    """
+
+    if G.nodes() != range(G.number_of_nodes()):
+        G = nx.convert_node_labels_to_integers(G)
+
+    Nnodes = G.number_of_nodes()
+    hop_distance = np.zeros((Nnodes, Nnodes))
+
+    hop_distance_dict = nx.shortest_path_length(G, weight=None)
+    for key1, inner_dict in hop_distance_dict.iteritems():
+        for key2, dist in inner_dict.iteritems():
+            hop_distance[key1,key2] = dist
+            hop_distance[key2,key1] = dist
+
+    return hop_distance
 
 def minimum_spanning_tree(G, distance_matrix=None):
     """ Given a graph <G> and some underlying metric encoded in
@@ -108,7 +133,8 @@ def minimum_spanning_tree(G, distance_matrix=None):
     span_tree = sparse.coo_matrix(span_tree)
 
     g = nx.Graph()
-    g.add_nodes_from(G.nodes())
+
+    g.add_nodes_from(sorted(G.nodes(data=True), key=str))
     g.add_weighted_edges_from((n, m, weight)
                               for n, m, weight in zip(span_tree.row, span_tree.col, span_tree.data))
 
@@ -130,7 +156,6 @@ def find_N_minus_one_critical_links(G, edges=None):
 
     critical_links = []
     for edge in edges:
-        print edge
         G.remove_edge(*edge)
         if nx.number_connected_components(G) > 1:
             critical_links.append(edge)
