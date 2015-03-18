@@ -174,8 +174,8 @@ def find_N_minus_one_critical_links(G, edges=None):
 
 def cell_subgraph(G, lat, lon, size, copy=True):
     """
-    Returns cutout of G with node positions around a point described
-    by lat, lon with tolerance (e.g. grid cell width) size.
+    Returns cutout of `G` with node positions around a point described
+    by `lat`, `lon` with tolerance (e.g. grid cell width) `size`.
     """
 
     pos = np.array((lon, lat))
@@ -204,24 +204,54 @@ def polygon_subgraph(G, polygon, nneighbours=0, copy=True):
     return giant_component(G.subgraph(nodes), copy=copy)
 
 
-def voronoi_partition(G):
+def voronoi_partition(G, outline):
     """
-    For 2D-embedded graph `G`, returns the shapes of the Voronoi cells
-    corresponding to each node. Strips the Graph off nodes that are not interior
-    to any Voronoi cell and returns the remainder of `G` with the Voronoi cell
-    region as an additional node attribute.
+    For 2D-embedded graph `G`, within the boundary given by the shapely polygon
+    `outline`, returns `G` with the Voronoi cell region as an additional node
+    attribute.
     """
 
-    points = nx.get_node_attributes(G, 'pos').values()
+    # this loop is necessary to get the points into the right order to match
+    # the nodes with the correct Voronoi regions later on
+    points = [n[1]['pos'] for n in G.nodes(data=True)]
+
+    # to avoid any network positions outside all Voronoi cells, append 
+    # the corners of a rectangle framing these points
+    xmin, xmax = np.amin(points[:][0]), np.amax(points[:][0])
+    xspan = xmax-xmin
+
+    ymin, ymax = np.amin(points[:][1]), np.amax(points[:][1])
+    yspan = ymax-ymin
+
+    points.extend([[xmin-xspan, ymin-yspan],
+                   [xmin-xspan, ymax+yspan],
+                   [xmax+xspan, ymin-yspan],
+                   [xmax+xspan, ymax+yspan]])
+
     vor = Voronoi(points)
 
     # convert Voronoi output to Polygons as additional node attribute
-    # exclude the nodes which are not interior to any Voronoi region
     for i,n in enumerate(G.nodes()):
-        if vor.point_region[i] == -1:
-            G.remove_node(n)
-        else:
-            region = Polygon(vor.vertices[vor.regions[vor.point_region[i]]])
-            G.node[n]['region'] = region
+
+        region = Polygon(vor.vertices[vor.regions[vor.point_region[i]]])
+        region = region.intersection(outline)
+
+        # test if region is a proper polygon and some easy fixes if not
+        if not region.is_valid:
+            region = region.buffer(0)
+
+        try:
+            polygons = region.geoms # if that works, we have a MultiPolygon
+            # pick the part with the largest area
+            area = []
+            for pg in polygons:
+                area.append(pg.area)
+    
+            idx = np.argmax(np.array(area))
+            region = polygons[idx]
+        except:
+            pass
+
+        G.node[n]['region'] = region
 
     return G

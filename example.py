@@ -13,26 +13,36 @@ germany_file = 'data/germany.npy'
 
 G = nx.read_gpickle(entsoe_file)
 coor = np.load(germany_file)
-polygon = Polygon(coor)
+polygon = Polygon(coor) # not a valid polygon, therefore the buffer fix
+polygon = polygon.buffer(0) 
 
 # include neighbours to avoid boundary effects in Voronoi algorithm
-g = polygon_subgraph(G, polygon, nneighbours=3)
-vor = voronoi_partition(g)
+g = polygon_subgraph(G, polygon, nneighbours=0)
+#nx.convert_node_labels_to_integers(g)
+vor = voronoi_partition(g, polygon)
 
-# cut off neighbours for plotting
-vor = polygon_subgraph(vor, polygon, nneighbours=0, copy=False)
-pos = nx.get_node_attributes(vor, 'pos')
+#plt.plot(coor[:,0], coor[:,1], color='r')
 
 cl = []
+check = True
 for i,(n,dat) in enumerate(vor.nodes(data=True)):
+    
     polyg = dat['region']
-    x,y = polyg.exterior.coords.xy
-    if min(x) < 6 or max(x) > 14.5 or min(y) < 47 or max(y) > 55:
-        continue
-    color = plt.get_cmap('jet')(i)
-    plt.plot(x,y, color=color)
-    cl.append(color)
+    pos = dat['pos']
 
+    if not polyg.contains(Point(pos)):
+        check = False
+
+    x,y = polyg.exterior.coords.xy
+    
+    color = plt.get_cmap('jet')(i/222.)
+    cl.append(color)
+    plt.plot(x,y, color=color)
+
+print check
+
+pos = nx.get_node_attributes(vor, 'pos')
 nx.draw(vor, pos=pos, node_color=cl)
-plt.plot(coor[:,0], coor[:,1], color='r')
+
+plt.tight_layout()
 plt.show()
