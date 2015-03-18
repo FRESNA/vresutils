@@ -217,16 +217,16 @@ def voronoi_partition(G, outline):
 
     # to avoid any network positions outside all Voronoi cells, append 
     # the corners of a rectangle framing these points
-    xmin, xmax = np.amin(points[:][0]), np.amax(points[:][0])
+    xmin, xmax = np.amin(np.array(points)[:,0]), np.amax(np.array(points)[:,0])
     xspan = xmax-xmin
 
-    ymin, ymax = np.amin(points[:][1]), np.amax(points[:][1])
+    ymin, ymax = np.amin(np.array(points)[:,1]), np.amax(np.array(points)[:,1])
     yspan = ymax-ymin
 
-    points.extend([[xmin-xspan, ymin-yspan],
-                   [xmin-xspan, ymax+yspan],
-                   [xmax+xspan, ymin-yspan],
-                   [xmax+xspan, ymax+yspan]])
+    points.extend([[xmin-3.*xspan, ymin-3.*yspan],
+                   [xmin-3.*xspan, ymax+3.*yspan],
+                   [xmax+3.*xspan, ymin-3.*yspan],
+                   [xmax+3.*xspan, ymax+3.*yspan]])
 
     vor = Voronoi(points)
 
@@ -234,11 +234,11 @@ def voronoi_partition(G, outline):
     for i,n in enumerate(G.nodes()):
 
         region = Polygon(vor.vertices[vor.regions[vor.point_region[i]]])
-        region = region.intersection(outline)
 
-        # test if region is a proper polygon and some easy fixes if not
         if not region.is_valid:
             region = region.buffer(0)
+
+        region = region.intersection(outline)
 
         try:
             polygons = region.geoms # if that works, we have a MultiPolygon
