@@ -2,7 +2,6 @@ import numpy as np
 import networkx as nx
 
 import matplotlib as mpl
-from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
 import matplotlib.cbook as cb
 from matplotlib.colors import colorConverter, Colormap
@@ -14,24 +13,30 @@ toModDir = make_toModDir(__file__)
 def set_style():
     mpl.style.use(toModDir('mplstyle'))
 
-def germany(resolution='l', ax=None, meta=None):
-    if meta is None:
-        llcrnrlat = 47
-        urcrnrlat = 56
-        llcrnrlon = 5.5
-        urcrnrlon = 15.5
-    else:
-        llcrnrlat = meta['latitudes'][-1,0]
-        urcrnrlat = meta['latitudes'][0,-1]
-        llcrnrlon = meta['longitudes'][-1,0]
-        urcrnrlon = meta['longitudes'][0,-1]
-    m = Basemap(projection='cyl', resolution=resolution,
-                llcrnrlat=llcrnrlat, urcrnrlat=urcrnrlat,
-                llcrnrlon=llcrnrlon, urcrnrlon=urcrnrlon,
-                ax=ax)
-    m.drawcoastlines()
-    m.drawcountries()
-    return m
+try:
+    from mpl_toolkits.basemap import Basemap
+
+    def germany(resolution='l', ax=None, meta=None):
+
+        if meta is None:
+            llcrnrlat = 47
+            urcrnrlat = 56
+            llcrnrlon = 5.5
+            urcrnrlon = 15.5
+        else:
+            llcrnrlat = meta['latitudes'][-1,0]
+            urcrnrlat = meta['latitudes'][0,-1]
+            llcrnrlon = meta['longitudes'][-1,0]
+            urcrnrlon = meta['longitudes'][0,-1]
+        m = Basemap(projection='cyl', resolution=resolution,
+                    llcrnrlat=llcrnrlat, urcrnrlat=urcrnrlat,
+                    llcrnrlon=llcrnrlon, urcrnrlon=urcrnrlon,
+                    ax=ax)
+        m.drawcoastlines()
+        m.drawcountries()
+        return m
+except ImportError:
+    pass
 
 def draw_edges(G, segments, pos=None, edgelist=None, width=1.0, color='k',
                style='solid', alpha=None, ax=None, **kwds):
