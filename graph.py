@@ -243,12 +243,7 @@ def voronoi_partition(G, outline):
         try:
             polygons = region.geoms # if that works, we have a MultiPolygon
             # pick the part with the largest area
-            area = []
-            for pg in polygons:
-                area.append(pg.area)
-    
-            idx = np.argmax(np.array(area))
-            region = polygons[idx]
+            region = max(polygons, key=lambda pg: pg.area)
         except:
             pass
 
