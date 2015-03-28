@@ -50,8 +50,8 @@ text.latex.preamble: \usepackage{sfmath}
 image.cmap: afmhot
  
 # Plot elements
-lines.linewidth: 5
-lines.markersize: 18
+lines.linewidth: 2
+lines.markersize: 5
  
 # savefig options (avoid clipping at margins)
 savefig.bbox : tight

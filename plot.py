@@ -7,11 +7,23 @@ import matplotlib.cbook as cb
 from matplotlib.colors import colorConverter, Colormap
 from matplotlib.collections import LineCollection
 
+from . import shapes
 from . import make_toModDir
 toModDir = make_toModDir(__file__)
 
 def set_style():
     mpl.style.use(toModDir('mplstyle'))
+
+def germany2(with_laender=False, ax=None, linewidth=10, **kwargs):
+    if ax is None:
+        ax = plt.gca()
+
+    if with_laender:
+        for n, pts in shapes.laender().iteritems():
+            ax.plot(*pts.T, color='gray')
+    ax.plot(*shapes.germany().T, color='k')
+
+
 
 try:
     from mpl_toolkits.basemap import Basemap
