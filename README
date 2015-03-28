@@ -4,3 +4,26 @@ germany.npy (German outline as sequence of points)
 entsoe_2009_final.gpickle (Tue's graph of the ENTSO-E grid)
 
 need to be present in data folder.
+
+
+For the shapes module one also needs
+
+germany.npy (German outline as sequence of points, again)
+vg250 (Geometry of various German divisions, for example Landkreise and Länder)
+
+The geometry of these Landkreise must be available as shapefiles at
+data/vg250 in the UTM32 projection, they are available from the
+Bundesamt für Kartographie and Geodäsie at [1].
+
+Run
+
+ln -s /home/vres/data/grid_maps/Bialek_data_from_Tue/ENTSOeGrid/entsoe_2009_final.gpickle data
+ln -s /home/vres/data/Shapefiles/vg250_0101.utm32s.shape.ebenen/vg250_ebenen data/vg250
+ln -s /home/vres/data/Shapefiles/germany.npy data
+
+to be happy.
+
+
+Footnotes:
+
+[1] http://www.geodatenzentrum.de/geodaten/gdz_rahmen.gdz_div?gdz_spr=deu&gdz_akt_zeile=5&gdz_anz_zeile=1&gdz_unt_zeile=14&gdz_user_id=0
