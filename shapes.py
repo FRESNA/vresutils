@@ -3,8 +3,9 @@
 from pyproj import Proj
 import shapefile
 from shapely.geometry import Polygon
-from itertools import izip
+from itertools import izip, chain, count
 import numpy as np
+import pandas as pd
 
 from vresutils import make_toModDir, Singleton, staticvars
 toModDir = make_toModDir(__file__)
@@ -61,8 +62,7 @@ class Landkreise(Singleton):
         (regionalschlüssel, index)
         """
         kreise = ((int(sr[self.fields['RS']]), ind)
-                  for ind, sr in izip(self.sf_kreise.iterRecords(),
-                                      xrange(self.sf_kreise.numRecords))
+                  for ind, sr in izip(count(), self.sf_kreise.iterRecords())
                   if sr[self.fields['GF']] == 4)
 
         inds = [ind for ind, rec in enumerate(self.sf_land.records())
