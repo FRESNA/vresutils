@@ -19,9 +19,10 @@ def germany2(with_laender=False, ax=None, linewidth=10, **kwargs):
         ax = plt.gca()
 
     if with_laender:
-        for n, pts in shapes.laender().iteritems():
-            ax.plot(*pts.T, color='gray')
-    ax.plot(*shapes.germany().T, color='k')
+        laender = LineCollection(shapes.laender().itervalues(), colors="gray", zorder=0)
+        ax.add_collection(laender)
+    line, = plt.plot(*shapes.germany().T, color='k')
+    line.set_zorder(1)
 
 
 
