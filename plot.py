@@ -4,8 +4,8 @@ import networkx as nx
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.cbook as cb
-from matplotlib.colors import colorConverter, Colormap
-from matplotlib.collections import LineCollection
+from matplotlib.colors import colorConverter
+from matplotlib.collections import LineCollection, PolyCollection
 
 from . import shapes
 from . import make_toModDir
@@ -24,7 +24,36 @@ def germany2(with_laender=False, ax=None, linewidth=10, **kwargs):
     line, = plt.plot(*shapes.germany().T, color='k')
     line.set_zorder(1)
 
+def landkreise(data, colorbar=True, cmap=None, ax=None):
+    """
+    Plot data on german Landkreis level. Needs a pandas Series with
+    the corresponding regionalschluessel as index.
 
+    Parameters
+    ----------
+    data : pd.Series
+        Float valued data to be plotted.
+
+    Returns
+    -------
+    collection : PolyCollection
+    """
+
+    if ax is None:
+        ax = plt.gca()
+
+    lk = shapes.Landkreise()
+    coll = PolyCollection(lk.getPoints(i)
+                          for i in lk.series().reindex(data.index))
+    coll.set_array(data)
+    coll.set_cmap(cmap)
+    ax.add_collection(coll)
+    ax.autoscale_view()
+
+    if colorbar:
+        plt.colorbar(mappable=coll, ax=ax)
+
+    return coll
 
 try:
     from mpl_toolkits.basemap import Basemap
