@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.spatial import cKDTree as KDTree
+from itertools import product
 import scipy.sparse as sparse
 
 def Points2Points(orig, dest, surjective=False):
@@ -39,7 +40,18 @@ try:
         return Points2Points(orig, Centroid(dest), **kwargs)
 
     def Shapes2Shapes(orig, dest, **kwargs):
-        return Points2Points(Centroid(orig), Centroid(dest), **kwargs)
+        transfer = sparse.lil_matrix((len(dest), len(orig)), dtype=np.float)
+        for i,j in product(xrange(len(dest)), xrange(len(orig))):
+            area = dest[i].intersection(orig[j]).area
+            if area > 0:
+                transfer[i,j] = area
+
+        # sum of input vectors must be preserved
+        ssum = np.squeeze(np.asarray(transfer.sum(axis=0)))
+        for i,j in zip(*transfer.nonzero()):
+            transfer[i,j] /= ssum[j]
+
+        return transfer
 
     def asShapely(shape):
         if isinstance(shape, geo.base.BaseGeometry):
