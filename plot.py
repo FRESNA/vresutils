@@ -24,7 +24,7 @@ def germany2(with_laender=False, ax=None, linewidth=10, **kwargs):
     line, = plt.plot(*shapes.germany().T, color='k')
     line.set_zorder(1)
 
-def landkreise(data, colorbar=True, cmap=None, ax=None):
+def landkreise(data, colorbar=True, ax=None, norm=None, **kw):
     """
     Plot data on german Landkreis level. Needs a pandas Series with
     the corresponding regionalschluessel as index.
@@ -43,14 +43,20 @@ def landkreise(data, colorbar=True, cmap=None, ax=None):
         ax = plt.gca()
 
     lk = shapes.Landkreise()
-    coll = PolyCollection(lk.getPoints(i)
-                          for i in lk.series().reindex(data.index))
+    coll = PolyCollection((lk.getPoints(i)
+                           for i in lk.series().reindex(data.index)),
+                          **kw)
+    if norm is not None:
+        coll.set_norm(norm)
     coll.set_array(data)
-    coll.set_cmap(cmap)
     ax.add_collection(coll)
     ax.autoscale_view()
 
     if colorbar:
+        ## FIXME : sounds like a bug to me, but hey
+        if norm is not None:
+            norm.autoscale(np.asarray(data))
+
         plt.colorbar(mappable=coll, ax=ax)
 
     return coll
