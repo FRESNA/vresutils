@@ -311,6 +311,13 @@ def polygon_subgraph_environment(G, polygon, environment_polygons):
     H.graph = G.graph
     return H
 
+def get_voronoi_regions(G, outline=None):
+    if 'region' not in next(G.node.itervalues()):
+        if callable(outline):
+            outline = outline()
+        assert outline is not None
+        voronoi_partition(G, Polygon(outline))
+    return nx.get_node_attributes(G, 'region')
 
 def voronoi_partition(G, outline):
     """
