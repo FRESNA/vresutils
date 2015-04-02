@@ -42,6 +42,16 @@ def densify(a):
         a = a.todense()
     return np.asarray(a)
 
+def interpolate(a, axis=0):
+    """Interpolate NaN values"""
+    def interpolate1d(y):
+        nan = np.isnan(y)
+        x = lambda z: z.nonzero()[0]
+        y[nan] = np.interp(x(nan), x(~nan), y[~nan])
+        return y
+    a = np.apply_along_axis(interpolate1d, axis, a)
+    return a
+
 def disable_sparse_safety_checks():
     import scipy.sparse, scipy.sparse.compressed
 
