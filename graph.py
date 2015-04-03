@@ -317,7 +317,7 @@ def get_voronoi_regions(G, outline=None):
             outline = outline()
         assert outline is not None
         voronoi_partition(G, Polygon(outline))
-    return nx.get_node_attributes(G, 'region')
+    return nx.get_node_attributes(G, 'region').values()
 
 def voronoi_partition(G, outline):
     """
