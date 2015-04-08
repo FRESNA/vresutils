@@ -1,6 +1,8 @@
 import numpy as np
 import networkx as nx
 
+from itertools import imap
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.cbook as cb
@@ -19,47 +21,53 @@ def germany2(with_laender=False, ax=None, linewidth=10, **kwargs):
         ax = plt.gca()
 
     if with_laender:
-        laender = LineCollection(shapes.laender().itervalues(), colors="gray", zorder=0)
+        laender = LineCollection(imap(shapes.points, shapes.laender().itervalues()),
+                                 colors="gray", zorder=0)
         ax.add_collection(laender)
-    line, = plt.plot(*shapes.germany().T, color='k')
+    line, = plt.plot(*shapes.points(shapes.germany()).T, color='k')
     line.set_zorder(1)
 
-def landkreise(data, colorbar=True, ax=None, norm=None, **kw):
-    """
-    Plot data on german Landkreis level. Needs a pandas Series with
-    the corresponding regionalschluessel as index.
+try:
+    import pandas as pd
 
-    Parameters
-    ----------
-    data : pd.Series
-        Float valued data to be plotted.
+    def landkreise(data, colorbar=True, ax=None, norm=None, **kw):
+        """
+        Plot data on german Landkreis level. Needs a pandas Series with
+        the corresponding regionalschluessel as index.
 
-    Returns
-    -------
-    collection : PolyCollection
-    """
+        Parameters
+        ----------
+        data : pd.Series
+            Float valued data to be plotted.
 
-    if ax is None:
-        ax = plt.gca()
+        Returns
+        -------
+        collection : PolyCollection
+        """
 
-    lk = shapes.Landkreise()
-    coll = PolyCollection((lk.getPoints(i)
-                           for i in lk.series().reindex(data.index)),
-                          **kw)
-    if norm is not None:
-        coll.set_norm(norm)
-    coll.set_array(data)
-    ax.add_collection(coll)
-    ax.autoscale_view()
+        if ax is None:
+            ax = plt.gca()
 
-    if colorbar:
-        ## FIXME : sounds like a bug to me, but hey
+        lk = shapes.landkreise()
+        coll = PolyCollection(imap(shapes.points,
+                                   pd.Series(lk).reindex(data.index)),
+                              **kw)
         if norm is not None:
-            norm.autoscale(np.asarray(data))
+            coll.set_norm(norm)
+        coll.set_array(data)
+        ax.add_collection(coll)
+        ax.autoscale_view()
 
-        plt.colorbar(mappable=coll, ax=ax)
+        if colorbar:
+            ## FIXME : sounds like a bug to me, but hey
+            if norm is not None:
+                norm.autoscale(np.asarray(data))
 
-    return coll
+            plt.colorbar(mappable=coll, ax=ax)
+
+        return coll
+except ImportError:
+    pass
 
 try:
     from mpl_toolkits.basemap import Basemap
