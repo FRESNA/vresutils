@@ -14,7 +14,7 @@ germany_file = 'data/germany.npy'
 G = nx.read_gpickle(entsoe_file)
 coor = np.load(germany_file)
 polygon = Polygon(coor) # not a valid polygon, therefore the buffer fix
-polygon = polygon.buffer(0) 
+polygon = polygon.buffer(0)
 
 # include neighbours to avoid boundary effects in Voronoi algorithm
 g = polygon_subgraph(G, polygon, nneighbours=0)
@@ -26,7 +26,7 @@ vor = voronoi_partition(g, polygon)
 cl = []
 check = True
 for i,(n,dat) in enumerate(vor.nodes(data=True)):
-    
+
     polyg = dat['region']
     pos = dat['pos']
 
@@ -34,7 +34,7 @@ for i,(n,dat) in enumerate(vor.nodes(data=True)):
         check = False
 
     x,y = polyg.exterior.coords.xy
-    
+
     color = plt.get_cmap('jet')(i/222.)
     cl.append(color)
     plt.plot(x,y, color=color)

@@ -28,11 +28,11 @@ def to_directed(G):
 
 
 def giant_component(G, copy=True):
-    g = G.subgraph(max(nx.connected_components(G), key=len))
+    H = G.subgraph(max(nx.connected_components(G), key=len))
     if copy:
-        return g.copy()
+        return H.copy()
     else:
-        return g
+        return H
 
 
 def BreadthFirstLevels(G, root):
@@ -54,25 +54,6 @@ def BreadthFirstLevels(G, root):
                            for w in G[v]
                            if w not in visited)
 
-
-def NodeListBFS(G, root, depth=10):
-    """ Return array of 1, 2, ..., <depth>th neighbours of root node <root> 
-    in graph <G>.
-    """
-
-    levels = []
-    nodes = []
-    if G.nodes() != range(G.number_of_nodes()):
-        root = G.nodes().index(root)
-        G = nx.convert_node_labels_to_integers(G)
-
-    for level, nodesoflevel in izip(xrange(depth), BreadthFirstLevels(G, root)):
-        levels += [level] * len(nodesoflevel)
-        nodes  += nodesoflevel
-
-    return np.array(levels), np.array(nodes)
-
-
 def get_distance_matrix(G):
     """ Given a spatially embedded graph <G>, get the node positions and
     calculate the pairwise euclidean distance of all nodes.
@@ -80,13 +61,13 @@ def get_distance_matrix(G):
 
     if G.nodes() != range(G.number_of_nodes()):
         G = nx.convert_node_labels_to_integers(G)
-    
+
     pos = nx.get_node_attributes(G, 'pos')
-    pos = [pos[i] 
+    pos = [pos[i]
            for i in range(G.number_of_nodes())]
     pos = np.array(pos)
 
-    # TODO these matrix formats are probably inefficient 
+    # TODO these matrix formats are probably inefficient
     # (but at least understood across different packages!)
     distance_matrix = distance.pdist(pos, metric='euclidean')
     distance_matrix = distance.squareform(distance_matrix)
@@ -99,7 +80,7 @@ def get_distance_matrix(G):
 def get_hop_distance(G):
     """ Given a graph <G>, find the hop distance between all pairs of
     nodes and return it as a matrix. Will only work properly if matrix
-    nodes are labelled with integer range, otherwise, the matrix entries 
+    nodes are labelled with integer range, otherwise, the matrix entries
     end up in random places.
     """
 
@@ -126,31 +107,31 @@ def minimum_spanning_tree(G, distance_matrix=None):
     distances as link weights. If returndist=True, also returns distance matrix
     (as dense array) between all nodes.
     """
-    
+
     if G.nodes() != range(G.number_of_nodes()):
         G = nx.convert_node_labels_to_integers(G)
 
-    # calculate distances 
+    # calculate distances
     if distance_matrix == None:
         distance_matrix = get_distance_matrix(G)
 
     # calculate minimum spanning tree
     span_tree = sparse.csgraph.minimum_spanning_tree(distance_matrix, overwrite=True)
 
-    # translate back to graph edges and add them to g, store distance in edge weight
+    # translate back to graph edges and add them to H, store distance in edge weight
     span_tree = sparse.coo_matrix(span_tree)
 
-    g = nx.Graph()
+    H = nx.Graph()
 
-    g.add_nodes_from(sorted(G.nodes(data=True), key=str))
-    g.add_weighted_edges_from((n, m, weight)
+    H.add_nodes_from(sorted(G.nodes(data=True), key=str))
+    H.add_weighted_edges_from((n, m, weight)
                               for n, m, weight in zip(span_tree.row, span_tree.col, span_tree.data))
 
-    return g
+    return H
 
 
 def find_N_minus_one_critical_links(G, edges=None):
-    """ Given a graph <G>, find the critical links whose removal leads to 
+    """ Given a graph <G>, find the critical links whose removal leads to
     network decomposition into multiple components.
     Optionally, restrict the search to edge list <edges>.
 
@@ -300,7 +281,7 @@ def polygon_subgraph_environment(G, polygon, environment_polygons):
         x = np.mean([m['X'] / m['length']
                      for m in chain(H.adj[env].itervalues(),
                                     (a for n in H.node[env]['nodes']
-                                       for a in G.adj[n].itervalues()))])
+                                     for a in G.adj[n].itervalues()))])
         pos = H.node[env]['pos']
         for n, attr in H.adj[env].iteritems():
             length = norm(pos - H.node[n]['pos'])
@@ -330,7 +311,7 @@ def voronoi_partition(G, outline):
     # the nodes with the correct Voronoi regions later on
     points = [n[1]['pos'] for n in G.nodes(data=True)]
 
-    # to avoid any network positions outside all Voronoi cells, append 
+    # to avoid any network positions outside all Voronoi cells, append
     # the corners of a rectangle framing these points
     xmin, xmax = np.amin(np.array(points)[:,0]), np.amax(np.array(points)[:,0])
     xspan = xmax-xmin
