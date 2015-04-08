@@ -42,8 +42,8 @@ try:
     def Shapes2Shapes(orig, dest, **kwargs):
         transfer = sparse.lil_matrix((len(dest), len(orig)), dtype=np.float)
         for i,j in product(xrange(len(dest)), xrange(len(orig))):
-            area = dest[i].intersection(orig[j]).area
-            if area > 0:
+            if dest[i].intersects(orig[j]):
+                area = dest[i].intersection(orig[j]).area
                 transfer[i,j] = area
 
         # sum of input vectors must be preserved
