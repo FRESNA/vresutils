@@ -16,10 +16,8 @@ coor = np.load(germany_file)
 polygon = Polygon(coor) # not a valid polygon, therefore the buffer fix
 polygon = polygon.buffer(0)
 
-# include neighbours to avoid boundary effects in Voronoi algorithm
-g = polygon_subgraph(G, polygon, nneighbours=0)
 #nx.convert_node_labels_to_integers(g)
-vor = voronoi_partition(g, polygon)
+vor = voronoi_partition(G, polygon)
 
 #plt.plot(coor[:,0], coor[:,1], color='r')
 

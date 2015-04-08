@@ -307,6 +307,8 @@ def voronoi_partition(G, outline):
     attribute.
     """
 
+    G = polygon_subgraph(G, outline, copy=False)
+
     # this loop is necessary to get the points into the right order to match
     # the nodes with the correct Voronoi regions later on
     points = [n[1]['pos'] for n in G.nodes(data=True)]
