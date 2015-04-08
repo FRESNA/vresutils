@@ -13,7 +13,26 @@ toModDir = make_toModDir(__file__)
 def germany():
     return np.load(toModDir('data/germany.npy'))
 
-def laender():
+def simplify(pts, tolerance=0.03):
+    return np.asarray(maybe_simplify(Polygon(pts), tolerance).boundary.coords)
+
+def points(poly):
+    return np.asarray(poly.boundary.coords)
+
+class Dict(dict): pass
+
+@cachable(keepweakref=True)
+def germany(tolerance=0.03):
+    return maybe_simplify(Polygon(np.load(toModDir('data/germany.npy'))), tolerance)
+
+def _shape2poly(sh, tolerance=0.03):
+    pts = np.asarray(sh.points[:sh.parts[1] if len(sh.parts) > 1 else None])
+    poly = Polygon(np.asarray(_shape2poly.p(*pts.T, inverse=True)).T)
+    return maybe_simplify(poly, tolerance)
+_shape2poly.p = Proj('+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m +no_defs')
+
+@cachable(keepweakref=True)
+def laender(tolerance=0.03):
     sf = shapefile.Reader(toModDir('data/vg250/VG250_LAN'))
     p = Proj('+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m +no_defs')
     def _shape2points(sh):
@@ -22,6 +41,28 @@ def laender():
     return dict((rec[6].decode('utf-8'), _shape2points(sh))
                 for rec, sh in izip(sf.iterRecords(), sf.iterShapes())
                 if rec[1] == 4)
+
+@cachable(keepweakref=True)
+def landkreise(tolerance=0.03):
+    sf_kreise = shapefile.Reader(toModDir('data/vg250/VG250_KRS'))
+    # for special casing hamburg and berlin
+    sf_land = shapefile.Reader(toModDir('data/vg250/VG250_LAN'))
+
+    fields = [f[0] for f in sf_kreise.fields[1:]]
+    fields = {n:fields.index(n) for n in ('GF', 'RS')}
+
+    kreise = ((int(sr[fields['RS']]),
+               _shape2poly(sf_kreise.shape(ind), tolerance))
+              for ind, sr in izip(count(), sf_kreise.iterRecords())
+              if sr[fields['GF']] == 4)
+
+    berlinhamburg = ((int(sr[fields['RS']]),
+                      _shape2poly(sf_land.shape(ind), tolerance))
+                     for ind, sr in izip(count(), sf_land.iterRecords())
+                     if (sr[fields['RS']] in ('11', '02')
+                         and sr[fields['GF']] == 4))
+
+    return Dict(chain(berlinhamburg, kreise))
 
 class Landkreise(Singleton):
     def __init__(self):

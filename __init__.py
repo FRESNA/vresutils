@@ -7,6 +7,7 @@ import cPickle
 from warnings import warn
 import time, sys
 import os.path, string
+import weakref
 
 def indicator(N, indices):
     m = np.zeros(N)
@@ -39,19 +40,22 @@ def format_filename(s):
     return ''.join(c for c in s if c in valid_chars).replace(' ','_')
 
 
-def cachable(func=None, version=None, cache_dir="/tmp/compcache", verbose=True):
+def cachable(func=None, version=None, cache_dir="/tmp/compcache", keepweakref=False, verbose=True):
     """
     Decorator to mark long running functions, which should be saved to
     disk for a pickled version of their hopefully short arguments.
 
     Arguments:
-    func      - Shouldn't be supplied, but instead contains the function,
-                if the decorator is used without arguments
-    version   - if given it is saved together with the arguments and
-                must be the same as the cache to be valid.
-    cache_dir - where to save the cached files, if it does not exist
-                it is created (default: /tmp/compcache)
-    verbose   - Output cache hits and timing information.
+    func        - Shouldn't be supplied, but instead contains the
+                  function, if the decorator is used without arguments
+    version     - if given it is saved together with the arguments and
+                  must be the same as the cache to be valid.
+    cache_dir   - where to save the cached files, if it does not exist
+                  it is created (default: /tmp/compcache)
+    keepweakref - Also store a weak reference and return it instead of
+                  rereading from disk (default: False).
+    verbose     - Output cache hits and timing information (default:
+                  True).
     """
 
     if not os.path.isdir(cache_dir):
@@ -69,6 +73,9 @@ def cachable(func=None, version=None, cache_dir="/tmp/compcache", verbose=True):
         if version is not None:
             cache_fn += format_filename("ver" + str(version) + "_")
 
+        if keepweakref:
+            cache = weakref.WeakValueDictionary()
+
         @wraps(func)
         def wrapper(*args, **kwds):
             # Check if there is a cached version
@@ -78,24 +85,29 @@ def cachable(func=None, version=None, cache_dir="/tmp/compcache", verbose=True):
                 '.pickle'
             )
 
-            if os.path.exists(fn):
+            if keepweakref and fn in cache:
+                return cache[fn]
+            elif os.path.exists(fn):
                 try:
                     with open(fn) as f:
-                        return cPickle.load(f)
+                        ret = cPickle.load(f)
                 except Exception as e:
                     warn("Couldn't unpickle from %s: %s" % (fn, e.message))
+            else:
+                with optional(verbose,
+                              timer("Caching call to {} in {}"
+                                    .format(func.__name__, os.path.basename(fn)))):
+                    ret = func(*args, **kwds)
+                    try:
+                        with open(fn, 'w') as f:
+                            cPickle.dump(ret, f)
+                    except Exception as e:
+                        warn("Couldn't pickle to %s: %s" % (fn, e.message))
 
-            with optional(verbose,
-                          timer("Caching call to {} in {}"
-                                .format(func.__name__, os.path.basename(fn)))):
-                ret = func(*args, **kwds)
-                try:
-                    with open(fn, 'w') as f:
-                        cPickle.dump(ret, f)
-                except Exception as e:
-                    warn("Couldn't pickle to %s: %s" % (fn, e.message))
+            if keepweakref:
+                cache[fn] = ret
 
-                return  ret
+            return ret
 
         return wrapper
 
