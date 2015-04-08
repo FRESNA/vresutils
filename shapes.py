@@ -6,15 +6,19 @@ from shapely.geometry import Polygon
 from itertools import izip, chain, count
 import numpy as np
 import pandas as pd
+import warnings
 
-from vresutils import make_toModDir, Singleton, staticvars
+from vresutils import make_toModDir, Singleton, staticvars, cachable
 toModDir = make_toModDir(__file__)
 
-def germany():
-    return np.load(toModDir('data/germany.npy'))
+def simplify_poly(poly, tolerance):
+    if tolerance is None:
+        return poly
+    else:
+        return poly.simplify(tolerance)
 
-def simplify(pts, tolerance=0.03):
-    return np.asarray(maybe_simplify(Polygon(pts), tolerance).boundary.coords)
+def simplify_pts(pts, tolerance=0.03):
+    return points(simplify_poly(Polygon(pts), tolerance))
 
 def points(poly):
     return np.asarray(poly.boundary.coords)
@@ -23,22 +27,18 @@ class Dict(dict): pass
 
 @cachable(keepweakref=True)
 def germany(tolerance=0.03):
-    return maybe_simplify(Polygon(np.load(toModDir('data/germany.npy'))), tolerance)
+    return simplify_poly(Polygon(np.load(toModDir('data/germany.npy'))), tolerance)
 
 def _shape2poly(sh, tolerance=0.03):
     pts = np.asarray(sh.points[:sh.parts[1] if len(sh.parts) > 1 else None])
     poly = Polygon(np.asarray(_shape2poly.p(*pts.T, inverse=True)).T)
-    return maybe_simplify(poly, tolerance)
+    return simplify_poly(poly, tolerance)
 _shape2poly.p = Proj('+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m +no_defs')
 
 @cachable(keepweakref=True)
 def laender(tolerance=0.03):
     sf = shapefile.Reader(toModDir('data/vg250/VG250_LAN'))
-    p = Proj('+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m +no_defs')
-    def _shape2points(sh):
-        return np.array(p(*np.array(sh.points[:sh.parts[1] if len(sh.parts) > 1 else None]).T,
-                          inverse=True)).T
-    return dict((rec[6].decode('utf-8'), _shape2points(sh))
+    return Dict((rec[6].decode('utf-8'), _shape2poly(sh, tolerance))
                 for rec, sh in izip(sf.iterRecords(), sf.iterShapes())
                 if rec[1] == 4)
 
@@ -66,6 +66,8 @@ def landkreise(tolerance=0.03):
 
 class Landkreise(Singleton):
     def __init__(self):
+        warnings.warn("The Landkreise Singleton is deprecated. Use the landkreise function instead!", DeprecationWarning)
+
         self.sf_kreise = shapefile.Reader(toModDir('data/vg250/VG250_KRS'))
         # for special casing hamburg and berlin
         self.sf_land = shapefile.Reader(toModDir('data/vg250/VG250_LAN'))
@@ -80,11 +82,11 @@ class Landkreise(Singleton):
         else:
             return self.sf_land.shape(-index-1)
 
-    def getPoints(self, index):
-        return self._shape2points(self.getShape(index))
+    def getPoints(self, index, tolerance=0.03):
+        return np.asarray(self.getPolygon(index, tolerance).boundary.coords)
 
-    def getPolygon(self, index):
-        return Polygon(self.getPoints(index))
+    def getPolygon(self, index, tolerance=0.03):
+        return Polygon(self._shape2points(self.getShape(index))).simplify_pts(tolerance)
 
     def _shape2points(self, sh):
         pts = np.array(sh.points[:sh.parts[1]] if len(sh.parts) > 1 else sh.points)
