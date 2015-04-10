@@ -30,7 +30,7 @@ def germany2(with_laender=False, ax=None, linewidth=10, **kwargs):
 try:
     import pandas as pd
 
-    def landkreise(data, colorbar=True, ax=None, norm=None, **kw):
+    def landkreise(data, colorbar=True, colorbar_ticklabels=None, ax=None, norm=None, **kw):
         """
         Plot data on german Landkreis level. Needs a pandas Series with
         the corresponding regionalschluessel as index.
@@ -39,6 +39,10 @@ try:
         ----------
         data : pd.Series
             Float valued data to be plotted.
+        colorbar : bool | dict
+            Whether to plot a colorbar and if a non-empty dict is
+            passed extra kw arguments to pass to the colorbar call.
+        colorbar_ticklabels : list of strings
 
         Returns
         -------
@@ -59,11 +63,17 @@ try:
         ax.autoscale_view()
 
         if colorbar:
+            kwargs = dict()
+            if isinstance(colorbar, dict):
+                kwargs.update(colorbar)
+
             ## FIXME : sounds like a bug to me, but hey
             if norm is not None:
                 norm.autoscale(np.asarray(data))
 
-            plt.colorbar(mappable=coll, ax=ax)
+            cbar = plt.colorbar(mappable=coll, **kwargs)
+            if colorbar_ticklabels is not None:
+                cbar.ax.set_yticklabels(colorbar_ticklabels)
 
         return coll
 except ImportError:
