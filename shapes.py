@@ -4,6 +4,7 @@ from pyproj import Proj
 import shapefile
 from shapely.geometry import Polygon
 from itertools import izip, chain, count
+from collections import OrderedDict
 import numpy as np
 import pandas as pd
 import warnings
@@ -35,12 +36,26 @@ def _shape2poly(sh, tolerance=0.03):
     return simplify_poly(poly, tolerance)
 _shape2poly.p = Proj('+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m +no_defs')
 
-@cachable(keepweakref=True)
-def laender(tolerance=0.03):
+@cachable(keepweakref=True, version=2)
+def laender(tolerance=0.03, shortnames=True):
+    if shortnames:
+        name = {u'Baden-Württemberg': u'BW', u'Bayern': u'BY',
+                u'Berlin': u'BE', u'Brandenburg': u'BB', u'Bremen':
+                u'HB', u'Hamburg': u'HH', u'Hessen': u'HE',
+                u'Mecklenburg-Vorpommern': u'MV', u'Niedersachsen':
+                u'NI', u'Nordrhein-Westfalen': u'NW',
+                u'Rheinland-Pfalz': u'RP', u'Saarland': u'SL',
+                u'Sachsen': u'SN', u'Sachsen-Anhalt': u'ST',
+                u'Schleswig-Holstein': u'SH', u'Thüringen':
+                u'TH'}.__getitem__
+    else:
+        name = lambda x: x
+
     sf = shapefile.Reader(toModDir('data/vg250/VG250_LAN'))
-    return Dict((rec[6].decode('utf-8'), _shape2poly(sh, tolerance))
-                for rec, sh in izip(sf.iterRecords(), sf.iterShapes())
-                if rec[1] == 4)
+    return OrderedDict(sorted([(name(rec[6].decode('utf-8')), _shape2poly(sh, tolerance))
+                               for rec, sh in izip(sf.iterRecords(), sf.iterShapes())
+                               if rec[1] == 4],
+                              key=lambda x: x[0]))
 
 @cachable(keepweakref=True)
 def landkreise(tolerance=0.03):
