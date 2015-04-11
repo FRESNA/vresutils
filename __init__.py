@@ -100,7 +100,7 @@ def cachable(func=None, version=None, cache_dir="/tmp/compcache", keepweakref=Fa
                     ret = func(*args, **kwds)
                     try:
                         with open(fn, 'w') as f:
-                            cPickle.dump(ret, f)
+                            cPickle.dump(ret, f, protocol=-1)
                     except Exception as e:
                         warn("Couldn't pickle to %s: %s" % (fn, e.message))
 
