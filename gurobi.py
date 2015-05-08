@@ -84,6 +84,11 @@ class GbVecVar(GbVec):
                               for i in np.arange(len(self))])
         return var
 
+    def QuadExpr(d=1.0):
+        ret = gb.QuadExpr()
+        ret.addTerms(asList(N, d), self.items, self.items)
+        return ret
+
     def __neg__(self):
         return GbVecExpr(svals=[-1.0], svecs=[self])
 
