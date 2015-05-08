@@ -143,6 +143,13 @@ class GbVecExprTest(unittest.TestCase):
         self.assertEqual(ex.lvals, [self.K])
         self.assertEqual(ex.lvecs, [self.v2])
 
+        ex = self.ex - self.v2
+        self.assertIsInstance(ex, GbVecExpr)
+        self.assertEqual(ex.svals, [2.0, -1.0])
+        self.assertEqual(ex.svecs, [self.v1, self.v2])
+        self.assertEqual(ex.lvals, [self.K])
+        self.assertEqual(ex.lvecs, [self.v2])
+
         ex = self.ex + 3.0 * self.v2
         self.assertIsInstance(ex, GbVecExpr)
         self.assertEqual(ex.svals, [2.0, 3.0])

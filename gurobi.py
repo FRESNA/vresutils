@@ -55,8 +55,8 @@ class GbVec(object):
 class GbVecConstr(GbVec):
     def __init__(self, model, N, name, lhs, sense, rhs, update=True):
         super(GbVecConstr, self).__init__(model,
-            np.array([model.addConstr(lhs, sense, rhs, name=name + str(i))
-                      for lhs, rhs, i in izip(asList(N, lhs), asList(N, rhs), count())])
+            np.asarray([model.addConstr(lhs, sense, rhs, name=name + str(i))
+                        for lhs, rhs, i in izip(asList(N, lhs), asList(N, rhs), count())])
         )
 
         if update:
@@ -84,6 +84,9 @@ class GbVecVar(GbVec):
                               for i in np.arange(len(self))])
         return var
 
+    def __neg__(self):
+        return GbVecExpr(svals=[-1.0], svecs=[self])
+
     def __mul__(self, other):
         if np.isscalar(other):
             return GbVecExpr(svals=[other], svecs=[self])
@@ -97,12 +100,21 @@ class GbVecVar(GbVec):
         else:
             return NotImplemented
 
+    def __sub__(self, other):
+        if isinstance(other, GbVecVar):
+            return GbVecExpr(svals=[1.0, -1.0], svecs=[self, other])
+        else:
+            return NotImplemented
+
 class GbVecExpr(object):
     def __init__(self, svals=[], svecs=[], lvals=[], lvecs=[]):
         self.svals = svals
         self.svecs = svecs
         self.lvals = lvals
         self.lvecs = lvecs
+
+    def __neg__(self):
+        return -1. * self
 
     def __mul__(self, other):
         if np.isscalar(other):
@@ -142,6 +154,15 @@ class GbVecExpr(object):
             self.svecs.append(other)
 
         return self
+
+    def __sub__(self, other):
+        return self + (- other)
+
+    def __rsub__(self, other):
+        return (- self) + other
+
+    def __isub__(self, other):
+        return self.__iadd__(- other)
 
     def __iter__(self):
         scalarexprs = (gb.LinExpr(self.svals, vecs)
