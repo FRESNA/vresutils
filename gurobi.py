@@ -187,8 +187,14 @@ class GbVecExpr(object):
 
         return imap(gb.quicksum, izip(scalarexprs, *matrixexprs))
 
+def ismatrixlike(v):
+    return sp.sparse.isspmatrix(v) or (isinstance(v, np.ndarray) and v.ndim==2)
+
+def isvectorlike(v):
+    return isinstance(v, list) or (isinstance(v, np.ndarray) and v.ndim==1)
+
 def gbdot(v1, v2):
-    if (sp.sparse.isspmatrix(v1) or isinstance(v1, np.ndarray)) and isinstance(v2, GbVecVar):
+    if ismatrixlike(v1) and isinstance(v2, GbVecVar):
         assert v1.shape[1] == len(v2), "Dimensions must match v1.shape[1] == len(v2)"
         return GbVecExpr(lvals=[v1], lvecs=[v2])
     elif isinstance(v1, GbVecVar) and isinstance(v2, GbVecVar):
@@ -196,7 +202,7 @@ def gbdot(v1, v2):
         expr = gb.QuadExpr()
         expr.addTerms([1.0] * len(v1), v1, v2)
         return expr
-    elif (isinstance(v1, list) or isinstance(v1, np.ndarray)) and isinstance(v2, GbVecVar):
+    elif isvectorlike(v1) and isinstance(v2, GbVecVar):
         assert len(v1) == len(v2)
         return gb.LinExpr(v1, v2)
     else:
