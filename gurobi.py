@@ -9,7 +9,7 @@ def asLists(N, *arrs):
     return [asList(N, a) for a in arrs]
 
 def asList(N, a):
-    if isinstance(a, (list, tuple)):
+    if isinstance(a, (list, tuple, np.ndarray)):
         assert len(a) == N
         return a
     elif isinstance(a, collections.Iterable):
@@ -56,7 +56,7 @@ class GbVecConstr(GbVec):
     def __init__(self, model, N, name, lhs, sense, rhs, update=True):
         super(GbVecConstr, self).__init__(model,
             np.asarray([model.addConstr(lhs, sense, rhs, name=name + str(i))
-                        for lhs, rhs, i in izip(asList(N, lhs), asList(N, rhs), count())])
+                        for i, lhs, rhs in izip(count(), *asLists(N, lhs, rhs))])
         )
 
         if update:
