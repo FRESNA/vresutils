@@ -205,5 +205,10 @@ def gbdot(v1, v2):
     elif isvectorlike(v1) and isinstance(v2, GbVecVar):
         assert len(v1) == len(v2)
         return gb.LinExpr(v1, v2)
+    elif isinstance(v1, GbVecVar) and isinstance(v2, GbVecExpr):
+        # a faster implementation is probably possible from within
+        # GbVecExpr but this pedestrian one should be good enough
+        # TODO : Needs to be tested
+        return gb.quicksum(n1 * n2 for n1, n2 in izip(v1, v2))
     else:
         raise NotImplementedError
