@@ -113,10 +113,17 @@ class GbVecVar(GbVec):
 
 class GbVecExpr(object):
     def __init__(self, svals=[], svecs=[], lvals=[], lvecs=[]):
+        assert len(svals) == len(svecs), "svals and svecs must come in pairs"
         self.svals = svals
         self.svecs = svecs
+        assert len(lvals) == len(lvecs), "lvals and lvecs must come in pairs"
         self.lvals = lvals
         self.lvecs = lvecs
+
+        length = len(self)
+        assert (all(len(i) == length for i in svecs) and
+                all(i.shape[0] == length for i in lvals)), \
+            "Dimensions must match"
 
     def __neg__(self):
         return -1. * self
@@ -149,6 +156,8 @@ class GbVecExpr(object):
     __radd__ = __add__
 
     def __iadd__(self, other):
+        if len(self) != 0 and len(other) != 0:
+            assert len(self) == len(other), "Dimensions must match"
         if isinstance(other, GbVecExpr):
             self.svals += other.svals
             self.svecs += other.svecs
@@ -168,6 +177,14 @@ class GbVecExpr(object):
 
     def __isub__(self, other):
         return self.__iadd__(- other)
+
+    def __len__(self):
+        if len(self.svecs):
+            return len(self.svecs[0])
+        elif len(self.lvals):
+            return self.lvals[0].shape[0]
+        else:
+            return 0
 
     def __iter__(self):
         scalarexprs = (gb.LinExpr(self.svals, vecs)
@@ -210,6 +227,7 @@ def gbdot(v1, v2):
         # a faster implementation is probably possible from within
         # GbVecExpr but this pedestrian one should be good enough
         # TODO : Needs to be tested
+        assert len(v1) == len(v2)
         return gb.quicksum(n1 * n2 for n1, n2 in izip(v1, v2))
     else:
         raise NotImplementedError
