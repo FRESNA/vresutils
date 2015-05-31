@@ -5,6 +5,7 @@ import scipy.sparse
 from numpy.testing import assert_allclose
 
 from gurobi import GbVec, GbVecConstr, GbVecVar, GbVecExpr, gbdot
+from array import spdiag
 
 import gurobipy as gb
 
@@ -163,6 +164,11 @@ class GbVecExprTest(unittest.TestCase):
         self.assertEqual(self.ex.svecs, [self.v1, self.v2])
         self.assertEqual(self.ex.lvals, [self.K])
         self.assertEqual(self.ex.lvecs, [self.v2])
+
+    def test_only_lvals(self):
+        # bug reported by sarah on 29/05/15
+        ex = GbVecExpr(lvals=[spdiag(np.ones(len(self.v1)))], lvecs=[self.v1])
+        self.assertEqual(len(list(ex)), len(self.v1))
 
 class GbDotTest(unittest.TestCase):
     def setUp(self):

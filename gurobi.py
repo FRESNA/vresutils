@@ -3,7 +3,7 @@ import numpy as np
 import scipy as sp
 import scipy.sparse
 import collections
-from itertools import izip, count, imap, starmap
+from itertools import izip, count, imap, starmap, izip_longest
 
 def asLists(N, *arrs):
     return [asList(N, a) for a in arrs]
@@ -185,7 +185,8 @@ class GbVecExpr(object):
                                  vec[np.squeeze(np.asarray(elems[1]))])
         matrixexprs = starmap(generate_matrix_rows, izip(self.lvals, self.lvecs))
 
-        return imap(gb.quicksum, izip(scalarexprs, *matrixexprs))
+        return imap(gb.quicksum, izip_longest(scalarexprs, *matrixexprs,
+                                              fillvalue=gb.LinExpr()))
 
 def ismatrixlike(v):
     return sp.sparse.isspmatrix(v) or (isinstance(v, np.ndarray) and v.ndim==2)
