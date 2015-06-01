@@ -72,7 +72,8 @@ class GbVecVarTest(unittest.TestCase):
         K = sp.sparse.diags(((1.0, 1.0),), (0,))
         expr = gbdot(K, self.v)
         self.assertIsInstance(expr, GbVecExpr)
-        self.assertEqual(expr.lvals, [K])
+        self.assertEqual(len(expr.lvals), 1)
+        self.assertEqual((expr.lvals[0] - K).nnz, 0)
         self.assertEqual(expr.lvecs, [self.v])
 
     def test_add(self):
@@ -88,7 +89,7 @@ class GbVecExprTest(unittest.TestCase):
         self.v1 = GbVecVar(self.model, 2, name='v1_')
         self.v2 = GbVecVar(self.model, 2, name='v2_')
 
-        self.K = sp.sparse.diags([(1, 1)], [0])
+        self.K = sp.sparse.diags([(1, 1)], [0]).tocsr()
 
         self.model.update()
         self.vs = self.model.getVars()
@@ -141,28 +142,32 @@ class GbVecExprTest(unittest.TestCase):
         self.assertIsInstance(ex, GbVecExpr)
         self.assertEqual(ex.svals, [2.0, 1.0])
         self.assertEqual(ex.svecs, [self.v1, self.v2])
-        self.assertEqual(ex.lvals, [self.K])
+        self.assertEqual(len(ex.lvals), 1)
+        self.assertEqual((ex.lvals[0] - self.K).nnz, 0)
         self.assertEqual(ex.lvecs, [self.v2])
 
         ex = self.ex - self.v2
         self.assertIsInstance(ex, GbVecExpr)
         self.assertEqual(ex.svals, [2.0, -1.0])
         self.assertEqual(ex.svecs, [self.v1, self.v2])
-        self.assertEqual(ex.lvals, [self.K])
+        self.assertEqual(len(ex.lvals), 1)
+        self.assertEqual((ex.lvals[0] - self.K).nnz, 0)
         self.assertEqual(ex.lvecs, [self.v2])
 
         ex = self.ex + 3.0 * self.v2
         self.assertIsInstance(ex, GbVecExpr)
         self.assertEqual(ex.svals, [2.0, 3.0])
         self.assertEqual(ex.svecs, [self.v1, self.v2])
-        self.assertEqual(ex.lvals, [self.K])
+        self.assertEqual(len(ex.lvals), 1)
+        self.assertEqual((ex.lvals[0] - self.K).nnz, 0)
         self.assertEqual(ex.lvecs, [self.v2])
 
         self.ex += 3.0 * self.v2
         self.assertIsInstance(self.ex, GbVecExpr)
         self.assertEqual(self.ex.svals, [2.0, 3.0])
         self.assertEqual(self.ex.svecs, [self.v1, self.v2])
-        self.assertEqual(self.ex.lvals, [self.K])
+        self.assertEqual(len(ex.lvals), 1)
+        self.assertEqual((ex.lvals[0] - self.K).nnz, 0)
         self.assertEqual(self.ex.lvecs, [self.v2])
 
     def test_only_lvals(self):
@@ -192,7 +197,8 @@ class GbDotTest(unittest.TestCase):
     def test_matvec(self):
         ex = gbdot(self.K, self.v1)
         self.assertIsInstance(ex, GbVecExpr)
-        self.assertEqual(ex.lvals, [self.K])
+        self.assertEqual(len(ex.lvals), 1)
+        self.assertEqual((ex.lvals[0] - self.K).nnz, 0)
         self.assertEqual(ex.lvecs, [self.v1])
 
         # dimension mismatch

@@ -22,7 +22,7 @@ def asList(N, a):
 class GbVec(object):
     def __init__(self, model, items):
         self.model = model
-        self.items = items
+        self.items = np.asarray(items)
 
     def __getitem__(self, key):
         item = self.items[key]
@@ -55,8 +55,8 @@ class GbVec(object):
 class GbVecConstr(GbVec):
     def __init__(self, model, N, name, lhs, sense, rhs, update=True):
         super(GbVecConstr, self).__init__(model,
-            np.asarray([model.addConstr(lhs, sense, rhs, name=name + str(i))
-                        for i, lhs, rhs in izip(count(), *asLists(N, lhs, rhs))])
+            [model.addConstr(lhs, sense, rhs, name=name + str(i))
+             for i, lhs, rhs in izip(np.arange(N), *asLists(N, lhs, rhs))]
         )
 
         if update:
@@ -69,9 +69,9 @@ class GbVecVar(GbVec):
             "Only vector constraints of type CONTINUOUS are supported"
 
         super(GbVecVar, self).__init__(model,
-            np.asarray([model.addVar(name=name + str(x[0]),
-                                     **dict(izip(kwargs.iterkeys(), x[1:])))
-                        for x in izip(np.arange(N), *asLists(N, *kwargs.values()))])
+            [model.addVar(name=name + str(x[0]),
+                          **dict(izip(kwargs.iterkeys(), x[1:])))
+             for x in izip(np.arange(N), *asLists(N, *kwargs.values()))]
         )
 
         if update:
@@ -117,7 +117,7 @@ class GbVecExpr(object):
         self.svals = svals
         self.svecs = svecs
         assert len(lvals) == len(lvecs), "lvals and lvecs must come in pairs"
-        self.lvals = lvals
+        self.lvals = [sp.sparse.csr_matrix(lv) for lv in lvals]
         self.lvecs = lvecs
 
         length = len(self)
@@ -191,10 +191,6 @@ class GbVecExpr(object):
                        for vecs in izip(*self.svecs))
 
         def generate_matrix_rows(val, vec):
-            if sp.sparse.isspmatrix(val):
-                val = val.tocsr()
-            else:
-                val = np.asmatrix(val)
             for i in np.arange(val.shape[0]):
                 row = val[i]
                 elems = row.nonzero()
