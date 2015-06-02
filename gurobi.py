@@ -84,6 +84,9 @@ class GbVecVar(GbVec):
                               for i in np.arange(len(self))])
         return var
 
+    def LinExpr(d=1.0):
+        return gb.LinExpr(asList(N, d), self.items)
+
     def QuadExpr(d=1.0):
         ret = gb.QuadExpr()
         ret.addTerms(asList(N, d), self.items, self.items)
