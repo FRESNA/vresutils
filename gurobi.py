@@ -85,12 +85,11 @@ class GbVecVar(GbVec):
         return var
 
     def LinExpr(self, d=1.0):
-        return gb.LinExpr(asList(len(self), d), list(self.items))
+        return gb.LinExpr(asList(len(self), d), self)
 
     def QuadExpr(self, d=1.0):
         ret = gb.QuadExpr()
-        items = list(self.items)
-        ret.addTerms(asList(len(self), d), items, items)
+        ret.addTerms(asList(len(self), d), self, self)
         return ret
 
     def __neg__(self):
