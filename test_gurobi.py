@@ -12,7 +12,7 @@ import gurobipy as gb
 class GbVecVarTest(unittest.TestCase):
     def setUp(self):
         self.model = gb.Model()
-        self.v = GbVecVar(self.model, 2, name='test', ub=3.0, lb=(1.0, 2.0))
+        self.v = GbVecVar(self.model, 2, name='v', ub=3.0, lb=(1.0, 2.0))
         self.model.update()
 
         self.v2 = self.model.getVars()
@@ -82,6 +82,16 @@ class GbVecVarTest(unittest.TestCase):
         self.assertIsInstance(expr, GbVecExpr)
         self.assertEqual(expr.svals, [1.0, 1.0])
         self.assertEqual(expr.svecs, [self.v, v2])
+
+    def test_linexpr(self):
+        self.assertEqual(str(self.v.LinExpr()), '<gurobi.LinExpr: v0 + v1>')
+        self.assertEqual(str(self.v.LinExpr(np.array((1.0,2.0)))),
+                         '<gurobi.LinExpr: v0 + 2.0 v1>')
+
+    def test_quadexpr(self):
+        self.assertEqual(str(self.v.QuadExpr(np.array((1.0,2.0)))),
+                        '<gurobi.QuadExpr: 0.0 + [ v0 ^ 2 + 2.0 v1 ^ 2 ]>')
+
 
 class GbVecExprTest(unittest.TestCase):
     def setUp(self):

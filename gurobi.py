@@ -84,12 +84,13 @@ class GbVecVar(GbVec):
                               for i in np.arange(len(self))])
         return var
 
-    def LinExpr(d=1.0):
-        return gb.LinExpr(asList(N, d), self.items)
+    def LinExpr(self, d=1.0):
+        return gb.LinExpr(asList(len(self), d), list(self.items))
 
-    def QuadExpr(d=1.0):
+    def QuadExpr(self, d=1.0):
         ret = gb.QuadExpr()
-        ret.addTerms(asList(N, d), self.items, self.items)
+        items = list(self.items)
+        ret.addTerms(asList(len(self), d), items, items)
         return ret
 
     def __neg__(self):
