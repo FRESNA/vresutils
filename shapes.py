@@ -36,7 +36,18 @@ def _shape2poly_wgs(sh, tolerance=0.03):
     poly = Polygon(np.asarray(_shape2poly_wgs.p(*pts.T, inverse=True)).T)
     return simplify_poly(poly, tolerance)
 _shape2poly_wgs.p = Proj('+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m +no_defs')
+
+def _shape2poly(sh, tolerance=0.03):
+    poly = Polygon(np.asarray(sh.points[:sh.parts[1] if len(sh.parts) > 1 else None]))
     return simplify_poly(poly, tolerance)
+
+@cachable(keepweakref=True)
+def countries(tolerance=0.03):
+    sf = shapefile.Reader(toModDir('data/NUTS_2010_60M_SH/data/NUTS_RG_60M_2010'))
+    return OrderedDict(sorted([(rec[0].decode('utf-8'), _shape2poly(sh, tolerance))
+                               for rec, sh in izip(sf.iterRecords(), sf.iterShapes())
+                               if rec[1] == 0],
+                              key=itemgetter(0)))
 
 @cachable(keepweakref=True, version=2)
 def laender(tolerance=0.03, shortnames=True):
