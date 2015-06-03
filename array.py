@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-import scipy as sp, scipy.sparse
+import scipy as sp, scipy.sparse, scipy.linalg, scipy.sparse.linalg
+from vresutils import indicator
 
 def positive(a):
     if hasattr(a, "multiply"):
@@ -12,7 +13,7 @@ def positive(a):
             m.eliminate_zeros()
             return m
         else:
-            return - a.multiply(a<0)
+            return a.multiply(a>0)
     else:
         return a * (a>0)
 
@@ -63,3 +64,32 @@ def disable_sparse_safety_checks():
     scipy.sparse.csc.get_index_dtype = _get_index_dtype
     scipy.sparse.csr.get_index_dtype = _get_index_dtype
     scipy.sparse.compressed.get_index_dtype = _get_index_dtype
+
+def strikeoutxy(L, n):
+    return np.asarray(np.bmat(((L[:n  ,:n], L[ :n ,n+1: ]),
+                               (L[n+1:,:n], L[n+1:,n+1:]))))
+
+def pinv(L, n):
+    Lt = strikeoutxy(L, n)
+    Li = sp.linalg.inv(Lt)
+    dt = Li.dtype
+    m = len(Lt)-n
+    return np.asarray(np.bmat(((Li[:n,:n], np.zeros((n,1)), Li[:n,n:]),
+                               (np.zeros((1,n)), np.zeros((1,1)), np.zeros((1,m))),
+                               (Li[n:,:n], np.zeros((m,1)), Li[n:,n:]))))
+
+def strikeoutx(L, n):
+    hstack = sp.sparse.hstack if sp.sparse.isspmatrix(L) else np.hstack
+    return hstack((L[:,:n], L[:,n+1:]))
+
+def pinv2(L, n):
+    Lt = strikeoutx(L, n)
+    Li = np.empty_like(L)
+    N = L.shape[1]
+    for i in np.arange(N):
+        sol = sp.sparse.linalg.bicg(Lt, indicator(N, i))
+        Li[:n,i] = sol[:n]
+        Li[n,i] = 0.
+        Li[n+1:,i] = sol[n:]
+
+    return Li
