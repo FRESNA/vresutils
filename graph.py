@@ -350,6 +350,17 @@ def voronoi_partition(G, outline):
     return G
 
 class OrderedGraph(nx.Graph):
+    """
+    This OrderedGraph is intended to be the simplest NetworkX-
+    compatible Graph, which preserves node and edge order. The
+    functions have been taken from the NX 1.9.1 code only replacing
+    all instances where the node or any of the stacked adj
+    dictionaries are created by an instance of OrderedDict.
+
+    There are no guarantees everything will indeed be preserved, but
+    it is much more likely to work than with the current normal
+    nx.Graph. :)
+    """
     def __init__(self, data=None, **attr):
         self.graph = {}   # dictionary for graph attributes
         self.node = OrderedDict()    # empty node dict (created before convert)
@@ -360,3 +371,119 @@ class OrderedGraph(nx.Graph):
         # load graph attributes (must be after convert)
         self.graph.update(attr)
         self.edge = self.adj
+
+    def add_node(self, n, attr_dict=None, **attr):
+        # set up attribute dict
+        if attr_dict is None:
+            attr_dict=attr
+        else:
+            try:
+                attr_dict.update(attr)
+            except AttributeError:
+                raise nx.NetworkXError(\
+                    "The attr_dict argument must be a dictionary.")
+        if n not in self.node:
+            self.adj[n] = OrderedDict()
+            self.node[n] = attr_dict
+        else: # update attr even if node already exists
+            self.node[n].update(attr_dict)
+
+    def add_nodes_from(self, nodes, **attr):
+        for n in nodes:
+            try:
+                newnode=n not in self.node
+            except TypeError:
+                nn,ndict = n
+                if nn not in self.node:
+                    self.adj[nn] = OrderedDict()
+                    newdict = attr.copy()
+                    newdict.update(ndict)
+                    self.node[nn] = newdict
+                else:
+                    olddict = self.node[nn]
+                    olddict.update(attr)
+                    olddict.update(ndict)
+                continue
+            if newnode:
+                self.adj[n] = OrderedDict()
+                self.node[n] = attr.copy()
+            else:
+                self.node[n].update(attr)
+
+    def add_edge(self, u, v, attr_dict=None, **attr):
+        # set up attribute dictionary
+        if attr_dict is None:
+            attr_dict=attr
+        else:
+            try:
+                attr_dict.update(attr)
+            except AttributeError:
+                raise nx.NetworkXError(\
+                    "The attr_dict argument must be a dictionary.")
+        # add nodes
+        if u not in self.node:
+            self.adj[u] = OrderedDict()
+            self.node[u] = {}
+        if v not in self.node:
+            self.adj[v] = OrderedDict()
+            self.node[v] = {}
+        # add the edge
+        datadict=self.adj[u].get(v,{})
+        datadict.update(attr_dict)
+        self.adj[u][v] = datadict
+        self.adj[v][u] = datadict
+
+    def add_edges_from(self, ebunch, attr_dict=None, **attr):
+        # set up attribute dict
+        if attr_dict is None:
+            attr_dict=attr
+        else:
+            try:
+                attr_dict.update(attr)
+            except AttributeError:
+                raise nx.NetworkXError(\
+                    "The attr_dict argument must be a dictionary.")
+        # process ebunch
+        for e in ebunch:
+            ne=len(e)
+            if ne==3:
+                u,v,dd = e
+            elif ne==2:
+                u,v = e
+                dd = {}
+            else:
+                raise nx.NetworkXError(\
+                    "Edge tuple %s must be a 2-tuple or 3-tuple."%(e,))
+            if u not in self.node:
+                self.adj[u] = OrderedDict()
+                self.node[u] = {}
+            if v not in self.node:
+                self.adj[v] = OrderedDict()
+                self.node[v] = {}
+            datadict=self.adj[u].get(v,{})
+            datadict.update(attr_dict)
+            datadict.update(dd)
+            self.adj[u][v] = datadict
+            self.adj[v][u] = datadict
+
+    def subgraph(self, nbunch):
+        bunch =self.nbunch_iter(nbunch)
+        # create new graph and copy subgraph into it
+        H = self.__class__()
+        # copy node and attribute dictionaries
+        for n in bunch:
+            H.node[n]=self.node[n]
+        # namespace shortcuts for speed
+        H_adj=H.adj
+        self_adj=self.adj
+        # add nodes and edges (undirected method)
+        for n in H.node:
+            Hnbrs=OrderedDict()
+            H_adj[n]=Hnbrs
+            for nbr,d in self_adj[n].items():
+                if nbr in H_adj:
+                    # add both representations of edge: n-nbr and nbr-n
+                    Hnbrs[nbr]=d
+                    H_adj[nbr][n]=d
+        H.graph=self.graph
+        return H
