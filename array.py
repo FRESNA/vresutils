@@ -37,6 +37,30 @@ def spdiag(v, k=0):
     else:
         return sp.sparse.diags((v,),(k,))
 
+def spblockdiag_csr(blocks):
+    data = []
+    indices = []
+    indptr = [[0]]
+
+    N = 0
+    M = 0
+    indptr_offset = 0
+
+    for b in blocks:
+        assert isinstance(b, sp.sparse.csr_matrix), "All blocks must be sparse csr matrices."
+
+        data.append(b.data)
+        indices.append(b.indices + M)
+        indptr.append(b.indptr[1:] + indptr_offset)
+
+        N += b.shape[0]
+        M += b.shape[1]
+        indptr_offset += b.indptr[-1]
+
+    return sp.sparse.csr_matrix((np.concatenate(data),
+                                 np.concatenate(indices),
+                                 np.concatenate(indptr)), shape=(N,M))
+
 def densify(a):
     """Return a dense array version of a """
     if sp.sparse.issparse(a):
