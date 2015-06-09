@@ -195,10 +195,8 @@ class GbVecExpr(object):
 
         def generate_matrix_rows(val, vec):
             for i in np.arange(val.shape[0]):
-                row = val[i]
-                elems = row.nonzero()
-                yield gb.LinExpr(np.squeeze(np.asarray(row[elems])),
-                                 vec[np.squeeze(np.asarray(elems[1]))])
+                indptr = slice(val.indptr[i], val.indptr[i+1])
+                yield gb.LinExpr(val.data[indptr], vec[val.indices[indptr]])
         matrixexprs = starmap(generate_matrix_rows, izip(self.lvals, self.lvecs))
 
         return imap(gb.quicksum, izip_longest(scalarexprs, *matrixexprs,
