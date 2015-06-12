@@ -5,6 +5,18 @@ import numpy as np
 import scipy as sp, scipy.sparse, scipy.linalg, scipy.sparse.linalg
 from vresutils import indicator
 
+def shift_ip(x,d=1):
+    """
+    Optimized inplace shift
+    """
+    assert x.flags.contiguous, 'x must be contiguous'
+    if d >= 0:
+        x[:d-1:-1] = x[-d-1::-1]
+    else:
+        x[d-1::-1] = x[:-d-1:-1]
+
+    return x
+
 def positive(a):
     if hasattr(a, "multiply"):
         if sp.sparse.isspmatrix_csc(a) or sp.sparse.isspmatrix_csr(a):
