@@ -43,8 +43,8 @@ class GbVec(object):
     def __getattr__(self, attr):
         try:
             return self.model.getAttr(attr, self.items)
-        except gb.GurobiError:
-            raise AttributeError
+        except gb.GurobiError as e:
+            raise AttributeError("Gurobi: {}".format(e))
 
     def __setattr__(self, attr, value):
         if attr in ('name', 'items', 'model'):
