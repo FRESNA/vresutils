@@ -56,7 +56,7 @@ class GbVecConstr(GbVec):
     def __init__(self, model, N, name, lhs, sense, rhs, update=True):
         super(GbVecConstr, self).__init__(model,
             [model.addConstr(lhs, sense, rhs, name=name + str(i))
-             for i, lhs, rhs in izip(np.arange(N), *asLists(N, lhs, rhs))]
+             for i, lhs, rhs in izip(xrange(N), *asLists(N, lhs, rhs))]
         )
 
         if update:
@@ -71,7 +71,7 @@ class GbVecVar(GbVec):
         super(GbVecVar, self).__init__(model,
             [model.addVar(name=name + str(x[0]),
                           **dict(izip(kwargs.iterkeys(), x[1:])))
-             for x in izip(np.arange(N), *asLists(N, *kwargs.values()))]
+             for x in izip(xrange(N), *asLists(N, *kwargs.values()))]
         )
 
         if update:
@@ -81,7 +81,7 @@ class GbVecVar(GbVec):
         var = self.__class__.__new__(self.__class__)
         var.name = self.name
         var.items = np.array([model.getVarByName(var.name + str(i))
-                              for i in np.arange(len(self))])
+                              for i in xrange(len(self))])
         return var
 
     def LinExpr(self, d=1.0):
@@ -194,7 +194,7 @@ class GbVecExpr(object):
                        for vecs in izip(*self.svecs))
 
         def generate_matrix_rows(val, vec):
-            for i in np.arange(val.shape[0]):
+            for i in xrange(val.shape[0]):
                 indptr = slice(val.indptr[i], val.indptr[i+1])
                 yield gb.LinExpr(val.data[indptr], vec[val.indices[indptr]])
         matrixexprs = starmap(generate_matrix_rows, izip(self.lvals, self.lvecs))
