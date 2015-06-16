@@ -22,12 +22,18 @@ def asList(N, a):
 class GbVec(object):
     def __init__(self, model, items):
         self.model = model
-        self.items = np.asarray(items)
+        self.items = items
 
     def __getitem__(self, key):
-        item = self.items[key]
+        try:
+            item = self.items[key]
+        except TypeError:
+            # key is something more difficult than a normal slice so
+            # we take the time to convert the self.items list to numpy
+            self.items = np.asarray(self.items)
+            item = self.items[key]
 
-        if not isinstance(item, np.ndarray):
+        if not isinstance(item, (list, np.ndarray)):
             return item
         else:
             view = self.__class__.__new__(self.__class__)
@@ -85,11 +91,13 @@ class GbVecVar(GbVec):
         return var
 
     def LinExpr(self, d=1.0):
-        return gb.LinExpr(asList(len(self), d), self)
+        return gb.LinExpr(asList(len(self), d), self.items
+                          if isinstance(self.items, list) else self)
 
     def QuadExpr(self, d=1.0):
         ret = gb.QuadExpr()
-        ret.addTerms(asList(len(self), d), self, self)
+        ret.addTerms(asList(len(self), d), self, self.items
+                     if isinstance(self.items, list) else self)
         return ret
 
     def __neg__(self):
@@ -196,7 +204,7 @@ class GbVecExpr(object):
         def generate_matrix_rows(val, vec):
             for i in xrange(val.shape[0]):
                 indptr = slice(val.indptr[i], val.indptr[i+1])
-                yield gb.LinExpr(val.data[indptr], vec[val.indices[indptr]])
+                yield gb.LinExpr(val.data[indptr], [vec[i] for i in val.indices[indptr]])
         matrixexprs = starmap(generate_matrix_rows, izip(self.lvals, self.lvecs))
 
         return imap(gb.quicksum, izip_longest(scalarexprs, *matrixexprs,
