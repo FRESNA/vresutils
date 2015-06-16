@@ -3,13 +3,17 @@
 
 import numpy as np
 import networkx as nx
-from itertools import izip, islice, chain
+from itertools import izip, islice, chain, imap
+from operator import itemgetter
 from shapely.geometry import Point, Polygon
 from scipy.spatial import Voronoi
 from scipy.spatial import distance
 from scipy import sparse
 from collections import OrderedDict
 from scipy.linalg import norm
+
+from . import make_toModDir
+toModDir = make_toModDir(__file__)
 
 def to_directed(G):
     """
@@ -348,6 +352,38 @@ def voronoi_partition(G, outline):
         G.node[n]['region'] = region
 
     return G
+
+def read_scigrid(nodes_csv="data/vertices_de_power_150601.csv",
+                 links_csv="data/links_de_power_150601.csv"):
+    """
+    Read SCIGrid output csv files into a NX Graph.
+    """
+    import pandas as pd
+
+    G = OrderedGraph()
+
+    N = pd.read_csv(toModDir(nodes_csv), delimiter=';', index_col=0)
+    N['pos'] = [np.asarray(v) for k,v in N.ix[:,['lon', 'lat']].iterrows()]
+    G.add_nodes_from(N.iterrows())
+
+    L = pd.read_csv(toModDir(links_csv), delimiter=';', index_col=0)
+    # TODO: for some reason the SCIGrid data is missing impedance
+    # values for a third of its lines, although L.x / L.length_m is a
+    # constant for each voltage level. For now we just extend these to
+    # cover the missing ones as well, but we should rather find out
+    # the reason for the NaNs.
+    L['X'] = (L.x / L.length_m).groupby(L.voltage).fillna(method='ffill') * L.length_m
+    L['Y'] = 1./L['X']
+    L['length'] = L['length_m']
+    L['voltage'] /= 1000  # voltage in kV for readability
+    G.add_edges_from(izip(L.v_id_1, L.v_id_2,
+                          imap(itemgetter(1),
+                               L.loc[:,['voltage', 'cables', 'wires', 'frequency',
+                                        'length', 'geom', 'r', 'x', 'c',
+                                        'i_th_max', 'X', 'Y']].iterrows())))
+
+    return G
+
 
 class OrderedGraph(nx.Graph):
     """
