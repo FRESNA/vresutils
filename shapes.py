@@ -100,6 +100,12 @@ def landkreise(tolerance=0.03):
 
     return Dict(chain(berlinhamburg, kreise))
 
+@cachable(keepweakref=True, version=2)
+def postcodeareas(tolerance=0.03):
+    sf = shapefile.Reader(toModDir('data/plz-gebiete/plz-gebiete.shp'))
+    return Dict((float(rec[0]), _shape2poly(sh))
+                for rec, sh in izip(sf.iterRecords(), sf.iterShapes()))
+
 class Landkreise(Singleton):
     def __init__(self):
         warnings.warn("The Landkreise Singleton is deprecated. Use the landkreise function instead!", DeprecationWarning)
