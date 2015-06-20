@@ -12,6 +12,7 @@ from scipy import sparse
 from collections import OrderedDict
 from scipy.linalg import norm
 
+from . import shapes as vshapes
 from . import make_toModDir
 toModDir = make_toModDir(__file__)
 
@@ -523,3 +524,13 @@ class OrderedGraph(nx.Graph):
                     H_adj[nbr][n]=d
         H.graph=self.graph
         return H
+
+def set_node_positions_from_nodelabels(G):
+    nodes = G.nodes()
+    if all(type(n) is str and len(n) == 2 for n in nodes):
+        pos = dict((n, np.array((p.centroid.x, p.centroid.y)))
+                   for n, p in vshapes.countries(subset=nodes).iteritems())
+    else:
+        pos = nx.spring_layout(G)
+
+    nx.set_node_attributes(G, 'pos', pos)
