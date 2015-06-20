@@ -18,19 +18,18 @@ The geometry of these Landkreise must be available as shapefiles at
 data/vg250 in the UTM32 projection, they are available from the
 Bundesamt für Kartographie and Geodäsie at [1].
 
-
 For graph.read_scigrid the data csv files available at [2] must be
 present.
 
 
 Run
 
-ln -s /home/vres/data/grid_maps/Bialek_data_from_Tue/ENTSOeGrid/entsoe_2009_final.gpickle data
-ln -s /home/vres/data/Shapefiles/vg250_0101.utm32s.shape.ebenen/vg250_ebenen data/vg250
 ln -s /home/vres/data/Shapefiles/germany.npy data
+ln -s /home/vres/data/Shapefiles/vg250_0101.utm32s.shape.ebenen/vg250_ebenen data/vg250
 ln -s /home/vres/data/Shapefiles/ne_10m_admin_0_countries data
 ln -s /home/vres/data/Shapefiles/NUTS_2010_60M_SH data
 ln -s /home/vres/data/Shapefiles/plz-gebiete data
+ln -s /home/vres/data/grid_maps/Bialek_data_from_Tue/ENTSOeGrid/entsoe_2009_final.gpickle data
 ln -s /home/vres/data/grid_maps/SciGRID/*.csv data
 
 to be happy.
