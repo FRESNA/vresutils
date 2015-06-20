@@ -38,7 +38,15 @@ def _shape2poly_wgs(sh, tolerance=0.03):
 _shape2poly_wgs.p = Proj('+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m +no_defs')
 
 def _shape2poly(sh, tolerance=0.03):
-    poly = Polygon(np.asarray(sh.points[:sh.parts[1] if len(sh.parts) > 1 else None]))
+    if len(sh.points) == 0:
+        return None
+    if len(sh.parts) > 1:
+        parts = np.r_[sh.parts,len(sh.points)]
+        largest = np.argmax(np.diff(parts))
+        inds = slice(*parts[largest:largest+2])
+    else:
+        inds = slice(None)
+    poly = Polygon(np.asarray(sh.points[inds]))
     return simplify_poly(poly, tolerance)
 
 @cachable(keepweakref=True)
