@@ -50,11 +50,34 @@ def _shape2poly(sh, tolerance=0.03):
     return simplify_poly(poly, tolerance)
 
 @cachable(keepweakref=True)
-def countries(tolerance=0.03):
+def nuts_countries(tolerance=0.03):
     sf = shapefile.Reader(toModDir('data/NUTS_2010_60M_SH/data/NUTS_RG_60M_2010'))
     return OrderedDict(sorted([(rec[0].decode('utf-8'), _shape2poly(sh, tolerance))
                                for rec, sh in izip(sf.iterRecords(), sf.iterShapes())
                                if rec[1] == 0],
+                              key=itemgetter(0)))
+
+@cachable(keepweakref=True, version=3)
+def countries(subset=None, tolerance=0.03):
+    sf = shapefile.Reader(toModDir('data/ne_10m_admin_0_countries/ne_10m_admin_0_countries'))
+    fields = dict(izip(map(itemgetter(0), sf.fields[1:]), count()))
+    if subset is not None:
+        subset = frozenset(subset)
+        include = lambda x: x in subset
+    else:
+        # '-99' means 'not available' in this dataset
+        include = lambda x: True
+    def name(rec):
+        if rec[fields['ISO_A2']] != '-99':
+            return rec[fields['ISO_A2']]
+        elif rec[fields['WB_A2']] != '-99':
+            return rec[fields['WB_A2']]
+        else:
+            return rec[fields['ADM0_A3']][:-1]
+    return OrderedDict(sorted([(n, _shape2poly(sf.shape(i), tolerance))
+                               for i, rec in enumerate(sf.iterRecords())
+                               for n in (name(rec),)
+                               if include(n) and rec[fields['scalerank']] == 0],
                               key=itemgetter(0)))
 
 @cachable(keepweakref=True, version=2)
