@@ -101,6 +101,15 @@ try:
         m.drawcoastlines()
         m.drawcountries()
         return m
+
+    def draw_basemap(resolution='l', ax=None):
+        if ax is None:
+            ax = plt.gca()
+        m = Basemap(*(ax.viewLim.min + ax.viewLim.max))
+        m.drawcoastlines()
+        m.drawcountries()
+        return m
+
 except ImportError:
     pass
 
