@@ -39,17 +39,18 @@ try:
     def Points2Shapes(orig, dest, **kwargs):
         return Points2Points(orig, Centroid(dest), **kwargs)
 
-    def Shapes2Shapes(orig, dest, **kwargs):
+    def Shapes2Shapes(orig, dest, normed=True, **kwargs):
         transfer = sparse.lil_matrix((len(dest), len(orig)), dtype=np.float)
         for i,j in product(xrange(len(dest)), xrange(len(orig))):
             if dest[i].intersects(orig[j]):
                 area = dest[i].intersection(orig[j]).area
-                transfer[i,j] = area
+                transfer[i,j] = area/dest[i].area
 
         # sum of input vectors must be preserved
-        ssum = np.squeeze(np.asarray(transfer.sum(axis=0)))
-        for i,j in zip(*transfer.nonzero()):
-            transfer[i,j] /= ssum[j]
+        if normed:
+            ssum = np.squeeze(np.asarray(transfer.sum(axis=0)))
+            for i,j in zip(*transfer.nonzero()):
+                transfer[i,j] /= ssum[j]
 
         return transfer
 
