@@ -574,9 +574,12 @@ class OrderedGraph(nx.Graph):
 def set_node_positions_from_nodelabels(G):
     nodes = G.nodes()
     if all(type(n) is str and len(n) == 2 for n in nodes):
+        region = vshapes.countries(subset=nodes)
         pos = dict((n, np.array((p.centroid.x, p.centroid.y)))
-                   for n, p in vshapes.countries(subset=nodes).iteritems())
+                   for n, p in region.iteritems())
     else:
+        region = dict()
         pos = nx.spring_layout(G)
 
+    nx.set_node_attributes(G, 'region', region)
     nx.set_node_attributes(G, 'pos', pos)
