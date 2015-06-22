@@ -297,6 +297,52 @@ def polygon_subgraph_environment(G, polygon, environment_polygons):
     H.graph = G.graph
     return H
 
+def stitch_graphs(G, G2, node):
+    """
+    Stitch a subgraph of the finer `G` into the coarse `G2` graph by
+    replacing the node `label`.
+
+    Parameters
+    ----------
+    G : Graph
+        A spatially embedded finely-grained graph with the node
+        attribute pos.
+
+    G2 : Graph
+        Spatially embedded coarse-grained graph with the node
+        attribute region holding the shapely polygons for each node.
+
+    node : Node label
+        Label of the `G2` graph, where `G` should be stitched into.
+
+    Returns
+    -------
+    H : Graph
+    """
+
+    regions = nx.get_node_attributes(G2, 'region')
+
+    H = polygon_subgraph(G, regions[node], copy=False)
+    neigh_nodes = reduce(set.union, islice(BreadthFirstLevels(G, H.nodes()), 1, 2))
+
+    assert len(set(H.nodes()).intersection(G2.nodes())) == 0, \
+        "The node labels between G and G2 may not overlap"
+
+    H.add_nodes_from(G2.nodes_iter(data=True))
+    H.add_edges_from(G2.edges_iter(data=True))
+    H.remove_node(node)
+
+    for n in neigh_nodes:
+        pos = Point(G.node[n]['pos'])
+        for n2, reg in regions.iteritems():
+            if reg.contains(pos):
+                attr_dict = G2.adj[node].get(n2,{})
+                H.add_edges_from((n2, n3, attr_dict.copy())
+                                 for n3 in G.adj[n]
+                                 if n3 in H)
+
+    return H
+
 def get_voronoi_regions(G, outline=None):
     if 'region' not in next(G.node.itervalues()):
         if callable(outline):
