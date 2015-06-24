@@ -78,6 +78,8 @@ def cachable(func=None, version=None, cache_dir="/tmp/compcache", keepweakref=Fa
 
         @wraps(func)
         def wrapper(*args, **kwds):
+            recompute = kwds.pop('recompute', False)
+
             # Check if there is a cached version
             fn = cache_fn + format_filename(
                 '_'.join(str(a) for a in args) + '_' +
@@ -85,9 +87,9 @@ def cachable(func=None, version=None, cache_dir="/tmp/compcache", keepweakref=Fa
                 '.pickle'
             )
 
-            if keepweakref and fn in cache:
+            if not recompute and keepweakref and fn in cache:
                 return cache[fn]
-            elif os.path.exists(fn):
+            elif not recompute and os.path.exists(fn):
                 try:
                     with open(fn) as f:
                         ret = cPickle.load(f)
