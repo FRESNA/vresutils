@@ -57,6 +57,14 @@ def nuts_countries(tolerance=0.03):
                                if rec[1] == 0],
                               key=itemgetter(0)))
 
+@cachable(keepweakref=True)
+def nuts1_regions(tolerance=0.03):
+    sf = shapefile.Reader(toModDir('data/NUTS_2010_60M_SH/data/NUTS_RG_60M_2010'))
+    return OrderedDict(sorted([(rec[0].decode('utf-8'), _shape2poly(sh, tolerance))
+                               for rec, sh in izip(sf.iterRecords(), sf.iterShapes())
+                               if rec[1] == 1],
+                              key=itemgetter(0)))
+
 @cachable(keepweakref=True, version=3)
 def countries(subset=None, tolerance=0.03):
     sf = shapefile.Reader(toModDir('data/ne_10m_admin_0_countries/ne_10m_admin_0_countries'))
