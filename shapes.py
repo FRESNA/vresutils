@@ -2,9 +2,9 @@
 
 from pyproj import Proj
 import shapefile
-from shapely.geometry import Polygon
-from itertools import izip, chain, count
-from operator import itemgetter
+from shapely.geometry import Polygon, MultiPolygon
+from itertools import izip, chain, count, imap
+from operator import itemgetter, attrgetter
 from collections import OrderedDict
 import numpy as np
 import pandas as pd
@@ -32,22 +32,21 @@ def germany(tolerance=0.03):
     return simplify_poly(Polygon(np.load(toModDir('data/germany.npy'))), tolerance)
 
 def _shape2poly_wgs(sh, tolerance=0.03):
-    pts = np.asarray(sh.points[:sh.parts[1] if len(sh.parts) > 1 else None])
-    poly = Polygon(np.asarray(_shape2poly_wgs.p(*pts.T, inverse=True)).T)
-    return simplify_poly(poly, tolerance)
+    def invproj(pts):
+        return np.asarray(_shape2poly_wgs.p(*pts.T, inverse=True)).T
+    polys = imap(Polygon, imap(invproj, np.split(sh.points, sh.parts[1:])))
+    mpoly = MultiPolygon(sorted((p for p in polys if p.area >= minarea),
+                               key=attrgetter('area'), reverse=True))
+    return simplify_poly(mpoly, tolerance)
 _shape2poly_wgs.p = Proj('+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m +no_defs')
 
-def _shape2poly(sh, tolerance=0.03):
+def _shape2poly(sh, tolerance=0.03, minarea=0.1):
     if len(sh.points) == 0:
         return None
-    if len(sh.parts) > 1:
-        parts = np.r_[sh.parts,len(sh.points)]
-        largest = np.argmax(np.diff(parts))
-        inds = slice(*parts[largest:largest+2])
-    else:
-        inds = slice(None)
-    poly = Polygon(np.asarray(sh.points[inds]))
-    return simplify_poly(poly, tolerance)
+    polys = imap(Polygon, np.split(sh.points, sh.parts[1:]))
+    mpoly = MultiPolygon(sorted((p for p in polys if p.area >= minarea),
+                               key=attrgetter('area'), reverse=True))
+    return simplify_poly(mpoly, tolerance)
 
 @cachable(keepweakref=True)
 def nuts_countries(tolerance=0.03):
