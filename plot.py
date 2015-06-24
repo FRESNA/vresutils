@@ -105,7 +105,7 @@ try:
     def draw_basemap(resolution='l', ax=None):
         if ax is None:
             ax = plt.gca()
-        m = Basemap(*(ax.viewLim.min + ax.viewLim.max))
+        m = Basemap(*(ax.viewLim.min + ax.viewLim.max), resolution=resolution)
         m.drawcoastlines()
         m.drawcountries()
         return m
