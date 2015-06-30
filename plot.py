@@ -1,13 +1,15 @@
 import numpy as np
 import networkx as nx
 
-from itertools import imap
+from itertools import imap, izip
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.cbook as cb
 from matplotlib.colors import colorConverter
 from matplotlib.collections import LineCollection, PolyCollection
+
+from shapely.geometry import MultiPolygon
 
 from . import shapes
 from . import make_toModDir
@@ -76,6 +78,54 @@ try:
             if colorbar_ticklabels is not None:
                 cbar.ax.set_yticklabels(colorbar_ticklabels)
 
+        return coll
+
+    def shapesdata(data, shapes, with_labels=False, ax=None):
+        """
+        Plot `data` on the basis of a dictionary of shapes.  `data`
+        must be given as a pandas Series with the corresponding keys
+        of shapes as index.
+
+        Parameters
+        ----------
+        data : pd.Series
+            Float valued data to be plotted.
+        shapes : dict | pd.Series
+            Dictionary of shapes
+        with_labels : bool
+            Whether to plot the name of each shape at its centroid
+
+        Returns
+        -------
+        collection : PolyCollection
+        """
+        if ax is None:
+            ax = plt.gca()
+
+        # Since shapes can be made up of multipolygons, which matplotlib
+        # can not consume directly, we need to realign data and shapes.
+        aligned_data = []
+        aligned_shapes = []
+        for d, sh in izip(data, shapes.reindex(data.index)):
+            if isinstance(sh, MultiPolygon):
+                aligned_shapes += list(sh)
+                aligned_data += [d] * len(sh)
+            else:
+                aligned_shapes.append(sh)
+                aligned_data.append(d)
+
+        coll = PolyCollection((np.asarray(x.boundary) for x in aligned_shapes),
+                              transOffset=ax.transData)
+        coll.set_array(np.asarray(aligned_data))
+
+        ax.add_collection(coll, autolim=True)
+
+        if with_labels:
+            for k,v in shapes.reindex(data.index).iteritems():
+                x,y = np.asarray(v.centroid)
+                plt.text(x,y, k)
+
+        ax.autoscale_view()
         return coll
 except ImportError:
     pass
