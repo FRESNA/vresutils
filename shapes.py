@@ -36,7 +36,8 @@ def _shape2poly_wgs(sh, tolerance=0.03, minarea=0.03):
         return np.asarray(_shape2poly_wgs.p(*pts.T, inverse=True)).T
     polys = map(Polygon, imap(invproj, np.split(sh.points, sh.parts[1:])))
     mpoly = reduce(lambda p1,p2: p1 if p1.intersects(p2) else p1.union(p2),
-                   sorted(polys, key=attrgetter('area'), reverse=True),
+                   sorted((p for p in polys if p.area >= minarea),
+                          key=attrgetter('area'), reverse=True),
                    GeometryCollection())
     if isinstance(mpoly, GeometryCollection):
         mpoly = max(polys, key=attrgetter('area'))
@@ -47,9 +48,9 @@ def _shape2poly(sh, tolerance=0.03, minarea=0.03):
     if len(sh.points) == 0:
         return None
     polys = map(Polygon, np.split(sh.points, sh.parts[1:]))
-    mpoly = reduce(lambda p1,p2: p1 if p1.intersects(p2) else
-                   p1.union(p2), sorted((p for p in polys if p.area >=
-                                         minarea), key=attrgetter('area'), reverse=True),
+    mpoly = reduce(lambda p1,p2: p1 if p1.intersects(p2) else p1.union(p2),
+                   sorted((p for p in polys if p.area >= minarea),
+                          key=attrgetter('area'), reverse=True),
                    GeometryCollection())
     if isinstance(mpoly, GeometryCollection):
         mpoly = max(polys, key=attrgetter('area'))
