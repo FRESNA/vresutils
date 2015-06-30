@@ -71,6 +71,17 @@ def nuts1_regions(tolerance=0.03, minarea=1.):
                                if rec[1] == 1],
                               key=itemgetter(0)))
 
+@cachable(keepweakref=True)
+def nuts1_regions_ext(tolerance=0.03, minarea=1.):
+    """
+    Add the countries in Europe missing to nuts1_regions using countries
+    """
+    cmap = {'BA': u'BA1', 'RS': u'RS1', 'AL': u'AL1', 'KV': u'KV1'}
+    nutsext = nuts1_regions(tolerance, minarea).copy()
+    nutsext.update((cmap[k], v) for k,v in countries(cmap.keys(), tolerance).iteritems())
+    return nutsext
+
+
 @cachable(keepweakref=True, version=3)
 def countries(subset=None, tolerance=0.03):
     sf = shapefile.Reader(toModDir('data/ne_10m_admin_0_countries/ne_10m_admin_0_countries'))
