@@ -55,6 +55,7 @@ try:
         lk = shapes.landkreise()
         coll = PolyCollection(imap(shapes.points,
                                    pd.Series(lk).reindex(data.index)),
+                              transOffset=ax.transData,
                               **kw)
         if norm is not None:
             coll.set_norm(norm)
