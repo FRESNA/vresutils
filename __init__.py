@@ -119,18 +119,30 @@ def cachable(func=None, version=None, cache_dir="/tmp/compcache", keepweakref=Fa
         return deco
 
 class timer(object):
+    level = 0
+    opened = False
+
     def __init__(self, name=""):
         self.name = name
 
     def __enter__(self):
+        if self.opened:
+            sys.stdout.write("\n")
+
         if len(self.name) > 0:
-            sys.stdout.write(self.name + ": ")
+            sys.stdout.write((".. " * self.level) + self.name + ": ")
             sys.stdout.flush()
+
+        self.__class__.level += 1
+        self.__class__.opened = True
 
         self.start = time.time()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        if not self.opened:
+            sys.stdout.write(".. " * self.level)
+
         if exc_type is None:
             stop = time.time()
             usec = (stop - self.start) * 1e6
@@ -146,6 +158,8 @@ class timer(object):
         else:
             print "failed"
 
+        self.__class__.level -= 1
+        self.__class__.opened = False
         return False
 
 class optional(object):
