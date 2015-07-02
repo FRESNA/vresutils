@@ -65,23 +65,18 @@ def nuts_countries(tolerance=0.03):
                               key=itemgetter(0)))
 
 @cachable(keepweakref=True)
-def nuts1_regions(tolerance=0.03, minarea=1.):
+def nuts1(tolerance=0.03, minarea=1., extended=True):
     sf = shapefile.Reader(toModDir('data/NUTS_2010_60M_SH/data/NUTS_RG_60M_2010'))
-    return OrderedDict(sorted([(rec[0].decode('utf-8'), _shape2poly(sh, tolerance, minarea))
+    nuts = OrderedDict(sorted([(rec[0].decode('utf-8'), _shape2poly(sh, tolerance, minarea))
                                for rec, sh in izip(sf.iterRecords(), sf.iterShapes())
                                if rec[1] == 1],
                               key=itemgetter(0)))
+    if extended:
+        cntry_map = {'BA': u'BA1', 'RS': u'RS1', 'AL': u'AL1', 'KV': u'KV1'}
+        cntries = countries(cntry_map.keys(), tolerance, minarea)
+        nuts.update((cntry_map[k], v) for k,v in cntries.iteritems())
 
-@cachable(keepweakref=True)
-def nuts1_regions_ext(tolerance=0.03, minarea=1.):
-    """
-    Add the countries in Europe missing to nuts1_regions using countries
-    """
-    cmap = {'BA': u'BA1', 'RS': u'RS1', 'AL': u'AL1', 'KV': u'KV1'}
-    nutsext = nuts1_regions(tolerance, minarea).copy()
-    nutsext.update((cmap[k], v) for k,v in countries(cmap.keys(), tolerance).iteritems())
-    return nutsext
-
+    return nuts
 
 @cachable(keepweakref=True, version=3)
 def countries(subset=None, tolerance=0.03):
