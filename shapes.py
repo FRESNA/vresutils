@@ -57,9 +57,9 @@ def _shape2poly(sh, tolerance=0.03, minarea=0.03):
     return simplify_poly(mpoly, tolerance)
 
 @cachable(keepweakref=True)
-def nuts_countries(tolerance=0.03):
+def nuts0(tolerance=0.03, minarea=1.):
     sf = shapefile.Reader(toModDir('data/NUTS_2010_60M_SH/data/NUTS_RG_60M_2010'))
-    return OrderedDict(sorted([(rec[0].decode('utf-8'), _shape2poly(sh, tolerance))
+    return OrderedDict(sorted([(rec[0].decode('utf-8'), _shape2poly(sh, tolerance, minarea))
                                for rec, sh in izip(sf.iterRecords(), sf.iterShapes())
                                if rec[1] == 0],
                               key=itemgetter(0)))
