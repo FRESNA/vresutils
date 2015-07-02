@@ -79,7 +79,7 @@ def nuts1(tolerance=0.03, minarea=1., extended=True):
     return nuts
 
 @cachable(keepweakref=True, version=3)
-def countries(subset=None, tolerance=0.03):
+def countries(subset=None, tolerance=0.03, minarea=1.):
     sf = shapefile.Reader(toModDir('data/ne_10m_admin_0_countries/ne_10m_admin_0_countries'))
     fields = dict(izip(map(itemgetter(0), sf.fields[1:]), count()))
     if subset is not None:
@@ -95,7 +95,7 @@ def countries(subset=None, tolerance=0.03):
             return rec[fields['WB_A2']]
         else:
             return rec[fields['ADM0_A3']][:-1]
-    return OrderedDict(sorted([(n, _shape2poly(sf.shape(i), tolerance))
+    return OrderedDict(sorted([(n, _shape2poly(sf.shape(i), tolerance, minarea))
                                for i, rec in enumerate(sf.iterRecords())
                                for n in (name(rec),)
                                if include(n) and rec[fields['scalerank']] == 0],
