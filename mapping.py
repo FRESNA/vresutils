@@ -2,6 +2,7 @@ import pandas as pd
 import shapefile
 from itertools import izip, count, chain
 from operator import itemgetter
+from collections import OrderedDict
 
 from shapes import nuts1
 
@@ -25,7 +26,10 @@ def countries_to_nuts1(series=False):
                             x[:2] not in excludecountry})
 
     if not series:
-        mapping = mapping.index.groupby(mapping)
+        od = OrderedDict()
+        for nuts, country in mapping.iteritems():
+            od.setdefault(country, []).append(nuts)
+        mapping = od
 
     return mapping
 
