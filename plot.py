@@ -114,7 +114,7 @@ try:
                 aligned_shapes.append(sh)
                 aligned_data.append(d)
 
-        coll = PolyCollection((np.asarray(x.boundary) for x in aligned_shapes),
+        coll = PolyCollection((np.asarray(x.exterior) for x in aligned_shapes),
                               transOffset=ax.transData)
         coll.set_array(np.asarray(aligned_data))
 
