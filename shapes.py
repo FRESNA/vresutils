@@ -2,9 +2,9 @@
 
 from pyproj import Proj
 import shapefile
-from shapely.geometry import Polygon
-from itertools import izip, chain, count
-from operator import itemgetter
+from shapely.geometry import LinearRing, Polygon, MultiPolygon, GeometryCollection
+from itertools import izip, chain, count, imap, takewhile
+from operator import itemgetter, attrgetter
 from collections import OrderedDict
 import numpy as np
 import pandas as pd
@@ -17,7 +17,7 @@ def simplify_poly(poly, tolerance):
     if tolerance is None:
         return poly
     else:
-        return poly.simplify(tolerance)
+        return poly.simplify(tolerance, preserve_topology=True)
 
 def simplify_pts(pts, tolerance=0.03):
     return points(simplify_poly(Polygon(pts), tolerance))
@@ -31,42 +31,58 @@ class Dict(dict): pass
 def germany(tolerance=0.03):
     return simplify_poly(Polygon(np.load(toModDir('data/germany.npy'))), tolerance)
 
-def _shape2poly_wgs(sh, tolerance=0.03):
-    pts = np.asarray(sh.points[:sh.parts[1] if len(sh.parts) > 1 else None])
-    poly = Polygon(np.asarray(_shape2poly_wgs.p(*pts.T, inverse=True)).T)
-    return simplify_poly(poly, tolerance)
-_shape2poly_wgs.p = Proj('+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m +no_defs')
-
-def _shape2poly(sh, tolerance=0.03):
+def _shape2poly(sh, tolerance=0.03, minarea=0.03, projection=None):
     if len(sh.points) == 0:
         return None
-    if len(sh.parts) > 1:
-        parts = np.r_[sh.parts,len(sh.points)]
-        largest = np.argmax(np.diff(parts))
-        inds = slice(*parts[largest:largest+2])
+
+    if projection is None:
+        pts = sh.points
+    elif projection == 'invwgs':
+        pts = np.asarray(_shape2poly.wgs(*np.asarray(sh.points).T, inverse=True)).T
     else:
-        inds = slice(None)
-    poly = Polygon(np.asarray(sh.points[inds]))
-    return simplify_poly(poly, tolerance)
+        raise TypeError("Unknown projection {}".format(projection))
+
+    def parts2polys(parts):
+        rings = map(LinearRing, parts)
+        while(rings):
+            exterior = rings.pop(0)
+            interiors = list(takewhile(attrgetter('is_ccw'), rings))
+            rings = rings[len(interiors):]
+            yield Polygon(exterior, interiors)
+
+    polys = sorted(parts2polys(np.split(pts, sh.parts[1:])),
+                   key=attrgetter('area'), reverse=True)
+    if polys[0].area > minarea:
+        mpoly = MultiPolygon(list(takewhile(lambda p: p.area > minarea, polys)))
+    else:
+        mpoly = polys[0]
+    return simplify_poly(mpoly, tolerance)
+_shape2poly.wgs = Proj('+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m +no_defs')
 
 @cachable(keepweakref=True)
-def nuts_countries(tolerance=0.03):
+def nuts0(tolerance=0.03, minarea=1.):
     sf = shapefile.Reader(toModDir('data/NUTS_2010_60M_SH/data/NUTS_RG_60M_2010'))
-    return OrderedDict(sorted([(rec[0].decode('utf-8'), _shape2poly(sh, tolerance))
+    return OrderedDict(sorted([(rec[0].decode('utf-8'), _shape2poly(sh, tolerance, minarea))
                                for rec, sh in izip(sf.iterRecords(), sf.iterShapes())
                                if rec[1] == 0],
                               key=itemgetter(0)))
 
 @cachable(keepweakref=True)
-def nuts1_regions(tolerance=0.03):
+def nuts1(tolerance=0.03, minarea=1., extended=True):
     sf = shapefile.Reader(toModDir('data/NUTS_2010_60M_SH/data/NUTS_RG_60M_2010'))
-    return OrderedDict(sorted([(rec[0].decode('utf-8'), _shape2poly(sh, tolerance))
+    nuts = OrderedDict(sorted([(rec[0].decode('utf-8'), _shape2poly(sh, tolerance, minarea))
                                for rec, sh in izip(sf.iterRecords(), sf.iterShapes())
                                if rec[1] == 1],
                               key=itemgetter(0)))
+    if extended:
+        cntry_map = {'BA': u'BA1', 'RS': u'RS1', 'AL': u'AL1', 'KV': u'KV1'}
+        cntries = countries(cntry_map.keys(), tolerance, minarea)
+        nuts.update((cntry_map[k], v) for k,v in cntries.iteritems())
+
+    return nuts
 
 @cachable(keepweakref=True, version=3)
-def countries(subset=None, tolerance=0.03):
+def countries(subset=None, tolerance=0.03, minarea=1.):
     sf = shapefile.Reader(toModDir('data/ne_10m_admin_0_countries/ne_10m_admin_0_countries'))
     fields = dict(izip(map(itemgetter(0), sf.fields[1:]), count()))
     if subset is not None:
@@ -82,7 +98,7 @@ def countries(subset=None, tolerance=0.03):
             return rec[fields['WB_A2']]
         else:
             return rec[fields['ADM0_A3']][:-1]
-    return OrderedDict(sorted([(n, _shape2poly(sf.shape(i), tolerance))
+    return OrderedDict(sorted([(n, _shape2poly(sf.shape(i), tolerance, minarea))
                                for i, rec in enumerate(sf.iterRecords())
                                for n in (name(rec),)
                                if include(n) and rec[fields['scalerank']] == 0],
@@ -104,7 +120,7 @@ def laender(tolerance=0.03, shortnames=True):
         name = lambda x: x
 
     sf = shapefile.Reader(toModDir('data/vg250/VG250_LAN'))
-    return OrderedDict(sorted([(name(rec[6].decode('utf-8')), _shape2poly_wgs(sh, tolerance))
+    return OrderedDict(sorted([(name(rec[6].decode('utf-8')), _shape2poly(sh, tolerance, projection='invwgs'))
                                for rec, sh in izip(sf.iterRecords(), sf.iterShapes())
                                if rec[1] == 4],
                               key=itemgetter(0)))
@@ -119,12 +135,12 @@ def landkreise(tolerance=0.03):
     fields = {n:fields.index(n) for n in ('GF', 'RS')}
 
     kreise = ((int(sr[fields['RS']]),
-               _shape2poly_wgs(sf_kreise.shape(ind), tolerance))
+               _shape2poly(sf_kreise.shape(ind), tolerance, projection='invwgs'))
               for ind, sr in izip(count(), sf_kreise.iterRecords())
               if sr[fields['GF']] == 4)
 
     berlinhamburg = ((int(sr[fields['RS']]),
-                      _shape2poly_wgs(sf_land.shape(ind), tolerance))
+                      _shape2poly(sf_land.shape(ind), tolerance, projection='invwgs'))
                      for ind, sr in izip(count(), sf_land.iterRecords())
                      if (sr[fields['RS']] in ('11', '02')
                          and sr[fields['GF']] == 4))
@@ -136,57 +152,3 @@ def postcodeareas(tolerance=0.03):
     sf = shapefile.Reader(toModDir('data/plz-gebiete/plz-gebiete.shp'))
     return Dict((float(rec[0]), _shape2poly(sh))
                 for rec, sh in izip(sf.iterRecords(), sf.iterShapes()))
-
-class Landkreise(Singleton):
-    def __init__(self):
-        warnings.warn("The Landkreise Singleton is deprecated. Use the landkreise function instead!", DeprecationWarning)
-
-        self.sf_kreise = shapefile.Reader(toModDir('data/vg250/VG250_KRS'))
-        # for special casing hamburg and berlin
-        self.sf_land = shapefile.Reader(toModDir('data/vg250/VG250_LAN'))
-        self.projection = Proj('+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m +no_defs')
-
-        fields = [f[0] for f in self.sf_kreise.fields[1:]]
-        self.fields = {n:fields.index(n) for n in ('GF', 'RS')}
-
-    def getShape(self, index):
-        if index >= 0:
-            return self.sf_kreise.shape(index)
-        else:
-            return self.sf_land.shape(-index-1)
-
-    def getPoints(self, index, tolerance=0.03):
-        return np.asarray(self.getPolygon(index, tolerance).boundary.coords)
-
-    def getPolygon(self, index, tolerance=0.03):
-        return Polygon(self._shape2points(self.getShape(index))).simplify_pts(tolerance)
-
-    def _shape2points(self, sh):
-        pts = np.array(sh.points[:sh.parts[1]] if len(sh.parts) > 1 else sh.points)
-        return np.array(self.projection(*pts.T, inverse=True)).T
-
-    def series(self):
-        """
-        Return pandas Series between shapes and indices.
-        """
-        return pd.Series(dict(iter(self)))
-
-    def __iter__(self):
-        """
-        Iterate over the first shape of all kreis shapes and then
-        berlin and hamburg. For each shape we return a tuple with
-        (regionalschlüssel, index)
-        """
-        kreise = ((int(sr[self.fields['RS']]), ind)
-                  for ind, sr in izip(count(), self.sf_kreise.iterRecords())
-                  if sr[self.fields['GF']] == 4)
-
-        inds = [ind for ind, rec in enumerate(self.sf_land.records())
-                if rec[self.fields['RS']] in ('11', '02')
-                and rec[self.fields['GF']] == 4]
-
-        berlinhamburg = ((int(self.sf_land.record(ind)[self.fields['RS']]),
-                          -ind-1)
-                         for ind in inds)
-
-        return chain(kreise, berlinhamburg)

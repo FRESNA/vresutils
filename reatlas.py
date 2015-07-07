@@ -8,7 +8,8 @@ import reatlas_client
 from tempfile import TemporaryFile
 import numpy as np
 
-from vresutils import timer
+from . import timer
+import array as varray
 
 def turbineconf_to_powercurve_object(fn):
     if '/' not in fn:
@@ -69,6 +70,8 @@ class REatlas(reatlas_client.REatlas):
                 offshorepowercurve=offshorepowercurve,
                 capacitylayouts=capacity_layouts_fn
             )
+
+            solar = False
         elif set(('panel', 'orientation')).issubset(resource):
             self.add_pv_orientations_by_config_file(resource['orientation'])
             panel = solarpanelconf_to_solar_panel_config_object(resource['panel']);
@@ -77,6 +80,7 @@ class REatlas(reatlas_client.REatlas):
                 solar_panel_config=panel,
                 capacitylayouts=capacity_layouts_fn
             )
+            solar = True
         else:
             raise TypeError('`resource` must either contain onshore and offshore or panel and orientation')
 
@@ -92,4 +96,10 @@ class REatlas(reatlas_client.REatlas):
             self.download_file_and_rename(remote_file=job_fn, local_file=f)
             self.delete_file(filename=job_fn)
             f.seek(0)
-            return np.load(f)
+            timeseries = np.load(f)
+
+        if solar:
+            with timer("Interpolating nan values"):
+                timeseries = varray.interpolate(timeseries)
+
+        return timeseries

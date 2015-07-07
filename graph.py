@@ -3,6 +3,7 @@
 
 import numpy as np
 import networkx as nx
+import warnings
 from itertools import izip, islice, chain, imap
 from operator import itemgetter
 from shapely.geometry import Point, Polygon
@@ -15,6 +16,9 @@ from scipy.linalg import norm
 from . import shapes as vshapes
 from . import make_toModDir
 toModDir = make_toModDir(__file__)
+
+def entsoe_tue():
+    return OrderedGraph(nx.read_gpickle(toModDir("data/entsoe_2009_final.gpickle")))
 
 def to_directed(G):
     """
@@ -295,6 +299,80 @@ def polygon_subgraph_environment(G, polygon, environment_polygons):
 
     # graph attributes
     H.graph = G.graph
+    return H
+
+def coarsify_graph(G, shapes, lost_nodes=None):
+    """
+    Generate a graph with a node for each shape and edges that agree
+    with the finer grid `G`.
+
+    Parameters
+    ----------
+    G : nx.Graph
+        A spatially embedded finely-grained graph with the node
+        attribute pos.
+
+    shapes : OrderedDict of (name, shapely.Polygon) pairs
+
+    Returns
+    -------
+    H : OrderedGraph
+    """
+
+    H = OrderedGraph()
+    H.add_nodes_from((n, dict(region=sh, pos=np.asarray(sh.centroid)))
+                     for n, sh in shapes.iteritems())
+
+    queue = OrderedDict()
+
+    def add_link(n, m):
+        if n != m:
+            H.add_edge(n, m)
+
+    def do_node(n):
+        if n in queue:
+            return queue[n]
+
+        pos = Point(G.node[n]['pos'])
+        # this two-step procedure checks the last successful shape
+        # first, as we are link-hopping through the graph
+        if do_node.shape.contains(pos):
+            return do_node.node
+        else:
+            for node, shape in shapes.iteritems():
+                if shape.contains(pos):
+                    do_node.node = node
+                    do_node.shape = shape
+                    return node
+            else:
+                # The point is not in any polygon => we assume that's
+                # a problem of not matching shapefiles and just claim
+                # its still in the same shape. This might drop links
+                # if a node with more than two links falls through
+                if len(G.adj[n]) > 2:
+                    warnings.warn("The algorithm had to skip over at least one node with more than two links lying outside of any shape. Consider checking the damage done by examining the status of these lost nodes by supplying an extra list to the lost_nodes argument of this function.")
+                    if isinstance(lost_nodes, list):
+                        lost_nodes.append(n)
+                return do_node.node
+    do_node.node, do_node.shape = next(shapes.iteritems())
+
+    # nodes are added to done, as soon as all its adjoining neighbours
+    # and links have been added.
+    done = set()
+    for n in G:
+        if n in done: continue
+
+        queue[n] = do_node(n)
+
+        while queue:
+            n, a = queue.popitem()
+            for m in G.adj[n]:
+                if m in done: continue
+                b = do_node(m)
+                add_link(a, b)
+                queue[m] = b
+            done.add(n)
+
     return H
 
 def stitch_graphs(G, G2, node):
