@@ -301,7 +301,7 @@ def polygon_subgraph_environment(G, polygon, environment_polygons):
     H.graph = G.graph
     return H
 
-def coarsify_graph(G, shapes):
+def coarsify_graph(G, shapes, lost_nodes=None):
     """
     Generate a graph with a node for each shape and edges that agree
     with the finer grid `G`.
@@ -350,7 +350,9 @@ def coarsify_graph(G, shapes):
                 # its still in the same shape. This might drop links
                 # if a node with more than two links falls through
                 if len(G.adj[n]) > 2:
-                    warnings.warn("Skipping over a node with more than two links.")
+                    warnings.warn("The algorithm had to skip over at least one node with more than two links lying outside of any shape. Consider checking the damage done by examining the status of these lost nodes by supplying an extra list to the lost_nodes argument of this function.")
+                    if isinstance(lost_nodes, list):
+                        lost_nodes.append(n)
                 return do_node.node
     do_node.node, do_node.shape = next(shapes.iteritems())
 
