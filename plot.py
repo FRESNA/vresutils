@@ -80,7 +80,7 @@ try:
 
         return coll
 
-    def shapesdata(data, shapes, with_labels=False, ax=None):
+    def shapes(shapes, data=None, with_labels=False, ax=None):
         """
         Plot `data` on the basis of a dictionary of shapes.  `data`
         must be given as a pandas Series with the corresponding keys
@@ -88,10 +88,11 @@ try:
 
         Parameters
         ----------
-        data : pd.Series
-            Float valued data to be plotted.
         shapes : dict | pd.Series
             Dictionary of shapes
+        data : pd.Series
+            Float valued data to be plotted. If data is omitted,
+            np.arange(N) will be used.
         with_labels : bool
             Whether to plot the name of each shape at its centroid
 
@@ -102,8 +103,16 @@ try:
         if ax is None:
             ax = plt.gca()
 
+        if not isinstance(shapes, pd.Series):
+            shapes = pd.Series(shapes)
+
+        if data is None:
+            data = pd.Series(np.arange(len(shapes)), index=shapes.index)
+
         # Since shapes can be made up of multipolygons, which matplotlib
-        # can not consume directly, we need to realign data and shapes.
+        # can not consume directly, we need to realign data and
+        # shapes.
+
         aligned_data = []
         aligned_shapes = []
         for d, sh in izip(data, shapes.reindex(data.index)):
@@ -114,7 +123,8 @@ try:
                 aligned_shapes.append(sh)
                 aligned_data.append(d)
 
-        coll = PolyCollection((np.asarray(x.exterior) for x in aligned_shapes),
+        coll = PolyCollection((np.asarray(x.exterior)
+                               for x in aligned_shapes),
                               transOffset=ax.transData)
         coll.set_array(np.asarray(aligned_data))
 
