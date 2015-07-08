@@ -13,7 +13,6 @@ from scipy import sparse
 from collections import OrderedDict
 from scipy.linalg import norm
 
-from . import shapes as vshapes
 from . import make_toModDir
 toModDir = make_toModDir(__file__)
 
@@ -650,6 +649,8 @@ class OrderedGraph(nx.Graph):
         return H
 
 def set_node_positions_from_nodelabels(G):
+    import shapes as vshapes
+
     nodes = G.nodes()
     if all(type(n) is str and len(n) == 2 for n in nodes):
         region = vshapes.countries(subset=nodes)
