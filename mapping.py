@@ -9,7 +9,7 @@ from shapes import nuts1
 from . import make_toModDir
 toModDir = make_toModDir(__file__)
 
-def countries_to_nuts1(series=False):
+def countries_to_nuts1(series=True):
     """
     Returns a mapping from european countries to lists of their nuts1
     regions.  Some countries like Kosovo or Turkey are omitted, as
