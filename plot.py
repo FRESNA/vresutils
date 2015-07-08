@@ -11,7 +11,7 @@ from matplotlib.collections import LineCollection, PolyCollection
 
 from shapely.geometry import MultiPolygon
 
-from . import shapes
+from . import shapes as vshapes
 from . import make_toModDir
 toModDir = make_toModDir(__file__)
 
@@ -23,10 +23,10 @@ def germany2(with_laender=False, ax=None, linewidth=10, **kwargs):
         ax = plt.gca()
 
     if with_laender:
-        laender = LineCollection(imap(shapes.points, shapes.laender().itervalues()),
+        laender = LineCollection(imap(vshapes.points, vshapes.laender().itervalues()),
                                  colors="gray", zorder=0)
         ax.add_collection(laender)
-    line, = plt.plot(*shapes.points(shapes.germany()).T, color='k')
+    line, = plt.plot(*vshapes.points(vshapes.germany()).T, color='k')
     line.set_zorder(1)
 
 try:
@@ -54,8 +54,8 @@ try:
         if ax is None:
             ax = plt.gca()
 
-        lk = shapes.landkreise()
-        coll = PolyCollection(imap(shapes.points,
+        lk = vshapes.landkreise()
+        coll = PolyCollection(imap(vshapes.points,
                                    pd.Series(lk).reindex(data.index)),
                               transOffset=ax.transData,
                               **kw)
