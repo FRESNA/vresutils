@@ -95,17 +95,27 @@ def cachable(func=None, version=None, cache_dir="/tmp/compcache", keepweakref=Fa
             )
 
             if not recompute and keepweakref and fn in cache:
-                return cache[fn]
+                with optional(verbose,
+                              timer("Serving call to {} from weakref cache"
+                                    .format(func.__name__))):
+                    return cache[fn]
             elif not recompute and os.path.exists(fn):
                 try:
                     with open(fn) as f:
-                        ret = cPickle.load(f)
+                        with optional(
+                                verbose,
+                                timer("Serving call to {} from file {}"
+                                      .format(func.__name__, os.path.basename(fn)))
+                        ):
+                            ret = cPickle.load(f)
                 except Exception as e:
                     warn("Couldn't unpickle from %s: %s" % (fn, e.message))
             else:
-                with optional(verbose,
-                              timer("Caching call to {} in {}"
-                                    .format(func.__name__, os.path.basename(fn)))):
+                with optional(
+                        verbose,
+                        timer("Caching call to {} in {}"
+                              .format(func.__name__, os.path.basename(fn)))
+                ):
                     ret = func(*args, **kwds)
                     try:
                         with open(fn, 'w') as f:
