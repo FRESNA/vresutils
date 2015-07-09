@@ -41,7 +41,7 @@ def format_filename(s):
     return ''.join(c for c in s if c in valid_chars).replace(' ','_')
 
 
-def cachable(func=None, version=None, cache_dir="/tmp/compcache", keepweakref=False, verbose=True):
+def cachable(func=None, version=None, cache_dir="/tmp/compcache", keepweakref=False, ignore=set(), verbose=True):
     """
     Decorator to mark long running functions, which should be saved to
     disk for a pickled version of their arguments.
@@ -55,6 +55,7 @@ def cachable(func=None, version=None, cache_dir="/tmp/compcache", keepweakref=Fa
                   it is created (default: /tmp/compcache)
     keepweakref - Also store a weak reference and return it instead of
                   rereading from disk (default: False).
+    ignore      - Set of kwd arguments not to take into account.
     verbose     - Output cache hits and timing information (default:
                   True).
     """
@@ -90,7 +91,9 @@ def cachable(func=None, version=None, cache_dir="/tmp/compcache", keepweakref=Fa
             # Check if there is a cached version
             fn = cache_fn + format_filename(
                 '_'.join(name(a) for a in args) + '_' +
-                '_'.join(name(k) + '.' + name(v) for k,v in kwds.iteritems()) +
+                '_'.join(name(k) + '.' + name(v)
+                         for k,v in kwds.iteritems()
+                         if k not in ignore) +
                 '.pickle'
             )
 
