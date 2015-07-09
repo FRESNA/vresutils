@@ -98,10 +98,7 @@ def cachable(func=None, version=None, cache_dir="/tmp/compcache", keepweakref=Fa
             )
 
             if not recompute and keepweakref and fn in cache:
-                with optional(verbose,
-                              timer("Serving call to {} from weakref cache"
-                                    .format(func.__name__))):
-                    return cache[fn]
+                return cache[fn]
             elif not recompute and os.path.exists(fn):
                 try:
                     with open(fn) as f:
