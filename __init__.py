@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+from hashlib import sha1
 import numpy as np
 from functools import wraps
 import cPickle
@@ -43,7 +44,7 @@ def format_filename(s):
 def cachable(func=None, version=None, cache_dir="/tmp/compcache", keepweakref=False, verbose=True):
     """
     Decorator to mark long running functions, which should be saved to
-    disk for a pickled version of their hopefully short arguments.
+    disk for a pickled version of their arguments.
 
     Arguments:
     func        - Shouldn't be supplied, but instead contains the
@@ -76,14 +77,20 @@ def cachable(func=None, version=None, cache_dir="/tmp/compcache", keepweakref=Fa
         if keepweakref:
             cache = weakref.WeakValueDictionary()
 
+        def name(x):
+            y = str(x)
+            if len(y) > 40:
+                y = sha1(y).hexdigest()
+            return y
+
         @wraps(func)
         def wrapper(*args, **kwds):
             recompute = kwds.pop('recompute', False)
 
             # Check if there is a cached version
             fn = cache_fn + format_filename(
-                '_'.join(str(a) for a in args) + '_' +
-                '_'.join(str(k) + '.' + str(v) for k,v in kwds.iteritems()) +
+                '_'.join(name(a) for a in args) + '_' +
+                '_'.join(name(k) + '.' + name(v) for k,v in kwds.iteritems()) +
                 '.pickle'
             )
 
