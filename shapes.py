@@ -42,13 +42,14 @@ def _shape2poly(sh, tolerance=0.03, minarea=0.03, projection=None):
     else:
         raise TypeError("Unknown projection {}".format(projection))
 
+    minlength = 2*np.pi*np.sqrt(minarea / np.pi)
     def parts2polys(parts):
         rings = map(LinearRing, parts)
         while(rings):
             exterior = rings.pop(0)
             interiors = list(takewhile(attrgetter('is_ccw'), rings))
             rings = rings[len(interiors):]
-            yield Polygon(exterior, interiors)
+            yield Polygon(exterior, [x for x in interiors if x.length > minlength])
 
     polys = sorted(parts2polys(np.split(pts, sh.parts[1:])),
                    key=attrgetter('area'), reverse=True)
