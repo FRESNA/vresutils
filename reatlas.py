@@ -60,31 +60,32 @@ class REatlas(reatlas_client.REatlas):
             capacity_layouts_fn = map(upload_capacity_layout, capacity_layouts)
 
         job_fn = self._get_unique_npy_file()
-        if set(('onshore', 'offshore')).issubset(resource):
-            onshorepowercurve = turbineconf_to_powercurve_object(resource['onshore'])
-            offshorepowercurve = turbineconf_to_powercurve_object(resource['offshore'])
 
-            job_id = self.convert_and_aggregate_wind(
-                result_name=job_fn[:-4],
-                onshorepowercurve=onshorepowercurve,
-                offshorepowercurve=offshorepowercurve,
-                capacitylayouts=capacity_layouts_fn
-            )
+        with timer("Running convert and aggregate"):
+            if set(('onshore', 'offshore')).issubset(resource):
+                onshorepowercurve = turbineconf_to_powercurve_object(resource['onshore'])
+                offshorepowercurve = turbineconf_to_powercurve_object(resource['offshore'])
 
-            solar = False
-        elif set(('panel', 'orientation')).issubset(resource):
-            self.add_pv_orientations_by_config_file(resource['orientation'])
-            panel = solarpanelconf_to_solar_panel_config_object(resource['panel']);
-            job_id = self.convert_and_aggregate_pv(
-                result_name=job_fn[:-4],
-                solar_panel_config=panel,
-                capacitylayouts=capacity_layouts_fn
-            )
-            solar = True
-        else:
-            raise TypeError('`resource` must either contain onshore and offshore or panel and orientation')
+                job_id = self.convert_and_aggregate_wind(
+                    result_name=job_fn[:-4],
+                    onshorepowercurve=onshorepowercurve,
+                    offshorepowercurve=offshorepowercurve,
+                    capacitylayouts=capacity_layouts_fn
+                )
 
-        with timer("Waiting for job to finish"):
+                solar = False
+            elif set(('panel', 'orientation')).issubset(resource):
+                self.add_pv_orientations_by_config_file(resource['orientation'])
+                panel = solarpanelconf_to_solar_panel_config_object(resource['panel']);
+                job_id = self.convert_and_aggregate_pv(
+                    result_name=job_fn[:-4],
+                    solar_panel_config=panel,
+                    capacitylayouts=capacity_layouts_fn
+                )
+                solar = True
+            else:
+                raise TypeError('`resource` must either contain onshore and offshore or panel and orientation')
+
             self.wait_for_job(job_id=job_id)
 
         with timer("Deleting uploaded capacity layouts"):
