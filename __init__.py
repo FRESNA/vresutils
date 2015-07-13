@@ -62,6 +62,9 @@ def cachable(func=None, version=None, cache_dir="/tmp/compcache", keepweakref=Fa
 
     if not os.path.isdir(cache_dir):
         os.mkdir(cache_dir)
+        gid = None
+    else:
+        gid = os.stat(cache_dir).st_gid
 
     def deco(func):
         """
@@ -119,6 +122,7 @@ def cachable(func=None, version=None, cache_dir="/tmp/compcache", keepweakref=Fa
                     ret = func(*args, **kwds)
                     try:
                         with open(fn, 'w') as f:
+                            if gid: os.fchown(f.fileno(), -1, gid)
                             cPickle.dump(ret, f, protocol=-1)
                     except Exception as e:
                         warn("Couldn't pickle to %s: %s" % (fn, e.message))
