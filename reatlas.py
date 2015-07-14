@@ -8,7 +8,7 @@ import reatlas_client
 from tempfile import TemporaryFile
 import numpy as np
 
-from . import timer, staticvars
+from . import timer
 import array as varray
 
 def turbineconf_to_powercurve_object(fn):
@@ -49,21 +49,15 @@ class REatlas(reatlas_client.REatlas):
         return super(REatlas, self).add_pv_orientations_by_config_file(fn)
 
     def convert_and_aggregate(self, resource, capacity_layouts):
-        @staticvars(nullfn=None)
         def upload_capacity_layout(layout):
-            fn = self._get_unique_npy_file()
-            if not np.any(layout):
-                if upload_capacity_layout.nullfn:
-                    return upload_capacity_layout.nullfn
-                else:
-                    upload_capacity_layout.nullfn = fn
             f = TemporaryFile()
             np.save(f, layout)
             f.seek(0)
+            fn = self._get_unique_npy_file()
             self.upload_from_file_and_rename(f, fn)
             return fn
         with timer("Uploading capacity layouts"):
-            capacity_layouts_fn = map(upload_capacity_layout, capacity_layouts)
+            capacity_layouts_fn = [upload_capacity_layout(capacity_layouts)]
 
         job_fn = self._get_unique_npy_file()
 
