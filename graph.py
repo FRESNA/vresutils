@@ -4,7 +4,7 @@
 import numpy as np
 import networkx as nx
 import warnings
-from itertools import izip, islice, chain, imap
+from itertools import izip, islice, chain, imap, count
 from operator import itemgetter
 from shapely.geometry import Point, Polygon
 from scipy.spatial import Voronoi
@@ -662,3 +662,18 @@ def set_node_positions_from_nodelabels(G):
 
     nx.set_node_attributes(G, 'region', region)
     nx.set_node_attributes(G, 'pos', pos)
+
+def convert_node_labels_to_integers(G):
+    H = G.__class__()
+    H.name = "(%s)" % G.name
+    mapping = dict(izip(G.nodes(), count()))
+    H.add_nodes_from((mapping.get(n, n), d) for n, d in G.nodes(data=True))
+    if G.is_multigraph():
+        H.add_edges_from( (mapping.get(n1, n1),mapping.get(n2, n2),k,d)
+                          for (n1,n2,k,d) in G.edges_iter(keys=True, data=True))
+    else:
+        H.add_edges_from( (mapping.get(n1, n1),mapping.get(n2, n2),d)
+                          for (n1, n2, d) in G.edges_iter(data=True))
+    H.graph.update(G.graph)
+
+    return H
