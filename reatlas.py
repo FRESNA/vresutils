@@ -97,7 +97,10 @@ class REatlas(reatlas_client.REatlas):
             self.download_file_and_rename(remote_file=job_fn, local_file=f)
             self.delete_file(filename=job_fn)
             f.seek(0)
-            timeseries = np.load(f)
+            try:
+                timeseries = np.load(f)
+            except IOError:
+                raise RuntimeError("Couldn't read downloaded job data")
 
         if solar:
             with timer("Interpolating nan values"):
