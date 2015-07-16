@@ -426,7 +426,7 @@ def get_voronoi_regions(G, outline=None):
             outline = outline()
         assert outline is not None
         voronoi_partition(G, Polygon(outline))
-    return get_node_attributes(G, 'region')
+    return get_node_attributes(G, 'region').values()
 
 def voronoi_partition(G, outline):
     """
@@ -439,7 +439,7 @@ def voronoi_partition(G, outline):
 
     # this loop is necessary to get the points into the right order to match
     # the nodes with the correct Voronoi regions later on
-    points = list(get_node_attributes(G, 'pos'))
+    points = get_node_attributes(G, 'pos').values()
 
     # to avoid any network positions outside all Voronoi cells, append
     # the corners of a rectangle framing these points
@@ -679,4 +679,4 @@ def convert_node_labels_to_integers(G):
     return H
 
 def get_node_attributes(G, attr):
-    return imap(itemgetter(attr), G.node.itervalues())
+    return OrderedDict((n, d[attr]) for n, d in G.node.iteritems())
