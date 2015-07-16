@@ -170,8 +170,8 @@ def cell_subgraph(G, lat, lon, size, copy=True):
 
     pos = np.array((lon, lat))
     nodes = (n
-             for n, p in nx.get_node_attributes(G, 'pos').iteritems()
-             if np.abs(p - pos).max() <= size/2)
+             for n, p in G.node.iteritems()
+             if np.abs(p['pos'] - pos).max() <= size/2)
     return giant_component(G.subgraph(nodes), copy=copy)
 
 
@@ -183,8 +183,8 @@ def polygon_subgraph(G, polygon, nneighbours=0, copy=True):
     """
 
     nodes = set(n
-                for n, p in nx.get_node_attributes(G, 'pos').iteritems()
-                if polygon.contains(Point(p)))
+                for n, p in G.node.iteritems()
+                if polygon.contains(Point(p['pos'])))
 
     if nneighbours > 0:
         # extend by nneighbours layers of neighbours
@@ -426,7 +426,7 @@ def get_voronoi_regions(G, outline=None):
             outline = outline()
         assert outline is not None
         voronoi_partition(G, Polygon(outline))
-    return nx.get_node_attributes(G, 'region').values()
+    return get_node_attributes(G, 'region')
 
 def voronoi_partition(G, outline):
     """
@@ -439,7 +439,7 @@ def voronoi_partition(G, outline):
 
     # this loop is necessary to get the points into the right order to match
     # the nodes with the correct Voronoi regions later on
-    points = [n[1]['pos'] for n in G.nodes(data=True)]
+    points = list(get_node_attributes(G, 'pos'))
 
     # to avoid any network positions outside all Voronoi cells, append
     # the corners of a rectangle framing these points
@@ -677,3 +677,6 @@ def convert_node_labels_to_integers(G):
     H.graph.update(G.graph)
 
     return H
+
+def get_node_attributes(G, attr):
+    return imap(itemgetter(attr), G.node.itervalues())
