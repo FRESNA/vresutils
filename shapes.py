@@ -23,7 +23,7 @@ def simplify_pts(pts, tolerance=0.03):
     return points(simplify_poly(Polygon(pts), tolerance))
 
 def points(poly):
-    return np.asarray(poly.boundary.coords)
+    return np.asarray(poly.exterior)
 
 class Dict(dict): pass
 
