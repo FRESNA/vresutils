@@ -20,12 +20,20 @@ try:
     import shapes as vshapes
     from shapely.geometry import MultiPolygon
 
+    def flatten(it):
+        for sh in it:
+            if isinstance(sh, MultiPolygon):
+                for p in sh:
+                    yield p
+            else:
+                yield sh
+
     def germany2(with_laender=False, ax=None, linewidth=10, **kwargs):
         if ax is None:
             ax = plt.gca()
 
         if with_laender:
-            laender = LineCollection(imap(vshapes.points, vshapes.laender().itervalues()),
+            laender = LineCollection(imap(vshapes.points, flatten(vshapes.laender().itervalues())),
                                      colors="gray", zorder=0)
             ax.add_collection(laender)
         line, = plt.plot(*vshapes.points(vshapes.germany()).T, color='k')
