@@ -671,10 +671,12 @@ def set_node_positions_from_nodelabels(G):
     nx.set_node_attributes(G, 'region', region)
     nx.set_node_attributes(G, 'pos', pos)
 
-def convert_node_labels_to_integers(G):
+def relabel_nodes(G, mapping):
+    """
+    Order preserving relabel_nodes for !disjunct! relabeling.
+    """
     H = G.__class__()
     H.name = "(%s)" % G.name
-    mapping = dict(izip(G.nodes(), count()))
     H.add_nodes_from((mapping.get(n, n), d) for n, d in G.nodes(data=True))
     if G.is_multigraph():
         H.add_edges_from( (mapping.get(n1, n1),mapping.get(n2, n2),k,d)
@@ -685,6 +687,9 @@ def convert_node_labels_to_integers(G):
     H.graph.update(G.graph)
 
     return H
+
+def convert_node_labels_to_integers(G):
+    return relabel_nodes(G, dict(izip(G.nodes(), count())))
 
 def get_node_attributes(G, attr):
     return OrderedDict((n, d[attr]) for n, d in G.node.iteritems())
