@@ -247,3 +247,15 @@ class CachedAttribute(object):
         # setattr redefines the instance's attribute so this doesn't get called again
         setattr(inst, self.name, result)
         return result
+
+def indexer(func):
+    '''
+    Decorator to turn a method into an object with a __getitem__ method.
+    Can be used to turn a method into some extended getitem equivalent.
+    '''
+    class Indexer(object):
+        def __init__(self, inst):
+            self.inst = inst
+        def __getitem__(self, key):
+            return func(self.inst, key)
+    return CachedAttribute(lambda self: Indexer(self), name=func.__name__)
