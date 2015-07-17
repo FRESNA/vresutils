@@ -374,7 +374,7 @@ def coarsify_graph(G, shapes, lost_nodes=None):
 
     return H
 
-def stitch_graphs(G, G2, node):
+def stitch_graphs(G, G2, nodes, region=None):
     """
     Stitch a subgraph of the finer `G` into the coarse `G2` graph by
     replacing the node `label`.
@@ -389,8 +389,12 @@ def stitch_graphs(G, G2, node):
         Spatially embedded coarse-grained graph with the node
         attribute region holding the shapely polygons for each node.
 
-    node : Node label
-        Label of the `G2` graph, where `G` should be stitched into.
+    nodes : Node labels
+        Labels of the `G2` graph, where `G` should be stitched into.
+
+    region : shapely geometry
+        The geographic region on which `G` should be stitched into `G2`.
+        Defaults to the union of regions of `nodes` in `G2`.
 
     Returns
     -------
@@ -399,7 +403,11 @@ def stitch_graphs(G, G2, node):
 
     regions = nx.get_node_attributes(G2, 'region')
 
-    H = polygon_subgraph(G, regions[node], copy=False)
+    if region is None:
+        from shapely.ops import cascaded_union
+        region = cascaded_union([regions[n] for n in nodes])
+
+    H = polygon_subgraph(G, region, copy=False)
     neigh_nodes = reduce(set.union, islice(BreadthFirstLevels(G, H.nodes()), 1, 2))
 
     assert len(set(H.nodes()).intersection(G2.nodes())) == 0, \
@@ -407,14 +415,14 @@ def stitch_graphs(G, G2, node):
 
     H.add_nodes_from(G2.nodes_iter(data=True))
     H.add_edges_from(G2.edges_iter(data=True))
-    H.remove_node(node)
+    H.remove_nodes_from(nodes)
 
     for n in neigh_nodes:
         pos = Point(G.node[n]['pos'])
         for n2, reg in regions.iteritems():
             if reg.contains(pos):
-                attr_dict = G2.adj[node].get(n2,{})
-                H.add_edges_from((n2, n3, attr_dict.copy())
+                # attr_dict = G2.adj[node].get(n2,{})
+                H.add_edges_from((n2, n3)
                                  for n3 in G.adj[n]
                                  if n3 in H)
 
