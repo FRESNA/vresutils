@@ -3,7 +3,7 @@ import numpy as np
 import scipy as sp
 import scipy.sparse
 import collections
-from itertools import izip, count, imap, starmap, izip_longest, repeat
+from itertools import izip, count, imap, starmap, repeat
 from vresutils import iterable
 
 def asLists(N, *arrs):
@@ -121,26 +121,28 @@ class GbVecVar(GbVec):
         if isinstance(other, GbVecVar):
             return GbVecExpr(svals=[1.0, 1.0], svecs=[self, other])
         else:
-            return NotImplemented
+            return GbVecExpr(svals=[1.0], svecs=[self], cval=other)
 
     def __sub__(self, other):
         if isinstance(other, GbVecVar):
             return GbVecExpr(svals=[1.0, -1.0], svecs=[self, other])
         else:
-            return NotImplemented
+            return GbVecExpr(svals=[1.0], svecs=[self], cval=-other)
 
 class GbVecExpr(object):
-    def __init__(self, svals=[], svecs=[], lvals=[], lvecs=[]):
+    def __init__(self, svals=[], svecs=[], lvals=[], lvecs=[], cval=0):
         assert len(svals) == len(svecs), "svals and svecs must come in pairs"
         self.svals = svals
         self.svecs = svecs
         assert len(lvals) == len(lvecs), "lvals and lvecs must come in pairs"
         self.lvals = [sp.sparse.csr_matrix(lv) for lv in lvals]
         self.lvecs = lvecs
+        self.cval = cval
 
         length = len(self)
         assert (all(len(i) == length for i in svecs) and
-                all(i.shape[0] == length for i in lvals)), \
+                all(i.shape[0] == length for i in lvals) and
+                (not iterable(self.cval) or len(self.cval) == length)), \
             "Dimensions must match"
 
     def __neg__(self):
@@ -151,7 +153,8 @@ class GbVecExpr(object):
             return GbVecExpr(svals=[other*v for v in self.svals],
                              svecs=list(self.svecs),
                              lvals=[other*v for v in self.lvals],
-                             lvecs=list(self.lvecs))
+                             lvecs=list(self.lvecs),
+                             cval=other*self.cval)
         else:
             return NotImplemented
     __rmul__ = __mul__
@@ -160,6 +163,7 @@ class GbVecExpr(object):
         if np.isscalar(other):
             self.svals = [other*v for v in self.svals]
             self.lvals = [other*v for v in self.lvals]
+            self.cval *= other
             return self
         else:
             # If we return NotImplemented here, then the eager logic
@@ -168,22 +172,28 @@ class GbVecExpr(object):
             raise TypeError
 
     def __add__(self, other):
-        expr = GbVecExpr(**{k: list(v) for k,v in self.__dict__.iteritems()})
+        cval = self.cval.copy() if iterable(self.cval) else self.cval
+        expr = GbVecExpr(svals=list(self.svals), svecs=list(self.svecs),
+                         lvals=list(self.lvals), lvecs=list(self.lvecs),
+                         cval=cval)
         expr += other
         return expr
     __radd__ = __add__
 
     def __iadd__(self, other):
-        if len(self) != 0 and len(other) != 0:
+        if len(self) != 0 and iterable(other) and len(other) != 0:
             assert len(self) == len(other), "Dimensions must match"
         if isinstance(other, GbVecExpr):
             self.svals += other.svals
             self.svecs += other.svecs
             self.lvals += other.lvals
             self.lvecs += other.lvecs
+            self.cval += other.cval
         elif isinstance(other, GbVecVar):
             self.svals.append(1.0)
             self.svecs.append(other)
+        else:
+            self.cval += other
 
         return self
 
@@ -205,17 +215,28 @@ class GbVecExpr(object):
             return 0
 
     def __iter__(self):
-        scalarexprs = (gb.LinExpr(self.svals, vecs)
-                       for vecs in izip(*self.svecs))
+        exprs = []
 
-        def generate_matrix_rows(val, vec):
-            for i in xrange(val.shape[0]):
-                indptr = slice(val.indptr[i], val.indptr[i+1])
-                yield gb.LinExpr(val.data[indptr], [vec[i] for i in val.indices[indptr]])
-        matrixexprs = starmap(generate_matrix_rows, izip(self.lvals, self.lvecs))
+        # scalar
+        if len(self.svecs):
+            exprs.append((gb.LinExpr(self.svals, vecs)
+                          for vecs in izip(*self.svecs)))
 
-        return imap(gb.quicksum, izip_longest(scalarexprs, *matrixexprs,
-                                              fillvalue=gb.LinExpr()))
+        # matrix
+        if len(self.lvecs):
+            def generate_matrix_rows(val, vec):
+                for i in xrange(val.shape[0]):
+                    indptr = slice(val.indptr[i], val.indptr[i+1])
+                    yield gb.LinExpr(val.data[indptr], [vec[i] for i in val.indices[indptr]])
+            exprs += starmap(generate_matrix_rows, izip(self.lvals, self.lvecs))
+
+        # constant
+        if iterable(self.cval):
+            exprs.append(self.cval)
+        elif self.cval != 0:
+            exprs.append(repeat(self.cval))
+
+        return imap(gb.quicksum, izip(*exprs))
 
 def ismatrixlike(v):
     return sp.sparse.isspmatrix(v) or (isinstance(v, np.ndarray) and v.ndim==2)
