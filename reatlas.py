@@ -56,54 +56,49 @@ class REatlas(reatlas_client.REatlas):
             fn = self._get_unique_npy_file()
             self.upload_from_file_and_rename(f, fn)
             return fn
-        with timer("Uploading capacity layouts"):
-            capacity_layouts_fn = [upload_capacity_layout(capacity_layouts)]
+        capacity_layouts_fn = [upload_capacity_layout(capacity_layouts)]
 
         job_fn = self._get_unique_npy_file()
 
-        with timer("Running convert and aggregate"):
-            if set(('onshore', 'offshore')).issubset(resource):
-                onshorepowercurve = turbineconf_to_powercurve_object(resource['onshore'])
-                offshorepowercurve = turbineconf_to_powercurve_object(resource['offshore'])
+        if set(('onshore', 'offshore')).issubset(resource):
+            onshorepowercurve = turbineconf_to_powercurve_object(resource['onshore'])
+            offshorepowercurve = turbineconf_to_powercurve_object(resource['offshore'])
 
-                job_id = self.convert_and_aggregate_wind(
-                    result_name=job_fn[:-4],
-                    onshorepowercurve=onshorepowercurve,
-                    offshorepowercurve=offshorepowercurve,
-                    capacitylayouts=capacity_layouts_fn
-                )
+            job_id = self.convert_and_aggregate_wind(
+                result_name=job_fn[:-4],
+                onshorepowercurve=onshorepowercurve,
+                offshorepowercurve=offshorepowercurve,
+                capacitylayouts=capacity_layouts_fn
+            )
 
-                solar = False
-            elif set(('panel', 'orientation')).issubset(resource):
-                self.add_pv_orientations_by_config_file(resource['orientation'])
-                panel = solarpanelconf_to_solar_panel_config_object(resource['panel']);
-                job_id = self.convert_and_aggregate_pv(
-                    result_name=job_fn[:-4],
-                    solar_panel_config=panel,
-                    capacitylayouts=capacity_layouts_fn
-                )
-                solar = True
-            else:
-                raise TypeError('`resource` must either contain onshore and offshore or panel and orientation')
+            solar = False
+        elif set(('panel', 'orientation')).issubset(resource):
+            self.add_pv_orientations_by_config_file(resource['orientation'])
+            panel = solarpanelconf_to_solar_panel_config_object(resource['panel']);
+            job_id = self.convert_and_aggregate_pv(
+                result_name=job_fn[:-4],
+                solar_panel_config=panel,
+                capacitylayouts=capacity_layouts_fn
+            )
+            solar = True
+        else:
+            raise TypeError('`resource` must either contain onshore and offshore or panel and orientation')
 
-            self.wait_for_job(job_id=job_id)
+        self.wait_for_job(job_id=job_id)
 
-        with timer("Deleting uploaded capacity layouts"):
-            for fn in capacity_layouts_fn:
-                self.delete_file(filename=fn)
+        for fn in capacity_layouts_fn:
+            self.delete_file(filename=fn)
 
-        with timer("Downloading result"):
-            f = TemporaryFile()
-            self.download_file_and_rename(remote_file=job_fn, local_file=f)
-            self.delete_file(filename=job_fn)
-            f.seek(0)
-            try:
-                timeseries = np.load(f)
-            except IOError:
-                raise RuntimeError("Couldn't read downloaded job data")
+        f = TemporaryFile()
+        self.download_file_and_rename(remote_file=job_fn, local_file=f)
+        self.delete_file(filename=job_fn)
+        f.seek(0)
+        try:
+            timeseries = np.load(f)
+        except IOError:
+            raise RuntimeError("Couldn't read downloaded job data")
 
         if solar:
-            with timer("Interpolating nan values"):
-                timeseries = varray.interpolate(timeseries)
+            timeseries = varray.interpolate(timeseries)
 
         return timeseries
