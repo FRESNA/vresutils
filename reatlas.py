@@ -56,7 +56,11 @@ class REatlas(reatlas_client.REatlas):
             fn = self._get_unique_npy_file()
             self.upload_from_file_and_rename(f, fn)
             return fn
-        capacity_layouts_fn = [upload_capacity_layout(capacity_layouts)]
+        if self._protocol_version < 3:
+            capacity_layouts_fn = [upload_capacity_layout(l)
+                                   for l in capacity_layouts]
+        else:
+            capacity_layouts_fn = [upload_capacity_layout(capacity_layouts)]
 
         job_fn = self._get_unique_npy_file()
 
