@@ -31,6 +31,14 @@ def rank(G, P=None):
 
     return np.linalg.matrix_rank(densify(flowtracer.M))
 
+def iterable(obj):
+    'return true if *obj* is iterable'
+    try:
+        iter(obj)
+    except TypeError:
+        return False
+    return True
+
 def format_filename(s):
     """
     Take a string and return a valid filename constructed from the string.

@@ -3,7 +3,8 @@ import numpy as np
 import scipy as sp
 import scipy.sparse
 import collections
-from itertools import izip, count, imap, starmap, izip_longest
+from itertools import izip, count, imap, starmap, izip_longest, repeat
+from vresutils import iterable
 
 def asLists(N, *arrs):
     return [asList(N, a) for a in arrs]
@@ -12,12 +13,18 @@ def asList(N, a):
     if isinstance(a, (list, tuple, np.ndarray)):
         assert len(a) == N
         return a
-    elif isinstance(a, collections.Iterable):
+    elif iterable(a):
         a = list(a)
         assert len(a) == N
         return a
     else:
         return N * [a]
+
+def asIterables(N, *arrs):
+    return [asIterable(N, a) for a in arrs]
+
+def asIterable(N, a):
+    return a if iterable(a) else repeat(a, N)
 
 class GbVec(object):
     def __init__(self, model, items):
@@ -62,7 +69,7 @@ class GbVecConstr(GbVec):
     def __init__(self, model, N, name, lhs, sense, rhs, update=True):
         super(GbVecConstr, self).__init__(model,
             [model.addConstr(lhs, sense, rhs, name=name + str(i))
-             for i, lhs, rhs in izip(xrange(N), *asLists(N, lhs, rhs))]
+             for i, lhs, rhs in izip(xrange(N), *asIterables(N, lhs, rhs))]
         )
 
         if update:
@@ -77,7 +84,7 @@ class GbVecVar(GbVec):
         super(GbVecVar, self).__init__(model,
             [model.addVar(name=name + str(x[0]),
                           **dict(izip(kwargs.iterkeys(), x[1:])))
-             for x in izip(xrange(N), *asLists(N, *kwargs.values()))]
+             for x in izip(xrange(N), *asIterables(N, *kwargs.values()))]
         )
 
         if update:
