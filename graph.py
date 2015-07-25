@@ -19,6 +19,9 @@ toModDir = make_toModDir(__file__)
 def entsoe_tue():
     return OrderedGraph(nx.read_gpickle(toModDir("data/entsoe_2009_final.gpickle")))
 
+def eu():
+    return nx.read_gpickle(toModDir("data/EU.gpickle"))
+
 def to_directed(G):
     """
     Returns directed version of graph G, with randomly assigned directions.
