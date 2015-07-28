@@ -7,7 +7,7 @@ from functools import wraps
 import cPickle
 from warnings import warn
 import time, sys
-import os.path, string
+import os, stat, os.path, string
 import weakref
 
 def indicator(N, indices):
@@ -72,8 +72,13 @@ def cachable(func=None, version=None, cache_dir="/home/vres/data/compcache",
     if not os.path.isdir(cache_dir):
         os.mkdir(cache_dir)
         gid = None
+        mode = None
     else:
-        gid = os.stat(cache_dir).st_gid
+        st = os.stat(cache_dir)
+        gid = st.st_gid
+        # mode is bitmask of the same rights as the directory without
+        # exec rights for anybody
+        mode = stat.S_IMODE(st.st_mode) & ~(stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
     def deco(func):
         """
@@ -132,6 +137,7 @@ def cachable(func=None, version=None, cache_dir="/home/vres/data/compcache",
                     try:
                         with open(fn, 'w') as f:
                             if gid: os.fchown(f.fileno(), -1, gid)
+                            if mode: os.fchmod(f.fileno(), mode)
                             cPickle.dump(ret, f, protocol=-1)
                     except Exception as e:
                         warn("Couldn't pickle to %s: %s" % (fn, e.message))
