@@ -327,9 +327,12 @@ def coarsify_graph(G, shapes, lost_nodes=None):
 
     queue = OrderedDict()
 
-    def add_link(n, m):
+    def add_link(n, m, capacity=None):
         if n != m:
             H.add_edge(n, m)
+            if capacity is not None:
+                attrs = H.adj[n][m]
+                attrs['capacity'] = attrs.get('capacity', 0) + capacity / 2.
 
     def do_node(n):
         if n in queue:
@@ -368,10 +371,10 @@ def coarsify_graph(G, shapes, lost_nodes=None):
 
         while queue:
             n, a = queue.popitem()
-            for m in G.adj[n]:
+            for m, d in G.adj[n].iteritems():
                 if m in done: continue
                 b = do_node(m)
-                add_link(a, b)
+                add_link(a, b, d.get('capacity', None))
                 queue[m] = b
             done.add(n)
 
@@ -425,8 +428,8 @@ def stitch_graphs(G, G2, nodes, region=None):
         for n2, reg in regions.iteritems():
             if reg.contains(pos):
                 # attr_dict = G2.adj[node].get(n2,{})
-                H.add_edges_from((n2, n3)
-                                 for n3 in G.adj[n]
+                H.add_edges_from((n2, n3, d)
+                                 for n3, d in G.adj[n].iteritems()
                                  if n3 in H)
 
     return H
