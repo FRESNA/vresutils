@@ -19,7 +19,7 @@ toModDir = make_toModDir(__file__)
 def entsoe_tue():
     return OrderedGraph(nx.read_gpickle(toModDir("data/entsoe_2009_final.gpickle")))
 
-def entsoe_tue_linecaps():
+def entsoe_tue_linecaps(with_manual_link=True):
     G = entsoe_tue()
 
     # Add linecapacities by assuming:
@@ -35,11 +35,12 @@ def entsoe_tue_linecaps():
         attr.update(voltage=voltage, capacity=capacity)
 
     # Add missing link
-    length = 110. * np.sqrt(np.sum((G.node['782']['pos'] - G.node['788']['pos'])**2))
-    X = 0.00068768296005101493 * length # mean of X / L
-    G.add_edge('788', '782',
-               capacity=3.0, X=X, Y=1/X,
-               length=length, limit=0.0, voltage=380)
+    if with_manual_link:
+        length = 110. * np.sqrt(np.sum((G.node['782']['pos'] - G.node['788']['pos'])**2))
+        X = 0.00068768296005101493 * length # mean of X / L
+        G.add_edge('788', '782',
+                   capacity=3.0, X=X, Y=1/X,
+                   length=length, limit=0.0, voltage=380)
 
     return G
 
