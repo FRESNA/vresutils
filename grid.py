@@ -56,13 +56,37 @@ def entsoe_tue_linecaps(with_manual_link=True):
 
     # Add missing link
     if with_manual_link:
-        length = 110. * np.sqrt(np.sum((G.node['782']['pos'] - G.node['788']['pos'])**2))
-        X = 0.00068768296005101493 * length # mean of X / L
+        length = node_distance(G, '782', '788')
+        X = specific_susceptance * length
         G.add_edge('788', '782',
                    capacity=3.0, X=X, Y=1/X,
                    length=length, limit=0.0, voltage=380)
 
     return G
+
+# Given by bialek's network
+# TODO : replace this by a well founded value from oeding or similar
+# as soon as we can switch to a scigrid based network
+specific_susceptance = 0.00068768296005101493  # mean of X / L
+
+def node_distance(G, n1, n2):
+    """
+    A distance measure between two nodes in graph `G` which correlates
+    well with what is already present in the length edge attribute in
+    the bialek grid.
+
+    Arguments
+    ---------
+    G : nx.Graph
+    n1 : node label 1
+    n2 : node label 2
+
+    Returns
+    -------
+    d : float
+        distance
+    """
+    return 110. * np.sqrt(np.sum((G.node[n1]['pos'] - G.node[n2]['pos'])**2))
 
 def eu():
     return nx.read_gpickle(toModDir("data/EU.gpickle"))
