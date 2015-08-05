@@ -88,5 +88,14 @@ def node_distance(G, n1, n2):
     """
     return 110. * np.sqrt(np.sum((G.node[n1]['pos'] - G.node[n2]['pos'])**2))
 
+def heuristically_extend_edge_attributes(G):
+    for n1, n2, d in G.edges_iter(data=True):
+        d.setdefault('length', node_distance(G, n1, n2))
+        d.setdefault('voltage', 380)
+        d.setdefault('X', specific_susceptance * d['length'])
+        d.setdefault('Y', 1./d['X'])
+
+    return G
+
 def eu():
     return nx.read_gpickle(toModDir("data/EU.gpickle"))
