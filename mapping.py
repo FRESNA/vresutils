@@ -67,3 +67,20 @@ def iso2_to_iso3():
         dict(FR="FRA",
              NO="NOR").iteritems()
     ))
+
+def iso2_to_name():
+    """
+    Extract a mapping from iso2 country codes to country names
+    from the countries dataset.
+    """
+    sf = shapefile.Reader(toModDir('data/ne_10m_admin_0_countries/ne_10m_admin_0_countries'))
+    fields = dict(izip(map(itemgetter(0), sf.fields[1:]), count()))
+    def name(rec):
+        if rec[fields['ISO_A2']] != '-99':
+            return rec[fields['ISO_A2']]
+        elif rec[fields['WB_A2']] != '-99':
+            return rec[fields['WB_A2']]
+        else:
+            return rec[fields['ADM0_A3']][:-1]
+    return dict((name(r),r[fields['NAME']].decode('utf-8'))
+                for r in sf.iterRecords())
