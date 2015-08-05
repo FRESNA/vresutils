@@ -423,12 +423,19 @@ def stitch_graphs(G, G2, nodes, region=None):
     H.add_edges_from(G2.edges_iter(data=True))
     H.remove_nodes_from(nodes)
 
+    from grid import node_distance, specific_susceptance
+    def edge_attrs(H, n1, n2, d):
+        a = d.copy()
+        a['length'] = node_distance(H, n1, n2)
+        a['X'] = specific_susceptance * a['length']
+        a['Y'] = 1./a['X']
+        return a
+
     for n in neigh_nodes:
         pos = Point(G.node[n]['pos'])
         for n2, reg in regions.iteritems():
             if reg.contains(pos):
-                # attr_dict = G2.adj[node].get(n2,{})
-                H.add_edges_from((n2, n3, d)
+                H.add_edges_from((n2, n3, edge_attrs(H, n2, n3, d))
                                  for n3, d in G.adj[n].iteritems()
                                  if n3 in H)
 
