@@ -324,9 +324,10 @@ def coarsify_graph(G, shapes, lost_nodes=None):
     def add_link(n, m, capacity=None):
         if n != m:
             H.add_edge(n, m)
+            attrs = H.adj[n][m]
+            attrs['lines'] = attrs.get('lines', 0) + 1
             if capacity is not None:
-                attrs = H.adj[n][m]
-                attrs['capacity'] = attrs.get('capacity', 0) + capacity / 2.
+                attrs['capacity'] = attrs.get('capacity', 0) + capacity
 
     def do_node(n):
         if n in queue:
@@ -371,6 +372,11 @@ def coarsify_graph(G, shapes, lost_nodes=None):
                 add_link(a, b, d.get('capacity', None))
                 queue[m] = b
             done.add(n)
+
+    from grid import penalize
+    for n1, n2, d in H.edges_iter(data=True):
+        if 'lines' in d and 'capacity' in d:
+            d['capacity'] = penalize(d['capacity'], d['lines'])
 
     return H
 

@@ -6,6 +6,32 @@ from vresutils.graph import OrderedGraph
 from . import make_toModDir
 toModDir = make_toModDir(__file__)
 
+def penalize(x, n):
+    """
+    Thumb-rule for the aggregation of cross-border power lines.
+
+    Parameters
+    ---------
+    x : float
+        total line capacity
+    n : int
+        number of power lines
+
+    Returns
+    -------
+    c : float
+        resulting capacity
+    """
+
+    if n == 1:
+        return x
+    elif n == 2:
+        return 5./6. * x
+    elif n == 3:
+        return 4./6. * x
+    else:
+        return .5 * x
+
 ##
 # Functions which provide access to special network data
 #
