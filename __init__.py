@@ -49,7 +49,7 @@ def format_filename(s):
     return ''.join(c for c in s if c in valid_chars).replace(' ','_')
 
 
-def cachable(func=None, version=None, cache_dir="/home/vres/data/compcache",
+def cachable(func=None, version=None, cache_dir="/home/vres/data/cache",
              keepweakref=False, ignore=set(), verbose=True):
     """
     Decorator to mark long running functions, which should be saved to
