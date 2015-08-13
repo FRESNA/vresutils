@@ -247,11 +247,11 @@ class CachedAttribute(object):
     This decorator allows you to create a property which can be
     computed once and accessed many times. Sort of like memoization.
     '''
-    def __init__(self, method, name=None):
+    def __init__(self, method, name=None, doc=None):
         # record the unbound-method and the name
         self.method = method
         self.name = name or method.__name__
-        self.__doc__ = method.__doc__
+        self.__doc__ = doc or method.__doc__
     def __get__(self, inst, cls):
         if inst is None:
             # instance attribute accessed on class, return self
@@ -273,4 +273,4 @@ def indexer(func):
             self.inst = inst
         def __getitem__(self, key):
             return func(self.inst, key)
-    return CachedAttribute(lambda self: Indexer(self), name=func.__name__)
+    return CachedAttribute(lambda self: Indexer(self), name=func.__name__, doc=func.__doc__)
