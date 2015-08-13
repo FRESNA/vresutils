@@ -548,7 +548,20 @@ class OrderedGraph(nx.Graph):
         self.adj = OrderedDict()     # empty adjacency dict
         # attempt to load graph with data
         if data is not None:
-            nx.convert.to_networkx_graph(data, create_using=self)
+            if isinstance(data, OrderedGraph):
+                try:
+                    nx.convert.from_dict_of_dicts(
+                        data.adj,
+                        create_using=self,
+                        multigraph_input=data.is_multigraph()
+                    )
+                    self.graph = data.graph.copy()
+                    self.node.update((n,d.copy()) for n,d in data.node.items())
+                except:
+                    raise nx.NetworkXError("Input is not a correct NetworkX graph.")
+            else:
+                nx.convert.to_networkx_graph(data, create_using=self)
+
         # load graph attributes (must be after convert)
         self.graph.update(attr)
         self.edge = self.adj
