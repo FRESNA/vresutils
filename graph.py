@@ -702,7 +702,7 @@ def relabel_nodes(G, mapping):
     Order preserving relabel_nodes for !disjunct! relabeling.
     """
     H = G.__class__()
-    H.name = "(%s)" % G.name
+    H.name = G.name
     H.add_nodes_from((mapping.get(n, n), d) for n, d in G.nodes(data=True))
     if G.is_multigraph():
         H.add_edges_from( (mapping.get(n1, n1),mapping.get(n2, n2),k,d)
