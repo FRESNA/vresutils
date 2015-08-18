@@ -5,6 +5,9 @@ import numpy as np
 import scipy as sp, scipy.sparse, scipy.linalg, scipy.sparse.linalg
 from vresutils import indicator
 
+def unique_sorted(x):
+    return x[np.r_[True, x[1:] != x[:-1]]]
+
 def shift_ip(x,d=1):
     """
     Optimized inplace shift

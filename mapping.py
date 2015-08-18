@@ -4,7 +4,8 @@ from itertools import izip, count, chain
 from operator import itemgetter
 from collections import OrderedDict
 
-from shapes import nuts1
+from .array import unique_sorted
+from .shapes import nuts1
 
 from . import make_toModDir
 toModDir = make_toModDir(__file__)
@@ -15,8 +16,7 @@ def aggregate(data, mapping, how="sum", axis=0):
     except AttributeError:
         raise ValueError('`how` must be a string describing a numpy function like `sum`')
 
-    cntries = np.asanyarray(mapping)
-    cntries = cntries[np.r_[True, cntries[1:] != cntries[:-1]]]
+    cntries = varray.unique_sorted(np.asanyarray(mapping))
     res = np.empty(shape=data.shape[:axis] + data.shape[axis+1:], dtype=data.dtype)
     for i, cnt in enumerate(cntries):
         res[i] = agg(np.take(data, np.where(mapping.index == cnt)[0], axis=axis), axis=axis)
