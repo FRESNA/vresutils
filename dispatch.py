@@ -78,10 +78,11 @@ def read_globalenergyobservatory():
 
     return pd.DataFrame(cur.fetchall(), columns=["Name", "Type", "Country", "Capacity", "lon", "lat"])
 
-def backup_capacity_nuts_grid(G):
+def backup_capacity_nuts_grid(G, plants=None):
     from shapely.geometry import Point
 
-    plants = read_globalenergyobservatory()
+    if plants is None:
+        plants = read_globalenergyobservatory()
     name_to_iso2 = dict((v,k) for k,v in vmapping.iso2_to_name().iteritems())
     iso2_to_nuts = vmapping.countries_to_nuts1(series=False)
 
