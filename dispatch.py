@@ -78,6 +78,55 @@ def read_globalenergyobservatory():
 
     return pd.DataFrame(cur.fetchall(), columns=["Name", "Type", "Country", "Capacity", "lon", "lat"])
 
+@cachable
+def read_enipedia():
+    import pandas as pd
+    import sparql
+
+    res = sparql.query('http://enipedia.tudelft.nl/wiki/Special:SparqlExtension', """
+        BASE <http://enipedia.tudelft.nl/wiki/>
+        PREFIX a: <http://enipedia.tudelft.nl/wiki/>
+        PREFIX prop: <http://enipedia.tudelft.nl/wiki/Property:>
+        PREFIX cat: <http://enipedia.tudelft.nl/wiki/Category:>
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        select ?plant_name ?fuel_used ?country ?elec_capacity_MW ?longitude ?latitude ?year_built ?status
+        where {
+             ?plant rdf:type cat:Powerplant .
+             ?plant rdfs:label ?plant_name .
+             ?plant prop:Latitude ?latitude .
+             ?plant prop:Longitude ?longitude .
+             ?plant prop:Primary_fuel_type ?fuel_type .
+             ?fuel_type rdfs:label ?fuel_used .
+             ?plant prop:Annual_Energyoutput_MWh ?OutputMWh .
+             OPTIONAL{?plant prop:Generation_capacity_electrical_MW ?elec_capacity_MW }.
+             OPTIONAL{?plant prop:Country ?country_link .
+                      ?country_link rdfs:label ?country }.
+             OPTIONAL{?plant prop:Year_built ?year_built }.
+             ?plant prop:Status ?status .
+        }
+     """)
+
+    def literal_to_python(l):
+        if isinstance(l, tuple):
+            return map(literal_to_python, l)
+        elif l is None:
+            return None
+        elif l.datatype is None:
+            return l.value
+        else:
+            parse_datetime = lambda x: datetime.datetime.strptime(x, "%Y-%m-%dT%H:%M:%SZ" )
+            return \
+                {'decimal': float, 'double': float, 'integer': int,
+                 'dateTime': parse_datetime, 'gYearMonth': parse_datetime} \
+                [l.datatype[len('http://www.w3.org/2001/XMLSchema#'):]](l.value)
+
+    df = pd.DataFrame(map(literal_to_python, res.fetchone()),
+                      columns=["Name", "Type", "Country", "Capacity",
+                               "lon", "lat", "Built", "Status"])
+
+    return df[df.Status == 'Operational']
+
 def backup_capacity_nuts_grid(G, plants=None):
     from shapely.geometry import Point
 
