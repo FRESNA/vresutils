@@ -4,6 +4,9 @@ import numpy as np
 import networkx as nx
 
 from vresutils import shapes as vshapes, mapping as vmapping
+from vresutils.graph import get_node_attributes
+from operator import attrgetter
+
 
 from vresutils import make_toModDir, cachable
 toModDir = make_toModDir(__file__)
@@ -78,6 +81,23 @@ def read_globalenergyobservatory():
 
     return pd.DataFrame(cur.fetchall(), columns=["Name", "Type", "Country", "Capacity", "lon", "lat"])
 
+def read_eurostat_nrg113a():
+    import pandas as pd
+
+    fn = toModDir('data/nrg_113a.xls')
+
+    # Data2 is the 2013 data in which NOrway is missing, while the
+    # 2012 data in Data doesn't contain Romania
+    sheets = pd.read_excel(fn, sheetname=['Data', 'Data2'], thousands=',', skiprows=10, header=0, skipfooter=3, na_values=':')
+
+    data = sheets['Data2']
+    data['NO'] = sheets['Data']['NO']
+    data['INDIC_NRG/GEO'] = data['INDIC_NRG/GEO'].map(lambda x: x[len('Electrical capacity, main activity producers -'):])
+
+    data.set_index('INDIC_NRG/GEO', inplace=True)
+
+    return data
+
 @cachable
 def read_enipedia():
     import pandas as pd
@@ -150,6 +170,20 @@ def backup_capacity_nuts_grid(G, plants=None):
     nutsids = plants.apply(nutsidofaplant, axis=1)
 
     return plants['Capacity'].groupby((nutsids, plants['Type'])).sum() / 1e3
+
+def backup_capacity_nuts_from_eurostat(G):
+    import pandas as pd
+
+    capacities = read_eurostat_nrg113a().sum()
+    areas = pd.Series(get_node_attributes(G, 'region')).map(attrgetter('area'))
+
+    plants = read_globalenergyobservatory().groupby('Country')['Capacity'].sum()
+    capacities['BA'] = plants['Bosnia and Herzegovina']
+    capacities['CH'] = plants['Switzerland']
+    capacities.rename(dict({'UK': 'GB', 'EL': 'GR'}), inplace=True)
+
+    m = vmapping.countries_to_nuts1()
+    return areas.groupby(m).apply(lambda x: x*(capacities[x.name]/x.sum())) / 1e3
 
 def backup_capacity_german_grid(G):
     from shapely.geometry import Point
