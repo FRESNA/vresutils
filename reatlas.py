@@ -8,7 +8,7 @@ import reatlas_client
 from tempfile import TemporaryFile
 import numpy as np
 
-from . import timer
+from . import timer, CachedAttribute
 import array as varray
 
 def turbineconf_to_powercurve_object(fn):
@@ -20,6 +20,51 @@ def solarpanelconf_to_solar_panel_config_object(fn):
     if '/' not in fn:
         fn = os.path.join(clientdir, 'SolarPanelData', fn + '.cfg')
     return reatlas_client.solarpanelconf_to_solar_panel_config_object(fn)
+
+class Cutout(object):
+    def __init__(self, cutoutname, username, reatlas=None):
+        self.cutoutname = cutoutname
+        self.username = username
+
+        if reatlas is None:
+            reatlas = REatlas()
+        self.reatlas = reatlas
+
+    @CachedAttribute
+    def meta(self):
+        self.reatlas.prepare_cutout_metadata(cutoutname=self.cutoutname,
+                                             username=self.username)
+
+        fn = 'meta_{}.npz'.format(self.cutoutname)
+        f = TemporaryFile()
+        self.reatlas.download_file_and_rename(remote_file=fn, local_file=f)
+        self.reatlas.delete_file(filename=fn)
+        f.seek(0)
+        try:
+            meta = np.load(f)
+        except IOError:
+            raise RuntimeError("Couldn't read downloaded metadata")
+
+        return meta
+
+    def grid_coordinates(self, latlon=False):
+        meta = self.meta
+        if latlon:
+            return np.array((np.ravel(meta['latitudes']),
+                             np.ravel(meta['longitudes']))).T
+        else:
+            return np.array((np.ravel(meta['longitudes']),
+                             np.ravel(meta['latitudes']))).T
+
+    def grid_cells(self):
+        from shapely.geometry import box
+
+        coords = self.grid_coordinates()
+        span = (coords[self.meta['latitudes'].shape[1]+1] - coords[0]) / 2
+        return [box(*c) for c in np.hstack((coords - span, coords + span))]
+
+    def __repr__(self):
+        return '<Cutout {}/{}>'.format(self.username, self.cutoutname)
 
 class REatlas(reatlas_client.REatlas):
     def __init__(self, **kwds):
@@ -42,6 +87,13 @@ class REatlas(reatlas_client.REatlas):
 
         if 'cutout' in config:
             self.select_cutout(**config['cutout'])
+
+    def select_cutout_from_obj(self, cutout=None, **kwargs):
+        if isinstance(cutout, Cutout):
+            kwargs.update(cutoutname=cutout.cutoutname,
+                          username=cutout.username)
+
+        return self.select_cutout(**kwargs)
 
     def add_pv_orientations_by_config_file(self, fn):
         if '/' not in fn:
