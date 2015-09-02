@@ -4,7 +4,10 @@ collects various small helpers, which make your programming life
 easier (or arguably harder, as long you still have to figure out, how
 to use them).
 
-For the shapes module one needs
+Some of the modules have extra data requirements:
+
+SHAPES
+------
 
 germany.npy :
     German outline as sequence of points, again, extracted from vg250.
@@ -24,6 +27,9 @@ NUTS_2010_60M_SH :
 plz-gebiete :
     The german postcode areas obtained from [4], based on OSM
 
+GRID
+----
+
 links_de_power_150601.csv, vertices_de_power_150601.csv :
     For graph.read_scigrid the data csv files available at [5] must be
     present.
@@ -31,6 +37,22 @@ links_de_power_150601.csv, vertices_de_power_150601.csv :
 entsoe_2009_final.gpickle :
     An networkx representation of the network published by Bialek
     at [6] with approximate geographical coordinates.
+
+DISPATCH
+--------
+
+Kraftwerksliste_CSV_deCP850ed.csv :
+    A list of the German powerplants as published by BNetzA at [7].
+    The encoding of the CSV on their page is originally compatible to
+    CP850 and has to be reencoded to UTF-8 (using recode f.ex.).
+
+global_energy_observatory_power_plants.sqlite :
+    An sqlite dump of the http://globalenergyobservatory.org/ page
+    scraped using [8].
+
+nrg_113a.xls :
+    Extracted Eurostat dataset of the Electrical backup capacity per
+    European country in the years 2012/13 from [9].
 
 Run
 
@@ -58,3 +80,9 @@ Footnotes:
 [5] http://www.scigrid.de/pages/downloads.html
 
 [6] http://www.powerworld.com/bialek
+
+[7] http://www.bundesnetzagentur.de/DE/Sachgebiete/ElektrizitaetundGas/Unternehmen_Institutionen/Versorgungssicherheit/Erzeugungskapazitaeten/Kraftwerksliste/kraftwerksliste-node.html
+
+[8] https://morph.io/coroa/global_energy_observatory_power_plants
+
+[9] http://ec.europa.eu/eurostat/product?code=nrg_113a&mode=view
