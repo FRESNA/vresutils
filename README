@@ -1,26 +1,36 @@
-To run example.py, links to 
+vresutils Package
 
-germany.npy (German outline as sequence of points)
-entsoe_2009_final.gpickle (Tue's graph of the ENTSO-E grid)
+collects various small helpers, which make your programming life
+easier (or arguably harder, as long you still have to figure out, how
+to use them).
 
-need to be present in data folder.
+For the shapes module one needs
 
+germany.npy :
+    German outline as sequence of points, again, extracted from vg250.
 
-For the shapes module one also needs
+vg250 :
+    Geometry of various German divisions, for example Landkreise and
+    Länder The geometry of these Landkreise must be available as
+    shapefiles at data/vg250 in the UTM32 projection, they are
+    available from the Bundesamt für Kartographie and Geodäsie at [1].
+ 
+ne_10m_admin_countries :
+    Worldwide country shapes from naturalearthdata.com [2]
 
-germany.npy (German outline as sequence of points, again)
-vg250 (Geometry of various German divisions, for example Landkreise and Länder)
-ne_10m_admin_countries (Worldwide country shapes from naturalearthdata.com)
-NUTS_2010_60M_SH (EU shapes from Eurostat)
-plz-gebiete (The german postcode areas obtained by ...)
+NUTS_2010_60M_SH :
+    EU shapes from Eurostat [3]
 
-The geometry of these Landkreise must be available as shapefiles at
-data/vg250 in the UTM32 projection, they are available from the
-Bundesamt für Kartographie and Geodäsie at [1].
+plz-gebiete :
+    The german postcode areas obtained from [4], based on OSM
 
-For graph.read_scigrid the data csv files available at [2] must be
-present.
+links_de_power_150601.csv, vertices_de_power_150601.csv :
+    For graph.read_scigrid the data csv files available at [5] must be
+    present.
 
+entsoe_2009_final.gpickle :
+    An networkx representation of the network published by Bialek
+    at [6] with approximate geographical coordinates.
 
 Run
 
@@ -38,4 +48,13 @@ Footnotes:
 
 [1] http://www.geodatenzentrum.de/geodaten/gdz_rahmen.gdz_div?gdz_spr=deu&gdz_akt_zeile=5&gdz_anz_zeile=1&gdz_unt_zeile=14&gdz_user_id=0
 
-[2] http://www.scigrid.de/pages/downloads.html
+[2] http://www.naturalearthdata.com/downloads/10m-cultural-vectors/
+(Admin 0 - Countries)
+
+[3] http://ec.europa.eu/eurostat/web/gisco/geodata/reference-data/administrative-units-statistical-units
+
+[4] http://www.suche-postleitzahl.org/downloads
+
+[5] http://www.scigrid.de/pages/downloads.html
+
+[6] http://www.powerworld.com/bialek
