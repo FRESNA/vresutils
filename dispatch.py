@@ -171,7 +171,7 @@ def backup_capacity_nuts_grid(G, plants=None):
 
     return plants['Capacity'].groupby((nutsids, plants['Type'])).sum() / 1e3
 
-def backup_capacity_nuts_from_eurostat(G):
+def backup_capacity_nuts_from_eurostat(G, mapping=None):
     import pandas as pd
 
     capacities = read_eurostat_nrg113a().sum()
@@ -182,8 +182,9 @@ def backup_capacity_nuts_from_eurostat(G):
     capacities['CH'] = plants['Switzerland']
     capacities.rename(dict({'UK': 'GB', 'EL': 'GR'}), inplace=True)
 
-    m = vmapping.countries_to_nuts1()
-    return areas.groupby(m).apply(lambda x: x*(capacities[x.name]/x.sum())) / 1e3
+    if mapping is None:
+        mapping = vmapping.countries_to_nuts1()
+    return areas.groupby(mapping).apply(lambda x: x*(capacities[x.name]/x.sum())) / 1e3
 
 def backup_capacity_german_grid(G):
     from shapely.geometry import Point
