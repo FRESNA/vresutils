@@ -167,7 +167,7 @@ class timer(object):
 
         if len(self.name) > 0:
             sys.stdout.write((".. " * self.level) + self.name + ": ")
-            sys.stdout.flush()
+        sys.stdout.flush()
 
         self.__class__.level += 1
         self.__class__.opened = True
@@ -193,6 +193,7 @@ class timer(object):
                     print "%.1f sec" % sec
         else:
             print "failed"
+        sys.stdout.flush()
 
         self.__class__.level -= 1
         self.__class__.opened = False
