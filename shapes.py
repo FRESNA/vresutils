@@ -153,3 +153,30 @@ def postcodeareas(tolerance=0.03):
     sf = shapefile.Reader(toModDir('data/plz-gebiete/plz-gebiete.shp'))
     return Dict((float(rec[0]), _shape2poly(sh))
                 for rec, sh in izip(sf.iterRecords(), sf.iterShapes()))
+
+def save_graph_as_shapes(G, nodes_fn, links_fn):
+    import networkx as nx
+
+    sf_nodes = shapefile.Writer(shapefile.POINT)
+
+    # Prepare fields
+    sf_nodes.field('label')
+    map(sf_nodes.field, next(G.nodes_iter(data=True))[1])
+    extractor = itemgetter(*map(itemgetter(0), sf_nodes.fields[1:]))
+
+    for n, d in G.nodes_iter(data=True):
+        sf_nodes.point(*d['pos'])
+        sf_nodes.record(n, *extractor(d))
+
+    sf_nodes.save(nodes_fn)
+
+
+    sf_links = shapefile.Writer(shapefile.POLYLINE)
+    map(sf_links.field, next(G.edges_iter(data=True))[2])
+    extractor = itemgetter(*map(itemgetter(0), sf_links.fields))
+
+    for n1, n2, d in G.edges_iter(data=True):
+        sf_links.line(parts=[[list(G.node[n]['pos']) for n in (n1, n2)]])
+        sf_links.record(*extractor(d))
+
+    sf_links.save(links_fn)
