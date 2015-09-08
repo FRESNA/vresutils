@@ -184,7 +184,10 @@ def backup_capacity_nuts_from_eurostat(G, mapping=None):
 
     if mapping is None:
         mapping = vmapping.countries_to_nuts1()
-    return areas.groupby(mapping).apply(lambda x: x*(capacities[x.name]/x.sum())) / 1e3
+
+    # rescale = lambda x: x*(capacities[x.name]/x.sum())
+    rescale = lambda x: x + max(0, capacities[x.name] - x.sum())/x.count()
+    return areas.groupby(mapping).apply(rescale) / 1e3
 
 def backup_capacity_german_grid(G):
     from shapely.geometry import Point
