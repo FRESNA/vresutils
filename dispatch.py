@@ -2,6 +2,7 @@
 
 import numpy as np
 import networkx as nx
+import random
 
 from vresutils import shapes as vshapes, mapping as vmapping
 from vresutils.graph import get_node_attributes
@@ -11,7 +12,7 @@ from operator import attrgetter
 from vresutils import make_toModDir, cachable
 toModDir = make_toModDir(__file__)
 
-@cachable
+@cachable(version=2)
 def read_kraftwerksliste(with_latlon=True):
     import pandas as pd
 
@@ -40,7 +41,7 @@ def read_kraftwerksliste(with_latlon=True):
                      if sh is not None}
         kraftwerke['lon'] = kraftwerke.PLZ.map({pc: c.x for pc, c in postcodes.iteritems()})
         kraftwerke['lat'] = kraftwerke.PLZ.map({pc: c.y for pc, c in postcodes.iteritems()})
-        kraftwerke.dropna(subset=('lon','lat'), inplace=True)
+        #kraftwerke.dropna(subset=('lon','lat'), inplace=True)
 
     kraftwerke[u'Type'] = kraftwerke[u"Auswertung Energieträger"].map({
         u'Erdgas': u'Gas',
@@ -53,8 +54,8 @@ def read_kraftwerksliste(with_latlon=True):
         u'Braunkohle': u'Coal',
         u'Abfall': u'Waste',
         u'Kernenergie': u'Nuclear',
-        u'Sonstige Energieträger\n(nicht erneuerbar) ': np.NaN,
-        u'Mehrere Energieträger\n(nicht erneuerbar)': np.NaN
+        u'Sonstige Energieträger\n(nicht erneuerbar) ': u'Other',
+        u'Mehrere Energieträger\n(nicht erneuerbar)': u'Multiple'
     })
 
     return kraftwerke
@@ -199,6 +200,8 @@ def backup_capacity_german_grid(G):
              if type(n) is int or n.isdigit()}
 
     def nodeofaplant(x):
+        if x["lon"] == np.NaN or x["lat"] == np.NaN:
+            return random.choice(cells)
         p = Point(x["lon"], x["lat"])
         for n, cell in cells.iteritems():
             if cell.contains(p):
