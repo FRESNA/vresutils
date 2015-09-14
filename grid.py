@@ -88,8 +88,10 @@ def node_distance(G, n1, n2):
     """
     return 110. * np.sqrt(np.sum((G.node[n1]['pos'] - G.node[n2]['pos'])**2))
 
-def heuristically_extend_edge_attributes(G):
-    for n1, n2, d in G.edges_iter(data=True):
+def heuristically_extend_edge_attributes(G, it=None):
+    if it is None:
+        it = G.edges_iter(data=True)
+    for n1, n2, d in it:
         d.setdefault('length', node_distance(G, n1, n2))
         d.setdefault('voltage', 380)
         d.setdefault('X', specific_susceptance * d['length'])
