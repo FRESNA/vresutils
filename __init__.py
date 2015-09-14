@@ -114,6 +114,7 @@ def cachable(func=None, version=None, cache_dir="/home/vres/data/cache",
                 '.pickle'
             )
 
+            ret = None
             if not recompute and keepweakref and fn in cache:
                 return cache[fn]
             elif not recompute and os.path.exists(fn):
@@ -127,7 +128,8 @@ def cachable(func=None, version=None, cache_dir="/home/vres/data/cache",
                             ret = cPickle.load(f)
                 except Exception as e:
                     warn("Couldn't unpickle from %s: %s" % (fn, e.message))
-            else:
+
+            if ret is None:
                 with optional(
                         verbose,
                         timer("Caching call to {} in {}"
@@ -142,7 +144,7 @@ def cachable(func=None, version=None, cache_dir="/home/vres/data/cache",
                     except Exception as e:
                         warn("Couldn't pickle to %s: %s" % (fn, e.message))
 
-            if keepweakref:
+            if keepweakref and ret is not None:
                 cache[fn] = ret
 
             return ret
