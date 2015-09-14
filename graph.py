@@ -498,6 +498,12 @@ def voronoi_partition(G, outline):
 
     return G
 
+def derive_edgemap(G, nodemap):
+    import pandas as pd
+    return pd.Series({(n1,n2): nodemap[n1]
+                      for n1, n2 in G.edges()
+                      if nodemap[n1] == nodemap[n2]})
+
 class OrderedGraph(nx.Graph):
     """
     This OrderedGraph is intended to be the simplest NetworkX-
