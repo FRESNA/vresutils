@@ -87,7 +87,7 @@ try:
 
         return coll
 
-    def shapes(shapes, data=None, with_labels=False, ax=None):
+    def shapes(shapes, data=None, with_labels=False, outline=False, colour=None, ax=None):
         """
         Plot `data` on the basis of a dictionary of shapes.  `data`
         must be given as a pandas Series with the corresponding keys
@@ -132,8 +132,11 @@ try:
 
         coll = PolyCollection((np.asarray(x.exterior)
                                for x in aligned_shapes),
-                              transOffset=ax.transData)
-        coll.set_array(np.asarray(aligned_data))
+                              transOffset=ax.transData,
+                              facecolors='none' if outline else None,
+                              edgecolors=colour)
+        if colour is None:
+            coll.set_array(np.asarray(aligned_data))
 
         ax.add_collection(coll, autolim=True)
 
