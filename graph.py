@@ -498,11 +498,25 @@ def voronoi_partition(G, outline):
 
     return G
 
-def derive_edgemap(G, nodemap):
+def derive_edgemap(G, nodemap, shapes=None):
     import pandas as pd
-    return pd.Series({(n1,n2): nodemap[n1]
-                      for n1, n2 in G.edges()
-                      if nodemap[n1] == nodemap[n2]})
+    if shapes is None:
+        return pd.Series({(n1,n2): nodemap[n1]
+                          for n1, n2 in G.edges()
+                          if nodemap[n1] == nodemap[n2]})
+    else:
+        from shapely.geometry import LineString
+
+        def edge_to_shape(e):
+            n1, n2 = e
+            nm1 = nodemap[n1]
+            nm2 = nodemap[n2]
+            if nm1 == nm2:
+                return nm1
+            else:
+                ls = LineString([G.node[n1]['pos'], G.node[n2]['pos']])
+                return max((nm1, nm2), key=lambda nm: ls.intersection(shapes[nm]).length)
+        return pd.Series({e: edge_to_shape(e) for e in G.edges()})
 
 class OrderedGraph(nx.Graph):
     """
