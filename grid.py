@@ -1,6 +1,9 @@
 import networkx as nx
 import numpy as np
 
+from itertools import izip, imap
+from operator import itemgetter
+
 from vresutils.graph import OrderedGraph
 
 from . import make_toModDir
