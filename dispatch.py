@@ -227,12 +227,11 @@ class CapacityClasses(object):
         self.capacity = np.asarray(KB.unstack(0).reindex(classes))
         self.cumcapacity = np.cumsum(self.capacity.sum(axis=1))
 
-    def __call__(self, G, L):
-        Delta = G - L
+    def __call__(self, Delta):
         global_Delta = Delta.sum(axis=1)
 
-        B = np.zeros((len(self.classes),) + G.shape, dtype=G.dtype)
-        C = np.zeros_like(G)
+        B = np.zeros((len(self.classes),) + Delta.shape, dtype=Delta.dtype)
+        C = np.zeros_like(Delta)
 
         deficit = global_Delta < 0
         if deficit.any():
