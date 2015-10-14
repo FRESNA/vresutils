@@ -3,9 +3,11 @@
 import numpy as np
 import networkx as nx
 import random
+from itertools import izip
 
 from vresutils import shapes as vshapes, mapping as vmapping
 from vresutils.graph import get_node_attributes
+from vresutils.array import positive, negative
 from operator import attrgetter
 
 
@@ -219,12 +221,17 @@ class CapacityClasses(object):
     def __init__(self, KB=None, G=None, classes=['Coal', 'Nuclear', 'Gas', 'Oil', 'Hydro', 'Waste'], unit='GW'):
         if KB is None:
             assert isinstance(G, nx.Graph), "Either KB or G must be specified"
-            KB = vdispatch.backup_capacity_german_grid(G)
+            KB = vdispatch.backup_capacity_german_grid(G).reindex_axis(G.nodes(), level=0)
 
         conv = dict(GW=1e-3, MW=1., kW=1e3)[unit]
 
         self.classes = classes
-        self.capacity = np.asarray(KB.unstack(0).reindex(classes))
+        self.capacity = np.asarray(
+            KB.unstack()
+            .reindex_axis(KB.index.levels[0], axis=0)
+            .reindex_axis(classes, axis=1).fillna(0.)
+            .T
+        )
         self.cumcapacity = np.cumsum(self.capacity.sum(axis=1))
 
     def __call__(self, Delta):
