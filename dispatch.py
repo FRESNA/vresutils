@@ -200,8 +200,8 @@ def backup_capacity_german_grid(G):
              if type(n) is int or n.isdigit()}
 
     def nodeofaplant(x):
-        if x["lon"] == np.NaN or x["lat"] == np.NaN:
-            return random.choice(cells)
+        if np.isnan(x["lon"]) or np.isnan(x["lat"]):
+            return random.choice(cells.keys())
         p = Point(x["lon"], x["lat"])
         for n, cell in cells.iteritems():
             if cell.contains(p):
