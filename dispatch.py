@@ -214,3 +214,54 @@ def backup_capacity_german_grid(G):
     capacity.name = 'Capacity'
 
     return capacity
+
+class CapacityClasses(object):
+    def __init__(self, KB=None, G=None, classes=['Coal', 'Nuclear', 'Gas', 'Oil', 'Hydro', 'Waste'], unit='GW'):
+        if KB is None:
+            assert isinstance(G, nx.Graph), "Either KB or G must be specified"
+            KB = vdispatch.backup_capacity_german_grid(G)
+
+        conv = dict(GW=1e-3, MW=1., kW=1e3)[unit]
+
+        self.classes = classes
+        self.capacity = np.asarray(KB.unstack(0).reindex(classes))
+        self.cumcapacity = np.cumsum(self.capacity.sum(axis=1))
+
+    def __call__(self, G, L):
+        Delta = G - L
+        global_Delta = Delta.sum(axis=1)
+
+        B = np.zeros((len(self.classes),) + G.shape, dtype=G.dtype)
+        C = np.zeros_like(G)
+
+        deficit = global_Delta < 0
+        if deficit.any():
+            global_deficit = - global_Delta[deficit]
+
+            deficit_times = np.where(deficit)[0]
+
+            prevcum = 0
+            was_sm = np.ones(global_deficit.shape, dtype=bool)
+            for cum, cap, cB in izip(self.cumcapacity, self.capacity, B):
+                is_sm = cum <= global_deficit
+
+                was_and_is_sm = was_sm & is_sm
+                if was_and_is_sm.any():
+                    cB[deficit_times[was_and_is_sm]] += cap
+
+                was_but_isnot_sm = was_sm & (~ is_sm)
+                if was_but_isnot_sm.any():
+                    cB[deficit_times[was_but_isnot_sm]] += (global_deficit[was_but_isnot_sm] - prevcum)[:,np.newaxis] * (cap / (cum - prevcum))
+
+                was_sm = is_sm
+                prevcum = cum
+
+        surplus = ~ deficit
+        if surplus.any():
+            weight = positive(Delta[surplus])
+            C[surplus] = (global_Delta[surplus]
+                          / weight.sum(axis=1))[:,np.newaxis] * weight
+
+        P = Delta + B.sum(axis=0) - C
+
+        return P, B, C
