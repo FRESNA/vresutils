@@ -446,7 +446,8 @@ def get_voronoi_regions(G, outline=None):
         if callable(outline):
             outline = outline()
         assert outline is not None
-        voronoi_partition(G, Polygon(outline))
+        G = voronoi_partition(G, Polygon(outline))
+        warnings.warn("TODO Relies on side-effect, broken in most recent NX")
     return get_node_attributes(G, 'region').values()
 
 def voronoi_partition(G, outline):
