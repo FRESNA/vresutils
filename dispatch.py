@@ -271,3 +271,51 @@ class CapacityClasses(object):
         P = Delta + B.sum(axis=0) - C
 
         return P, B, C
+
+def synchronized(N, mean_load=True, optimized_curtailment=True, calc_flows=True):
+    """
+    Derive balancing and curtailment for a Nodes instance `N`
+    according to synchronized balancing.
+
+    Arguments
+    ---------
+    N : Nodes class
+
+    Returns
+    -------
+    M : Nodes class
+      A new Nodes instance, with synchronized balancing
+
+    Examples
+    --------
+    import regions.generate
+    N = synchronized(regions.generate.embedded_germany())
+
+    Gives you a fully solved model with unconstrained synchronized balancing.
+    """
+
+    M = N.__class__(N)
+    global_Delta = M.mismatch.sum(axis=1)
+
+    deficit = global_Delta < 0
+    if deficit.any():
+        M.balancing = np.zeros(M.balancing.shape)
+        weight = M.mean if mean_load else M.load[deficit]
+        M.balancing[deficit] = (- global_Delta[deficit]
+                                / weight.sum(axis=-1))[:,np.newaxis] * weight
+
+    surplus = ~ deficit
+    if surplus.any():
+        M.curtailment = np.zeros(M.balancing.shape)
+        #weight = M.solar[surplus] + M.wind[surplus] if optimized_curtailment else M.mean
+        weight = positive(M.mismatch[surplus]) if optimized_curtailment else M.mean
+        M.curtailment[surplus] = (global_Delta[surplus]
+                                  / weight.sum(axis=-1))[:,np.newaxis] * weight
+
+    M.region = "{}({})".format(M.region, "synchronized")
+
+    if calc_flows:
+        from flowtracing.flow import FlowerPTDF
+        M.flows = FlowerPTDF(M.graph).PTDF.dot(M.injection_pattern.T).T
+
+    return M
