@@ -518,7 +518,8 @@ def derive_edgemap(G, nodemap, shapes=None):
             else:
                 ls = LineString([G.node[n1]['pos'], G.node[n2]['pos']])
                 return max((nm1, nm2), key=lambda nm: ls.intersection(shapes[nm]).length)
-        return pd.Series(OrderedDict((e, edge_to_shape(e)) for e in G.edges()))
+        edges = G.edges()
+        return pd.Series(map(edge_to_shape, edges), index=pd.MultiIndex.from_tuples(edges))
 
 if StrictVersion(nx.__version__) >= '1.10':
     class OrderedGraph(nx.Graph):
