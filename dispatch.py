@@ -312,7 +312,7 @@ def synchronized(N, mean_load=True, optimized_curtailment=True, calc_flows=True)
         M.curtailment[surplus] = (global_Delta[surplus]
                                   / weight.sum(axis=-1))[:,np.newaxis] * weight
 
-    M.region = "{}({})".format(M.region, "synchronized")
+    M.region = "{}({})".format(M.region, "synchronized+" if optimized_curtailment else "synchronized")
 
     if calc_flows:
         from flowtracing.flow import FlowerPTDF
