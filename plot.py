@@ -39,7 +39,9 @@ try:
         line, = plt.plot(*vshapes.points(vshapes.germany()).T, color='k', linewidth=linewidth)
         line.set_zorder(1)
 
-    def landkreise(data, colorbar=True, colorbar_ticklabels=None, ax=None, norm=None, **kw):
+    def landkreise(data,
+                   colorbar=True, colorbar_ticklabels=None,
+                   norm=None, ax=None):
         """
         Plot data on german Landkreis level. Needs a pandas Series with
         the corresponding regionalschluessel as index.
@@ -58,36 +60,14 @@ try:
         collection : PolyCollection
         """
 
-        if ax is None:
-            ax = plt.gca()
+        return shapes(vshapes.landkreise(), data=data,
+                      colorbar=colorbar, colorbar_ticklabels=colorbar_ticklabels,
+                      norm=norm, ax=ax)
 
-        lk = vshapes.landkreise()
-        coll = PolyCollection(imap(vshapes.points,
-                                   pd.Series(lk).reindex(data.index)),
-                              transOffset=ax.transData,
-                              **kw)
-        if norm is not None:
-            coll.set_norm(norm)
-        coll.set_array(data)
-        ax.add_collection(coll)
-        ax.autoscale_view()
-
-        if colorbar:
-            kwargs = dict()
-            if isinstance(colorbar, dict):
-                kwargs.update(colorbar)
-
-            ## FIXME : sounds like a bug to me, but hey
-            if norm is not None:
-                norm.autoscale(np.asarray(data))
-
-            cbar = plt.colorbar(mappable=coll, **kwargs)
-            if colorbar_ticklabels is not None:
-                cbar.ax.set_yticklabels(colorbar_ticklabels)
-
-        return coll
-
-    def shapes(shapes, data=None, with_labels=False, outline=False, colour=None, ax=None):
+    def shapes(shapes, data=None,
+               colorbar=True, colorbar_ticklabels=None, norm=None,
+               with_labels=False, outline=False, colour=None,
+               ax=None):
         """
         Plot `data` on the basis of a dictionary of shapes.  `data`
         must be given as a pandas Series with the corresponding keys
@@ -138,7 +118,23 @@ try:
         if colour is None:
             coll.set_array(np.asarray(aligned_data))
 
+        if norm is not None:
+            coll.set_norm(norm)
+
         ax.add_collection(coll, autolim=True)
+
+        if colorbar:
+            kwargs = dict()
+            if isinstance(colorbar, dict):
+                kwargs.update(colorbar)
+
+            ## FIXME : sounds like a bug to me, but hey
+            if norm is not None:
+                norm.autoscale(np.asarray(data))
+
+            cbar = plt.colorbar(mappable=coll, **kwargs)
+            if colorbar_ticklabels is not None:
+                cbar.ax.set_yticklabels(colorbar_ticklabels)
 
         if with_labels:
             for k,v in shapes.reindex(data.index).iteritems():
