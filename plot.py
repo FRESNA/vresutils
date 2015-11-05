@@ -34,9 +34,9 @@ try:
 
         if with_laender:
             laender = LineCollection(imap(vshapes.points, flatten(vshapes.laender().itervalues())),
-                                     colors="gray", zorder=0)
+                                     colors="gray", zorder=0, linewidths=linewidth)
             ax.add_collection(laender)
-        line, = plt.plot(*vshapes.points(vshapes.germany()).T, color='k')
+        line, = plt.plot(*vshapes.points(vshapes.germany()).T, color='k', linewidth=linewidth)
         line.set_zorder(1)
 
     def landkreise(data, colorbar=True, colorbar_ticklabels=None, ax=None, norm=None, **kw):
