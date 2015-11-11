@@ -65,7 +65,7 @@ try:
                       norm=norm, ax=ax)
 
     def shapes(shapes, data=None,
-               colorbar=True, colorbar_ticklabels=None, norm=None,
+               colorbar=False, colorbar_ticklabels=None, norm=None,
                with_labels=False, outline=False, colour=None,
                ax=None):
         """
@@ -229,7 +229,7 @@ try:
 
         """
         if not np.allclose(segments.sum(axis=1), 1):
-            segments = segments / segments.sum(axis=1)[:,np.newaxis]
+            segments = segments / segments.sum(axis=1, keepdims=True)
 
         if ax is None:
             ax = plt.gca()
