@@ -521,10 +521,38 @@ def derive_edgemap(G, nodemap, shapes=None):
         edges = G.edges()
         return pd.Series(map(edge_to_shape, edges), index=pd.MultiIndex.from_tuples(edges))
 
-if StrictVersion(nx.__version__) >= '1.10':
+if False and StrictVersion(nx.__version__) >= '1.12':
     class OrderedGraph(nx.Graph):
         node_dict_factory = OrderedDict
         adjlist_dict_factory = OrderedDict
+elif StrictVersion(nx.__version__) >= '1.10':
+    class OrderedGraph(nx.Graph):
+        node_dict_factory = OrderedDict
+        adjlist_dict_factory = OrderedDict
+
+        def __init__(self, data=None, **attr):
+            self.node_dict_factory = ndf = self.node_dict_factory
+            self.adjlist_dict_factory = self.adjlist_dict_factory
+            self.edge_attr_dict_factory = self.edge_attr_dict_factory
+
+            self.graph = {}   # dictionary for graph attributes
+            self.node = ndf()  # empty node attribute dict
+            self.adj = ndf()  # empty adjacency dict
+            # attempt to load graph with data
+            if data is not None:
+                if isinstance(data, OrderedGraph):
+                    try:
+                        nx.convert.from_dict_of_dicts(
+                            data.adj,
+                            create_using=self,
+                            multigraph_input=data.is_multigraph()
+                        )
+                        self.graph = data.graph.copy()
+                        self.node.update((n,d.copy()) for n,d in data.node.items())
+                    except:
+                        raise nx.NetworkXError("Input is not a correct NetworkX graph.")
+                else:
+                    convert.to_networkx_graph(data, create_using=self)
 else:
     class OrderedGraph(nx.Graph):
         """
