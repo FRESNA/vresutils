@@ -517,7 +517,15 @@ def derive_edgemap(G, nodemap, shapes=None):
                 return nm1
             else:
                 ls = LineString([G.node[n1]['pos'], G.node[n2]['pos']])
-                return max((nm1, nm2), key=lambda nm: ls.intersection(shapes[nm]).length)
+                length = lambda nm: ls.intersection(shapes[nm]).length
+                l1 = length(nm1)
+                l2 = length(nm2)
+                if l1 >= l2 and l1 > 0:
+                    return m1
+                elif l2 > l1 and l2 > 0:
+                    return m2
+                else:
+                    return np.nan
         edges = G.edges()
         return pd.Series(map(edge_to_shape, edges), index=pd.MultiIndex.from_tuples(edges))
 
