@@ -560,7 +560,7 @@ elif StrictVersion(nx.__version__) >= '1.10':
                     except:
                         raise nx.NetworkXError("Input is not a correct NetworkX graph.")
                 else:
-                    convert.to_networkx_graph(data, create_using=self)
+                    nx.convert.to_networkx_graph(data, create_using=self)
 else:
     class OrderedGraph(nx.Graph):
         """
