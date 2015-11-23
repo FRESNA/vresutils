@@ -511,19 +511,20 @@ def derive_edgemap(G, nodemap, shapes=None):
 
         def edge_to_shape(e):
             n1, n2 = e
-            nm1 = nodemap[n1]
-            nm2 = nodemap[n2]
+            nm1 = nodemap.get(n1)
+            nm2 = nodemap.get(n2)
             if nm1 == nm2:
                 return nm1
             else:
                 ls = LineString([G.node[n1]['pos'], G.node[n2]['pos']])
-                length = lambda nm: ls.intersection(shapes[nm]).length
+                def length(nm):
+                    return ls.intersection(shapes[nm]).length if nm is not None else 0
                 l1 = length(nm1)
                 l2 = length(nm2)
                 if l1 >= l2 and l1 > 0:
-                    return m1
+                    return nm1
                 elif l2 > l1 and l2 > 0:
-                    return m2
+                    return nm2
                 else:
                     return np.nan
         edges = G.edges()
