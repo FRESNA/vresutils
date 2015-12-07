@@ -39,6 +39,52 @@ def penalize(x, n):
 # Functions which provide access to special network data
 #
 
+def bialek_data():
+    import pandas as pd
+    from operator import itemgetter
+
+    buses, lines, coords = itemgetter('Bus Records', 'Line Records', 'DisplayBus') \
+        (pd.read_excel(toModDir('data/bialek.xlsx'),
+                       sheetname=None, skiprows=1, header=0))
+
+    buses.set_index('Number', inplace=True)
+    coords.set_index('Number', inplace=True)
+    coords.rename(columns={'X/Longitude Location': u'lon',
+                           'Y/Latitude Location': u'lat'},
+                  inplace=True)
+    lines.set_index(['From Number', 'To Number'], inplace=True)
+
+    # trafo from Xp, Yp to Xg, Yg according to diss of Qiang Zhou
+    # (p. 139-140)
+    XYpul = np.array((-500, 1500))
+    XYplr = np.array((1500, -500))
+    XYgul = np.array((-10.386207, 57.980912))
+    XYglr = np.array((25.954773, 35.416979))
+    lonlat = (coords.loc[:,['lon', 'lat']] - XYpul) * (XYglr - XYgul)/(XYplr - XYpul) + XYgul
+    # lonlat = lonlat.assign(**{u'pos':list(np.asarray(lonlat))})
+    buses = pd.concat((buses, lonlat), axis=1)
+
+    return buses, lines
+
+def bialek():
+    G = OrderedGraph()
+    buses, lines = bialek_data()
+    nodes = buses.loc[:,['Name', 'Area Name', 'PU Volt']] \
+                 .rename(columns={'Name': 'name', 'Area Name': 'area name',
+                                  'PU Volt': 'voltage'}) \
+                 .assign(pos=list(np.asarray(buses.loc[:,['lon','lat']])))
+    links = lines.loc[:,['From Name', 'To Name', 'X', 'Lim A MVA', 'Circuit']] \
+                 .rename(columns={'From Name': 'from name',
+                                  'To Name': 'to name',
+                                  'Lim A MVA': 'limit',
+                                  'Circuit': 'circuit'}) \
+                 .assign(Y=1./lines['X'])
+
+    G.add_nodes_from(nodes.iterrows())
+    G.add_edges_from((u,v,d) for (u,v),d in links.iterrows())
+
+    return G
+
 def entsoe_tue():
     return OrderedGraph(nx.read_gpickle(toModDir("data/entsoe_2009_final.gpickle")))
 
