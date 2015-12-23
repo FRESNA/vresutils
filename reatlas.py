@@ -30,6 +30,10 @@ class Cutout(object):
             reatlas = REatlas()
         self.reatlas = reatlas
 
+    @property
+    def shape(self):
+        return self.meta['latitudes'].shape
+
     @CachedAttribute
     def meta(self):
         self.reatlas.prepare_cutout_metadata(cutoutname=self.cutoutname,
@@ -60,7 +64,7 @@ class Cutout(object):
         from shapely.geometry import box
 
         coords = self.grid_coordinates()
-        span = (coords[self.meta['latitudes'].shape[1]+1] - coords[0]) / 2
+        span = (coords[self.shape[1]+1] - coords[0]) / 2
         return [box(*c) for c in np.hstack((coords - span, coords + span))]
 
     def __repr__(self):
