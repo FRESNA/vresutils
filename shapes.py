@@ -154,7 +154,7 @@ def landkreise(tolerance=0.03):
 @cachable(keepweakref=True, version=2)
 def postcodeareas(tolerance=0.03):
     sf = shapefile.Reader(toModDir('data/plz-gebiete/plz-gebiete.shp'))
-    return Dict((float(rec[0]), _shape2poly(sh))
+    return Dict((float(rec[0]), _shape2poly(sh, tolerance=tolerance))
                 for rec, sh in izip(sf.iterRecords(), sf.iterShapes()))
 
 def save_graph_as_shapes(G, nodes_fn, links_fn):
