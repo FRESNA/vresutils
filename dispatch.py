@@ -105,6 +105,7 @@ def read_eurostat_nrg113a():
 def read_enipedia():
     import pandas as pd
     import sparql
+    import datetime
 
     res = sparql.query('http://enipedia.tudelft.nl/wiki/Special:SparqlExtension', """
         BASE <http://enipedia.tudelft.nl/wiki/>
