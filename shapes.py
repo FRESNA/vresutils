@@ -53,10 +53,13 @@ def _shape2poly(sh, tolerance=0.03, minarea=0.03, projection=None):
 
     polys = sorted(parts2polys(np.split(pts, sh.parts[1:])),
                    key=attrgetter('area'), reverse=True)
-    if polys[0].area > minarea:
-        mpoly = MultiPolygon(list(takewhile(lambda p: p.area > minarea, polys)))
+    mainpoly = polys[0]
+    mainlength = np.sqrt(mainpoly.area/(2.*np.pi))
+    if mainpoly.area > minarea:
+        mpoly = MultiPolygon(filter(lambda p: mainpoly.distance(p) < mainlength,
+                                    takewhile(lambda p: p.area > minarea, polys)))
     else:
-        mpoly = polys[0]
+        mpoly = mainpoly
     return simplify_poly(mpoly, tolerance)
 _shape2poly.wgs = Proj('+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m +no_defs')
 
@@ -151,7 +154,7 @@ def landkreise(tolerance=0.03):
 @cachable(keepweakref=True, version=2)
 def postcodeareas(tolerance=0.03):
     sf = shapefile.Reader(toModDir('data/plz-gebiete/plz-gebiete.shp'))
-    return Dict((float(rec[0]), _shape2poly(sh))
+    return Dict((float(rec[0]), _shape2poly(sh, tolerance=tolerance))
                 for rec, sh in izip(sf.iterRecords(), sf.iterShapes()))
 
 def save_graph_as_shapes(G, nodes_fn, links_fn):

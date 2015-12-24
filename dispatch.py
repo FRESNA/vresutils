@@ -273,7 +273,7 @@ class CapacityClasses(object):
 
         return P, B, C
 
-def synchronized(N, mean_load=True, optimized_curtailment=True, calc_flows=True):
+def synchronized(N, mean_load=True, optimized_curtailment=True, calc_flows=True, susceptance='Y'):
     """
     Derive balancing and curtailment for a Nodes instance `N`
     according to synchronized balancing.
@@ -316,7 +316,7 @@ def synchronized(N, mean_load=True, optimized_curtailment=True, calc_flows=True)
     M.region = "{}({})".format(M.region, "synchronized+" if optimized_curtailment else "synchronized")
 
     if calc_flows:
-        from flowtracing.flow import FlowerPTDF
-        M.flows = FlowerPTDF(M.graph).PTDF.dot(M.injection_pattern.T).T
+        from .flow import PTDF
+        M.flows = M.injection_pattern.dot(PTDF(M.graph, susceptance=susceptance).T)
 
     return M
