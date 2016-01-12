@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from pyproj import Proj
+import pyproj
 import shapefile
+from shapely.ops import transform
 from shapely.geometry import LinearRing, Polygon, MultiPolygon, GeometryCollection
+from functools import partial
 from itertools import izip, chain, count, imap, takewhile
 from operator import itemgetter, attrgetter
 from collections import OrderedDict
@@ -24,6 +26,13 @@ def simplify_pts(pts, tolerance=0.03):
 
 def points(poly):
     return np.asarray(poly.exterior)
+
+def area(geom):
+    return reproject(geom).area
+
+def reproject(geom, fr=pyproj.Proj(proj='longlat'), to=pyproj.Proj(proj='aea')):
+    reproject_pts = partial(pyproj.transform, fr, to)
+    return transform(reproject_pts, geom)
 
 class Dict(dict): pass
 
@@ -61,7 +70,7 @@ def _shape2poly(sh, tolerance=0.03, minarea=0.03, projection=None):
     else:
         mpoly = mainpoly
     return simplify_poly(mpoly, tolerance)
-_shape2poly.wgs = Proj('+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m +no_defs')
+_shape2poly.wgs = pyproj.Proj('+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m +no_defs')
 
 @cachable(keepweakref=True)
 def nuts0(tolerance=0.03, minarea=1.):
