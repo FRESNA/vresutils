@@ -490,9 +490,8 @@ def voronoi_partition(G, outline):
         region = region.intersection(outline)
 
         try:
-            polygons = region.geoms # if that works, we have a MultiPolygon
-            # pick the part with the largest area
-            region = max(polygons, key=lambda pg: pg.area)
+            # for a MultiPolygon pick the part with the largest area
+            region = max(region.geoms, key=lambda pg: pg.area)
         except:
             pass
 
