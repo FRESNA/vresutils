@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from pyproj import Proj
+import pyproj
 import shapefile
+from shapely.ops import transform
 from shapely.geometry import LinearRing, Polygon, MultiPolygon, GeometryCollection
+from functools import partial
 from itertools import izip, chain, count, imap, takewhile
 from operator import itemgetter, attrgetter
 from collections import OrderedDict
@@ -12,6 +14,13 @@ import warnings
 
 from vresutils import make_toModDir, Singleton, staticvars, cachable
 toModDir = make_toModDir(__file__)
+
+def haversine(*coords):
+    if len(coords) == 1:
+        coords = coords[0]
+    lon, lat = np.deg2rad(np.asarray(coords)).T
+    a = np.sin((lat[1]-lat[0])/2.)**2 + np.cos(lat[0]) * np.cos(lat[1]) * np.sin((lon[0] - lon[1])/2.)**2
+    return 6371.000 * 2 * np.arctan2( np.sqrt(a), np.sqrt(1-a) )
 
 def simplify_poly(poly, tolerance):
     if tolerance is None:
@@ -24,6 +33,13 @@ def simplify_pts(pts, tolerance=0.03):
 
 def points(poly):
     return np.asarray(poly.exterior)
+
+def area(geom):
+    return reproject(geom).area
+
+def reproject(geom, fr=pyproj.Proj(proj='longlat'), to=pyproj.Proj(proj='aea')):
+    reproject_pts = partial(pyproj.transform, fr, to)
+    return transform(reproject_pts, geom)
 
 class Dict(dict): pass
 
@@ -61,7 +77,7 @@ def _shape2poly(sh, tolerance=0.03, minarea=0.03, projection=None):
     else:
         mpoly = mainpoly
     return simplify_poly(mpoly, tolerance)
-_shape2poly.wgs = Proj('+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m +no_defs')
+_shape2poly.wgs = pyproj.Proj('+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m +no_defs')
 
 @cachable(keepweakref=True)
 def nuts0(tolerance=0.03, minarea=1.):

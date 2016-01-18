@@ -32,6 +32,7 @@ def Points2Points(orig, dest, surjective=False):
 
 try:
     import shapely.geometry as geo
+    from .shapes import reproject
 
     def Shapes2Points(orig, dest, **kwargs):
         return Points2Points(Centroid(orig), dest, **kwargs)
@@ -39,7 +40,10 @@ try:
     def Points2Shapes(orig, dest, **kwargs):
         return Points2Points(orig, Centroid(dest), **kwargs)
 
-    def Shapes2Shapes(orig, dest, normed=True, **kwargs):
+    def Shapes2Shapes(orig, dest, normed=True, equalarea=False, **kwargs):
+        if equalarea:
+            dest = map(reproject, dest)
+            orig = map(reproject, orig)
         transfer = sparse.lil_matrix((len(dest), len(orig)), dtype=np.float)
         for i,j in product(xrange(len(dest)), xrange(len(orig))):
             if dest[i].intersects(orig[j]):
