@@ -20,6 +20,9 @@ def shift_ip(x,d=1):
 
     return x
 
+def normed(x, axis=None):
+    return x/x.sum(axis=axis, keepdims=True)
+
 def positive(a):
     if hasattr(a, "multiply"):
         if sp.sparse.isspmatrix_csc(a) or sp.sparse.isspmatrix_csr(a):
