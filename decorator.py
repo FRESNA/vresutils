@@ -95,7 +95,7 @@ def cachable(func=None, version=None, cache_dir=config['cache_dir'],
                 return cache[fn]
             elif not recompute and os.path.exists(fn):
                 try:
-                    with open(fn) as f:
+                    with open(fn, 'rb') as f:
                         with optional(
                                 verbose,
                                 timer("Serving call to {} from file {}"
@@ -103,7 +103,7 @@ def cachable(func=None, version=None, cache_dir=config['cache_dir'],
                         ):
                             ret = cPickle.load(f)
                 except Exception as e:
-                    warn("Couldn't unpickle from %s: %s" % (fn, e.message))
+                    warn("Couldn't unpickle from %s: %s" % (fn, e.args[0]))
 
             if ret is None:
                 with optional(
@@ -113,12 +113,12 @@ def cachable(func=None, version=None, cache_dir=config['cache_dir'],
                 ):
                     ret = func(*args, **kwds)
                     try:
-                        with open(fn, 'w') as f:
+                        with open(fn, 'wb') as f:
                             if gid: os.fchown(f.fileno(), -1, gid)
                             if mode: os.fchmod(f.fileno(), mode)
                             cPickle.dump(ret, f, protocol=-1)
                     except Exception as e:
-                        warn("Couldn't pickle to %s: %s" % (fn, e.message))
+                        warn("Couldn't pickle to %s: %s" % (fn, e.args[0]))
 
             if keepweakref and ret is not None:
                 cache[fn] = ret

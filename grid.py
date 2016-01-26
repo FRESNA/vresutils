@@ -4,7 +4,8 @@ import networkx as nx
 import numpy as np
 
 from operator import itemgetter
-from six.moves import zip, map
+from six.moves import zip, map, cPickle as pickle
+import six
 
 from vresutils.graph import OrderedGraph
 
@@ -88,7 +89,12 @@ def bialek():
     return G
 
 def entsoe_tue():
-    return OrderedGraph(nx.read_gpickle(toModDir("data/entsoe_2009_final.gpickle")))
+    with open(toModDir("data/entsoe_2009_final.gpickle"), 'rb') as f:
+        if six.PY2:
+            G = pickle.load(f)
+        else:
+            G = pickle.load(f, encoding='latin-1')
+    return OrderedGraph(G)
 
 def entsoe_tue_linecaps(with_manual_link=True):
     G = entsoe_tue()
