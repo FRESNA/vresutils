@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import numpy as np
 import pandas as pd
 import tempfile, os.path
@@ -6,6 +8,8 @@ import subprocess
 from shutil import rmtree
 
 from . import cachable, make_toModDir
+from six import iteritems
+from six.moves import map
 toModDir = make_toModDir(__file__)
 
 @cachable(ignore=set(('tmpdir',)))
@@ -36,7 +40,7 @@ def corine_label1(cutout, tmpdir=None):
         return x.lower()
 
     groups = {simplify_name(k):v
-              for k,v in legend.groupby(legend.LABEL1).groups.iteritems()}
+              for k,v in iteritems(legend.groupby(legend.LABEL1).groups)}
 
     return list(groups), corine_by_groups(cutout, groups, tmpdir=tmpdir)
 
@@ -56,7 +60,7 @@ def corine_by_groups(cutout, groups, fn=toModDir('data/corine/g100_06.tif'), tmp
             meta.update(transform=src.meta['affine'],
                         compress='lzw')
 
-            for group, indices in groups.iteritems():
+            for group, indices in iteritems(groups):
                 windows = src.block_windows(1)
 
                 with rasterio.open(os.path.join(tmpdir, '{}.tif'.format(group)), 'w', **meta) as dst:
@@ -90,7 +94,7 @@ def corine_by_groups(cutout, groups, fn=toModDir('data/corine/g100_06.tif'), tmp
         def load_avg(group):
             with rasterio.open(os.path.join(tmpdir, '{}_avg.tif'.format(group))) as avg:
                 return avg.read()[0]
-        landuse = np.asarray(map(load_avg, groups))
+        landuse = np.asarray(list(map(load_avg, groups)))
 
     if own_tmpdir:
         rmtree(tmpdir, ignore_errors=True)

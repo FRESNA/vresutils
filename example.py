@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import matplotlib.pyplot as plt
 from scipy.spatial import voronoi_plot_2d
 
@@ -37,7 +39,7 @@ for i,(n,dat) in enumerate(vor.nodes(data=True)):
     cl.append(color)
     plt.plot(x,y, color=color)
 
-print check
+print(check)
 
 pos = nx.get_node_attributes(vor, 'pos')
 nx.draw(vor, pos=pos, node_color=cl)

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
+
 import numpy as np
 import networkx as nx
 import random
@@ -12,6 +14,8 @@ from operator import attrgetter
 
 
 from vresutils import make_toModDir, cachable
+from six import iteritems
+from six.moves import map
 toModDir = make_toModDir(__file__)
 
 @cachable(version=2)
@@ -39,10 +43,10 @@ def read_kraftwerksliste(with_latlon=True):
 
     if with_latlon:
         postcodes = {pc: sh.centroid
-                     for pc, sh in vshapes.postcodeareas().iteritems()
+                     for pc, sh in iteritems(vshapes.postcodeareas())
                      if sh is not None}
-        kraftwerke['lon'] = kraftwerke.PLZ.map({pc: c.x for pc, c in postcodes.iteritems()})
-        kraftwerke['lat'] = kraftwerke.PLZ.map({pc: c.y for pc, c in postcodes.iteritems()})
+        kraftwerke['lon'] = kraftwerke.PLZ.map({pc: c.x for pc, c in iteritems(postcodes)})
+        kraftwerke['lat'] = kraftwerke.PLZ.map({pc: c.y for pc, c in iteritems(postcodes)})
         #kraftwerke.dropna(subset=('lon','lat'), inplace=True)
 
     kraftwerke[u'Type'] = kraftwerke[u"Auswertung Energieträger"].map({
@@ -133,7 +137,7 @@ def read_enipedia():
 
     def literal_to_python(l):
         if isinstance(l, tuple):
-            return map(literal_to_python, l)
+            return list(map(literal_to_python, l))
         elif l is None:
             return None
         elif l.datatype is None:
@@ -145,7 +149,7 @@ def read_enipedia():
                  'dateTime': parse_datetime, 'gYearMonth': parse_datetime} \
                 [l.datatype[len('http://www.w3.org/2001/XMLSchema#'):]](l.value)
 
-    df = pd.DataFrame(map(literal_to_python, res.fetchone()),
+    df = pd.DataFrame(list(map(literal_to_python, res.fetchone())),
                       columns=["Name", "Type", "Country", "Capacity",
                                "lon", "lat", "Built", "Status"])
 
@@ -156,7 +160,7 @@ def backup_capacity_nuts_grid(G, plants=None):
 
     if plants is None:
         plants = read_globalenergyobservatory()
-    name_to_iso2 = dict((v,k) for k,v in vmapping.iso2_to_name().iteritems())
+    name_to_iso2 = dict((v,k) for k,v in iteritems(vmapping.iso2_to_name()))
     iso2_to_nuts = vmapping.countries_to_nuts1(series=False)
 
     def nutsidofaplant(x):
@@ -204,9 +208,9 @@ def backup_capacity_german_grid(G):
 
     def nodeofaplant(x):
         if np.isnan(x["lon"]) or np.isnan(x["lat"]):
-            return random.choice(cells.keys())
+            return random.choice(list(cells.keys()))
         p = Point(x["lon"], x["lat"])
-        for n, cell in cells.iteritems():
+        for n, cell in iteritems(cells):
             if cell.contains(p):
                 return n
         else:

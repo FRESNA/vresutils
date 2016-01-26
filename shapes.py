@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
+
 import pyproj
 import shapefile
 from shapely.ops import transform
@@ -13,6 +15,8 @@ import pandas as pd
 import warnings
 
 from vresutils import make_toModDir, Singleton, staticvars, cachable
+from six import iteritems
+from six.moves import map
 toModDir = make_toModDir(__file__)
 
 def haversine(*coords):
@@ -60,7 +64,7 @@ def _shape2poly(sh, tolerance=0.03, minarea=0.03, projection=None):
 
     minlength = 2*np.pi*np.sqrt(minarea / np.pi)
     def parts2polys(parts):
-        rings = map(LinearRing, parts)
+        rings = list(map(LinearRing, parts))
         while(rings):
             exterior = rings.pop(0)
             interiors = list(takewhile(attrgetter('is_ccw'), rings))
@@ -72,8 +76,9 @@ def _shape2poly(sh, tolerance=0.03, minarea=0.03, projection=None):
     mainpoly = polys[0]
     mainlength = np.sqrt(mainpoly.area/(2.*np.pi))
     if mainpoly.area > minarea:
-        mpoly = MultiPolygon(filter(lambda p: mainpoly.distance(p) < mainlength,
-                                    takewhile(lambda p: p.area > minarea, polys)))
+        mpoly = MultiPolygon([p
+                              for p in takewhile(lambda p: p.area > minarea, polys)
+                              if mainpoly.distance(p) < mainlength])
     else:
         mpoly = mainpoly
     return simplify_poly(mpoly, tolerance)
@@ -96,8 +101,8 @@ def nuts1(tolerance=0.03, minarea=1., extended=True):
                               key=itemgetter(0)))
     if extended:
         cntry_map = {'BA': u'BA1', 'RS': u'RS1', 'AL': u'AL1', 'KV': u'KV1'}
-        cntries = countries(cntry_map.keys(), tolerance, minarea)
-        nuts.update((cntry_map[k], v) for k,v in cntries.iteritems())
+        cntries = countries(list(cntry_map.keys()), tolerance, minarea)
+        nuts.update((cntry_map[k], v) for k,v in iteritems(cntries))
 
     return nuts
 

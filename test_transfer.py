@@ -1,10 +1,12 @@
+from __future__ import absolute_import
+
 import unittest
 import numpy as np
 from numpy.testing import assert_allclose
 
 import scipy.sparse as sparse
 
-import transfer
+from . import transfer
 
 def make_orig_dest():
     orig = np.array(((0., 0.), (1., 1.)))

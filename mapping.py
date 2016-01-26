@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import pandas as pd
 import shapefile
 from itertools import izip, count, chain
@@ -8,6 +10,8 @@ from .array import unique_sorted
 from .shapes import nuts1
 
 from . import make_toModDir
+from six import iteritems
+from six.moves import map
 toModDir = make_toModDir(__file__)
 
 def aggregate(data, mapping, how="sum", axis=0):
@@ -40,7 +44,7 @@ def countries_to_nuts1(series=True):
 
     if not series:
         od = OrderedDict()
-        for nuts, country in mapping.iteritems():
+        for nuts, country in iteritems(mapping):
             od.setdefault(country, []).append(nuts)
         mapping = od
 
@@ -64,8 +68,7 @@ def iso2_to_iso3():
         ((name(r),r[fields['ISO_A3']])
          for r in sf.iterRecords()
          if r[fields['ISO_A3']] != '-99'),
-        dict(FR="FRA",
-             NO="NOR").iteritems()
+        iteritems(dict(FR="FRA", NO="NOR"))
     ))
 
 def iso2_to_name():

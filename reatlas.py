@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 # Import REatlas
 import sys, os
 _toplevel = os.path.dirname(os.path.dirname(__file__))
@@ -9,7 +11,7 @@ from tempfile import TemporaryFile
 import numpy as np
 
 from . import timer, CachedAttribute
-import array as varray
+from . import array as varray
 
 def turbineconf_to_powercurve_object(fn):
     if '/' not in fn:
@@ -78,7 +80,7 @@ class REatlas(reatlas_client.REatlas):
 
         config_fn = os.path.expanduser('~/.reatlas.config')
         if os.path.exists(config_fn):
-            execfile(config_fn, dict(), config)
+            exec(compile(open(config_fn).read(), config_fn, 'exec'), dict(), config)
 
         config.update(kwds)
 

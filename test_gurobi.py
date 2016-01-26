@@ -1,11 +1,13 @@
+from __future__ import absolute_import
+
 import unittest
 
 import numpy as np, scipy as sp
 import scipy.sparse
 from numpy.testing import assert_allclose
 
-from gurobi import GbVec, GbVecConstr, GbVecVar, GbVecExpr, gbdot
-from array import spdiag
+from .gurobi import GbVec, GbVecConstr, GbVecVar, GbVecExpr, gbdot
+from .array import spdiag
 
 import gurobipy as gb
 

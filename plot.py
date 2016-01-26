@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import numpy as np
 
 from itertools import imap, izip
@@ -9,6 +11,8 @@ from matplotlib.colors import colorConverter
 from matplotlib.collections import LineCollection, PolyCollection
 
 from . import make_toModDir
+from six import itervalues, iteritems
+from six.moves import range
 toModDir = make_toModDir(__file__)
 
 def set_style():
@@ -17,7 +21,7 @@ def set_style():
 
 try:
     import pandas as pd
-    import shapes as vshapes
+    from . import shapes as vshapes
     from shapely.geometry import MultiPolygon
 
     def flatten(it):
@@ -33,7 +37,7 @@ try:
             ax = plt.gca()
 
         if with_laender:
-            laender = LineCollection(imap(vshapes.points, flatten(vshapes.laender().itervalues())),
+            laender = LineCollection(imap(vshapes.points, flatten(itervalues(vshapes.laender()))),
                                      colors="gray", zorder=0, linewidths=linewidth)
             ax.add_collection(laender)
         line, = plt.plot(*vshapes.points(vshapes.germany()).T, color='k', linewidth=linewidth)
@@ -137,7 +141,7 @@ try:
                 cbar.ax.set_yticklabels(colorbar_ticklabels)
 
         if with_labels:
-            for k,v in shapes.reindex(data.index).iteritems():
+            for k,v in iteritems(shapes.reindex(data.index)):
                 x,y = np.asarray(v.centroid)
                 plt.text(x,y, k)
 

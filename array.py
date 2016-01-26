@@ -1,5 +1,6 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
+
+from __future__ import absolute_import
 
 import numpy as np
 import scipy as sp, scipy.sparse, scipy.linalg, scipy.sparse.linalg

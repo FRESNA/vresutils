@@ -1,5 +1,6 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
+
+from __future__ import absolute_import
 
 import numpy as np
 import networkx as nx
@@ -15,6 +16,9 @@ from collections import OrderedDict
 from scipy.linalg import norm
 
 from . import make_toModDir
+from six import iterkeys, iteritems, itervalues
+from six.moves import map, range, zip
+from functools import reduce
 toModDir = make_toModDir(__file__)
 
 def to_directed(G):
@@ -26,7 +30,7 @@ def to_directed(G):
 
     # remove symmetric edges
     for n, nbrdict in G2.adjacency_iter():
-        for n2 in nbrdict.iterkeys():
+        for n2 in iterkeys(nbrdict):
             if G2.has_edge(n2, n):
                 G2.remove_edge(n2, n)
 
@@ -65,7 +69,7 @@ def get_distance_matrix(G):
     calculate the pairwise euclidean distance of all nodes.
     """
 
-    if G.nodes() != range(G.number_of_nodes()):
+    if G.nodes() != list(range(G.number_of_nodes())):
         G = nx.convert_node_labels_to_integers(G)
 
     pos = nx.get_node_attributes(G, 'pos')
@@ -90,15 +94,15 @@ def get_hop_distance(G):
     end up in random places.
     """
 
-    if G.nodes() != range(G.number_of_nodes()):
+    if G.nodes() != list(range(G.number_of_nodes())):
         G = nx.convert_node_labels_to_integers(G)
 
     Nnodes = G.number_of_nodes()
     hop_distance = np.zeros((Nnodes, Nnodes))
 
     hop_distance_dict = nx.shortest_path_length(G, weight=None)
-    for key1, inner_dict in hop_distance_dict.iteritems():
-        for key2, dist in inner_dict.iteritems():
+    for key1, inner_dict in iteritems(hop_distance_dict):
+        for key2, dist in iteritems(inner_dict):
             hop_distance[key1,key2] = dist
             hop_distance[key2,key1] = dist
 
@@ -114,7 +118,7 @@ def minimum_spanning_tree(G, distance_matrix=None):
     (as dense array) between all nodes.
     """
 
-    if G.nodes() != range(G.number_of_nodes()):
+    if G.nodes() != list(range(G.number_of_nodes())):
         G = nx.convert_node_labels_to_integers(G)
 
     # calculate distances
@@ -168,7 +172,7 @@ def cell_subgraph(G, lat, lon, size, copy=True):
 
     pos = np.array((lon, lat))
     nodes = (n
-             for n, p in G.node.iteritems()
+             for n, p in iteritems(G.node)
              if np.abs(p['pos'] - pos).max() <= size/2)
     return giant_component(G.subgraph(nodes), copy=copy)
 
@@ -181,7 +185,7 @@ def polygon_subgraph(G, polygon, nneighbours=0, copy=True):
     """
 
     nodes = set(n
-                for n, p in G.node.iteritems()
+                for n, p in iteritems(G.node)
                 if polygon.contains(Point(p['pos'])))
 
     if nneighbours > 0:
@@ -243,7 +247,7 @@ def polygon_subgraph_environment(G, polygon, environment_polygons):
             # polygon (env_poly) first, as we are link-hopping
             # through the graph
             if not add_node.env_poly.contains(pos):
-                for name, p in environment_polygons.iteritems():
+                for name, p in iteritems(environment_polygons):
                     if p.contains(pos):
                         add_node.env_name = name
                         add_node.env_poly = p
@@ -259,7 +263,7 @@ def polygon_subgraph_environment(G, polygon, environment_polygons):
             else:
                 H.node[add_node.env_name]['nodes'][n] = attr_dict
             return add_node.env_name
-    add_node.env_name, add_node.env_poly = next(environment_polygons.iteritems())
+    add_node.env_name, add_node.env_poly = next(iteritems(environment_polygons))
 
     # nodes are added to done, as soon as all its adjoining neighbours
     # and links have been added.
@@ -273,7 +277,7 @@ def polygon_subgraph_environment(G, polygon, environment_polygons):
 
         while queue:
             n, a = queue.popitem()
-            for m, d in G.adj[n].iteritems():
+            for m, d in iteritems(G.adj[n]):
                 if m in done: continue
 
                 b = add_node(m)
@@ -285,11 +289,11 @@ def polygon_subgraph_environment(G, polygon, environment_polygons):
     for env in environment_polygons:
         # estimate X / length ratio
         x = np.mean([m['X'] / m['length']
-                     for m in chain(H.adj[env].itervalues(),
+                     for m in chain(itervalues(H.adj[env]),
                                     (a for n in H.node[env]['nodes']
-                                     for a in G.adj[n].itervalues()))])
+                                     for a in itervalues(G.adj[n])))])
         pos = H.node[env]['pos']
-        for n, attr in H.adj[env].iteritems():
+        for n, attr in iteritems(H.adj[env]):
             length = norm(pos - H.node[n]['pos'])
             X = x * length
             attr.update(length=length, X=X, Y=1./X)
@@ -318,7 +322,7 @@ def coarsify_graph(G, shapes, lost_nodes=None):
 
     H = OrderedGraph()
     H.add_nodes_from((n, dict(region=sh, pos=np.asarray(sh.centroid)))
-                     for n, sh in shapes.iteritems())
+                     for n, sh in iteritems(shapes))
 
     queue = OrderedDict()
 
@@ -340,7 +344,7 @@ def coarsify_graph(G, shapes, lost_nodes=None):
         if do_node.shape.contains(pos):
             return do_node.node
         else:
-            for node, shape in shapes.iteritems():
+            for node, shape in iteritems(shapes):
                 if shape.contains(pos):
                     do_node.node = node
                     do_node.shape = shape
@@ -355,7 +359,7 @@ def coarsify_graph(G, shapes, lost_nodes=None):
                     if isinstance(lost_nodes, list):
                         lost_nodes.append(n)
                 return do_node.node
-    do_node.node, do_node.shape = next(shapes.iteritems())
+    do_node.node, do_node.shape = next(iteritems(shapes))
 
     # nodes are added to done, as soon as all its adjoining neighbours
     # and links have been added.
@@ -367,14 +371,14 @@ def coarsify_graph(G, shapes, lost_nodes=None):
 
         while queue:
             n, a = queue.popitem()
-            for m, d in G.adj[n].iteritems():
+            for m, d in iteritems(G.adj[n]):
                 if m in done: continue
                 b = do_node(m)
                 add_link(a, b, d.get('capacity', None))
                 queue[m] = b
             done.add(n)
 
-    from grid import penalize
+    from .grid import penalize
     for n1, n2, d in H.edges_iter(data=True):
         if 'lines' in d and 'capacity' in d:
             d['capacity'] = penalize(d['capacity'], d['lines'])
@@ -424,7 +428,7 @@ def stitch_graphs(G, G2, nodes, region=None):
     H.add_edges_from(G2.edges_iter(data=True))
     H.remove_nodes_from(nodes)
 
-    from grid import node_distance, specific_susceptance
+    from .grid import node_distance, specific_susceptance
     def edge_attrs(H, n1, n2, d):
         a = d.copy()
         a['length'] = node_distance(H, n1, n2)
@@ -434,22 +438,22 @@ def stitch_graphs(G, G2, nodes, region=None):
 
     for n in neigh_nodes:
         pos = Point(G.node[n]['pos'])
-        for n2, reg in regions.iteritems():
+        for n2, reg in iteritems(regions):
             if reg.contains(pos):
                 H.add_edges_from((n2, n3, edge_attrs(H, n2, n3, d))
-                                 for n3, d in G.adj[n].iteritems()
+                                 for n3, d in iteritems(G.adj[n])
                                  if n3 in H)
 
     return H
 
 def get_voronoi_regions(G, outline=None):
-    if 'region' not in next(G.node.itervalues()):
+    if 'region' not in next(itervalues(G.node)):
         if callable(outline):
             outline = outline()
         assert outline is not None
         G = voronoi_partition(G, Polygon(outline))
         warnings.warn("TODO Relies on side-effect, broken in most recent NX")
-    return get_node_attributes(G, 'region').values()
+    return list(get_node_attributes(G, 'region').values())
 
 def voronoi_partition(G, outline):
     """
@@ -462,7 +466,7 @@ def voronoi_partition(G, outline):
 
     # this loop is necessary to get the points into the right order to match
     # the nodes with the correct Voronoi regions later on
-    points = get_node_attributes(G, 'pos').values()
+    points = list(get_node_attributes(G, 'pos').values())
 
     # to avoid any network positions outside all Voronoi cells, append
     # the corners of a rectangle framing these points
@@ -527,7 +531,7 @@ def derive_edgemap(G, nodemap, shapes=None):
                 else:
                     return np.nan
         edges = G.edges()
-        return pd.Series(map(edge_to_shape, edges), index=pd.MultiIndex.from_tuples(edges))
+        return pd.Series(list(map(edge_to_shape, edges)), index=pd.MultiIndex.from_tuples(edges))
 
 if False and StrictVersion(nx.__version__) >= '1.12':
     class OrderedGraph(nx.Graph):
@@ -715,13 +719,13 @@ else:
             return H
 
 def set_node_positions_from_nodelabels(G):
-    import shapes as vshapes
+    from . import shapes as vshapes
 
     nodes = G.nodes()
     if all(type(n) is str and len(n) == 2 for n in nodes):
         region = vshapes.countries(subset=nodes)
         pos = dict((n, np.array((p.centroid.x, p.centroid.y)))
-                   for n, p in region.iteritems())
+                   for n, p in iteritems(region))
     else:
         region = dict()
         pos = nx.spring_layout(G)
@@ -750,4 +754,4 @@ def convert_node_labels_to_integers(G):
     return relabel_nodes(G, dict(izip(G.nodes(), count())))
 
 def get_node_attributes(G, attr):
-    return OrderedDict((n, d[attr]) for n, d in G.node.iteritems())
+    return OrderedDict((n, d[attr]) for n, d in iteritems(G.node))

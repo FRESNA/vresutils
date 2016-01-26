@@ -1,8 +1,10 @@
+from __future__ import absolute_import
+
 import unittest
 import numpy as np
 from numpy.testing import assert_allclose
 
-import array as varray
+from . import array as varray
 
 class Test_shift_ip(unittest.TestCase):
     def runTest(self):

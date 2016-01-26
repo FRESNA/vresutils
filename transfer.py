@@ -1,7 +1,12 @@
+from __future__ import absolute_import
+
 import numpy as np
 from scipy.spatial import cKDTree as KDTree
 from itertools import product
 import scipy.sparse as sparse
+from six.moves import map
+from six.moves import range
+from six.moves import zip
 
 def Points2Points(orig, dest, surjective=False):
     """
@@ -17,7 +22,7 @@ def Points2Points(orig, dest, surjective=False):
     transfer = sparse.lil_matrix((len(dest), len(orig)), dtype=np.float)
 
     _, indy = KDTree(dest).query(orig)
-    transfer[indy, range(len(indy))] = 1
+    transfer[indy, list(range(len(indy)))] = 1
 
     if surjective:
         _, indx = KDTree(orig).query(dest)
@@ -42,10 +47,10 @@ try:
 
     def Shapes2Shapes(orig, dest, normed=True, equalarea=False, **kwargs):
         if equalarea:
-            dest = map(reproject, dest)
-            orig = map(reproject, orig)
+            dest = list(map(reproject, dest))
+            orig = list(map(reproject, orig))
         transfer = sparse.lil_matrix((len(dest), len(orig)), dtype=np.float)
-        for i,j in product(xrange(len(dest)), xrange(len(orig))):
+        for i,j in product(range(len(dest)), range(len(orig))):
             if dest[i].intersects(orig[j]):
                 area = dest[i].intersection(orig[j]).area
                 transfer[i,j] = area/dest[i].area

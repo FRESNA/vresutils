@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import gurobipy as gb
 import numpy as np
 import scipy as sp
@@ -5,6 +7,8 @@ import scipy.sparse
 import collections
 from itertools import izip, count, imap, starmap, repeat
 from vresutils import iterable
+from six import iterkeys
+from six.moves import range
 
 def asLists(N, *arrs):
     return [asList(N, a) for a in arrs]
@@ -69,7 +73,7 @@ class GbVecConstr(GbVec):
     def __init__(self, model, N, name, lhs, sense, rhs, update=True):
         super(GbVecConstr, self).__init__(model,
             [model.addConstr(lhs, sense, rhs, name=name + str(i))
-             for i, lhs, rhs in izip(xrange(N), *asIterables(N, lhs, rhs))]
+             for i, lhs, rhs in izip(range(N), *asIterables(N, lhs, rhs))]
         )
 
         if update:
@@ -83,8 +87,8 @@ class GbVecVar(GbVec):
 
         super(GbVecVar, self).__init__(model,
             [model.addVar(name=name + str(x[0]),
-                          **dict(izip(kwargs.iterkeys(), x[1:])))
-             for x in izip(xrange(N), *asIterables(N, *kwargs.values()))]
+                          **dict(izip(iterkeys(kwargs), x[1:])))
+             for x in izip(range(N), *asIterables(N, *kwargs.values()))]
         )
 
         if update:
@@ -94,7 +98,7 @@ class GbVecVar(GbVec):
         var = self.__class__.__new__(self.__class__)
         var.name = self.name
         var.items = np.array([model.getVarByName(var.name + str(i))
-                              for i in xrange(len(self))])
+                              for i in range(len(self))])
         return var
 
     def LinExpr(self, d=1.0):
@@ -225,7 +229,7 @@ class GbVecExpr(object):
         # matrix
         if len(self.lvecs):
             def generate_matrix_rows(val, vec):
-                for i in xrange(val.shape[0]):
+                for i in range(val.shape[0]):
                     indptr = slice(val.indptr[i], val.indptr[i+1])
                     yield gb.LinExpr(val.data[indptr], vec[val.indices[indptr]])
             exprs += starmap(generate_matrix_rows, izip(self.lvals, self.lvecs))

@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import
+from __future__ import print_function
 
 import numpy as np
 from hashlib import sha1
 from functools import wraps
-import cPickle
+from six.moves import cPickle
 import weakref
 from warnings import warn
 import time, sys
 import os, os.path, stat, string
+from six import iteritems
 
 def _format_filename(s):
     """
@@ -81,7 +83,7 @@ def cachable(func=None, version=None, cache_dir="/home/vres/data/cache",
             fn = cache_fn + _format_filename(
                 '_'.join(name(a) for a in args) + '_' +
                 '_'.join(name(k) + '.' + name(v)
-                         for k,v in kwds.iteritems()
+                         for k,v in iteritems(kwds)
                          if k not in ignore) +
                 '.pickle'
             )
@@ -157,16 +159,16 @@ class timer(object):
             stop = time.time()
             usec = (stop - self.start) * 1e6
             if usec < 1000:
-                print "%.1f usec" % usec
+                print("%.1f usec" % usec)
             else:
                 msec = usec / 1000
                 if msec < 1000:
-                    print "%.1f msec" % msec
+                    print("%.1f msec" % msec)
                 else:
                     sec = msec / 1000
-                    print "%.1f sec" % sec
+                    print("%.1f sec" % sec)
         else:
-            print "failed"
+            print("failed")
         sys.stdout.flush()
 
         self.__class__.level -= 1
