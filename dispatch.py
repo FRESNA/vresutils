@@ -5,17 +5,15 @@ from __future__ import absolute_import
 import numpy as np
 import networkx as nx
 import random
-from itertools import izip
+from operator import attrgetter
+from six import iteritems
+from six.moves import map, zip
 
 from vresutils import shapes as vshapes, mapping as vmapping
 from vresutils.graph import get_node_attributes
 from vresutils.array import positive, negative
-from operator import attrgetter
-
 
 from vresutils import make_toModDir, cachable
-from six import iteritems
-from six.moves import map
 toModDir = make_toModDir(__file__)
 
 @cachable(version=2)
@@ -253,7 +251,7 @@ class CapacityClasses(object):
 
             prevcum = 0
             was_sm = np.ones(global_deficit.shape, dtype=bool)
-            for cum, cap, cB in izip(self.cumcapacity, self.capacity, B):
+            for cum, cap, cB in zip(self.cumcapacity, self.capacity, B):
                 is_sm = cum <= global_deficit
 
                 was_and_is_sm = was_sm & is_sm

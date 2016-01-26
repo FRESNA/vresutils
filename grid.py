@@ -3,8 +3,8 @@ from __future__ import absolute_import
 import networkx as nx
 import numpy as np
 
-from itertools import izip, imap
 from operator import itemgetter
+from six.moves import zip, map
 
 from vresutils.graph import OrderedGraph
 
@@ -176,10 +176,10 @@ def read_scigrid(nodes_csv="data/vertices_de_power_150601.csv",
     L['Y'] = 1./L['X']
     L['length'] = L['length_m']
     L['voltage'] /= 1000  # voltage in kV for readability
-    G.add_edges_from(izip(L.v_id_1, L.v_id_2,
-                          imap(itemgetter(1),
-                               L.loc[:,['voltage', 'cables', 'wires', 'frequency',
-                                        'length', 'geom', 'r', 'x', 'c',
-                                        'i_th_max', 'X', 'Y']].iterrows())))
+    G.add_edges_from(zip(L.v_id_1, L.v_id_2,
+                         map(itemgetter(1),
+                             L.loc[:,['voltage', 'cables', 'wires', 'frequency',
+                                      'length', 'geom', 'r', 'x', 'c',
+                                      'i_th_max', 'X', 'Y']].iterrows())))
 
     return G

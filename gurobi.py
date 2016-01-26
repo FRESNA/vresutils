@@ -5,10 +5,11 @@ import numpy as np
 import scipy as sp
 import scipy.sparse
 import collections
-from itertools import izip, count, imap, starmap, repeat
-from vresutils import iterable
+from itertools import count, starmap, repeat
 from six import iterkeys
-from six.moves import range
+from six.moves import map, range, zip
+
+from vresutils import iterable
 
 def asLists(N, *arrs):
     return [asList(N, a) for a in arrs]
@@ -73,7 +74,7 @@ class GbVecConstr(GbVec):
     def __init__(self, model, N, name, lhs, sense, rhs, update=True):
         super(GbVecConstr, self).__init__(model,
             [model.addConstr(lhs, sense, rhs, name=name + str(i))
-             for i, lhs, rhs in izip(range(N), *asIterables(N, lhs, rhs))]
+             for i, lhs, rhs in zip(range(N), *asIterables(N, lhs, rhs))]
         )
 
         if update:
@@ -87,8 +88,8 @@ class GbVecVar(GbVec):
 
         super(GbVecVar, self).__init__(model,
             [model.addVar(name=name + str(x[0]),
-                          **dict(izip(iterkeys(kwargs), x[1:])))
-             for x in izip(range(N), *asIterables(N, *kwargs.values()))]
+                          **dict(zip(iterkeys(kwargs), x[1:])))
+             for x in zip(range(N), *asIterables(N, *kwargs.values()))]
         )
 
         if update:
@@ -224,7 +225,7 @@ class GbVecExpr(object):
         # scalar
         if len(self.svecs):
             exprs.append((gb.LinExpr(self.svals, vecs)
-                          for vecs in izip(*self.svecs)))
+                          for vecs in zip(*self.svecs)))
 
         # matrix
         if len(self.lvecs):
@@ -232,7 +233,7 @@ class GbVecExpr(object):
                 for i in range(val.shape[0]):
                     indptr = slice(val.indptr[i], val.indptr[i+1])
                     yield gb.LinExpr(val.data[indptr], vec[val.indices[indptr]])
-            exprs += starmap(generate_matrix_rows, izip(self.lvals, self.lvecs))
+            exprs += starmap(generate_matrix_rows, zip(self.lvals, self.lvecs))
 
         # constant
         if iterable(self.cval):
@@ -240,7 +241,7 @@ class GbVecExpr(object):
         elif self.cval != 0:
             exprs.append(repeat(self.cval))
 
-        return imap(gb.quicksum, izip(*exprs))
+        return map(gb.quicksum, zip(*exprs))
 
 def ismatrixlike(v):
     return sp.sparse.isspmatrix(v) or (isinstance(v, np.ndarray) and v.ndim==2)
@@ -265,6 +266,6 @@ def gbdot(v1, v2):
         # GbVecExpr but this pedestrian one should be good enough
         # TODO : Needs to be tested
         assert len(v1) == len(v2)
-        return gb.quicksum(n1 * n2 for n1, n2 in izip(v1, v2))
+        return gb.quicksum(n1 * n2 for n1, n2 in zip(v1, v2))
     else:
         raise NotImplementedError

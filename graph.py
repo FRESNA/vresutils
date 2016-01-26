@@ -6,7 +6,7 @@ import numpy as np
 import networkx as nx
 import warnings
 from distutils.version import StrictVersion
-from itertools import izip, islice, chain, imap, count
+from itertools import islice, chain, count
 from operator import itemgetter
 from shapely.geometry import Point, Polygon
 from scipy.spatial import Voronoi
@@ -14,11 +14,11 @@ from scipy.spatial import distance
 from scipy import sparse
 from collections import OrderedDict
 from scipy.linalg import norm
-
-from . import make_toModDir
 from six import iterkeys, iteritems, itervalues
 from six.moves import map, range, zip
 from functools import reduce
+
+from . import make_toModDir
 toModDir = make_toModDir(__file__)
 
 def to_directed(G):
@@ -751,7 +751,7 @@ def relabel_nodes(G, mapping):
     return H
 
 def convert_node_labels_to_integers(G):
-    return relabel_nodes(G, dict(izip(G.nodes(), count())))
+    return relabel_nodes(G, dict(zip(G.nodes(), count())))
 
 def get_node_attributes(G, attr):
     return OrderedDict((n, d[attr]) for n, d in iteritems(G.node))

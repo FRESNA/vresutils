@@ -2,16 +2,16 @@ from __future__ import absolute_import
 
 import pandas as pd
 import shapefile
-from itertools import izip, count, chain
+from itertools import count, chain
 from operator import itemgetter
 from collections import OrderedDict
+from six import iteritems
+from six.moves import map, zip
 
 from .array import unique_sorted
 from .shapes import nuts1
 
 from . import make_toModDir
-from six import iteritems
-from six.moves import map
 toModDir = make_toModDir(__file__)
 
 def aggregate(data, mapping, how="sum", axis=0):
@@ -56,7 +56,7 @@ def iso2_to_iso3():
     from the countries dataset.
     """
     sf = shapefile.Reader(toModDir('data/ne_10m_admin_0_countries/ne_10m_admin_0_countries'))
-    fields = dict(izip(map(itemgetter(0), sf.fields[1:]), count()))
+    fields = dict(zip(map(itemgetter(0), sf.fields[1:]), count()))
     def name(rec):
         if rec[fields['ISO_A2']] != '-99':
             return rec[fields['ISO_A2']]
@@ -77,7 +77,7 @@ def iso2_to_name():
     from the countries dataset.
     """
     sf = shapefile.Reader(toModDir('data/ne_10m_admin_0_countries/ne_10m_admin_0_countries'))
-    fields = dict(izip(map(itemgetter(0), sf.fields[1:]), count()))
+    fields = dict(zip(map(itemgetter(0), sf.fields[1:]), count()))
     def name(rec):
         if rec[fields['ISO_A2']] != '-99':
             return rec[fields['ISO_A2']]

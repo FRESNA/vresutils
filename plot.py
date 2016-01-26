@@ -2,7 +2,8 @@ from __future__ import absolute_import
 
 import numpy as np
 
-from itertools import imap, izip
+from six import itervalues, iteritems
+from six.moves import range, map, zip
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -11,8 +12,6 @@ from matplotlib.colors import colorConverter
 from matplotlib.collections import LineCollection, PolyCollection
 
 from . import make_toModDir
-from six import itervalues, iteritems
-from six.moves import range
 toModDir = make_toModDir(__file__)
 
 def set_style():
@@ -37,7 +36,7 @@ try:
             ax = plt.gca()
 
         if with_laender:
-            laender = LineCollection(imap(vshapes.points, flatten(itervalues(vshapes.laender()))),
+            laender = LineCollection(map(vshapes.points, flatten(itervalues(vshapes.laender()))),
                                      colors="gray", zorder=0, linewidths=linewidth)
             ax.add_collection(laender)
         line, = plt.plot(*vshapes.points(vshapes.germany()).T, color='k', linewidth=linewidth)
@@ -106,7 +105,7 @@ try:
 
         aligned_data = []
         aligned_shapes = []
-        for d, sh in izip(data, shapes.reindex(data.index)):
+        for d, sh in zip(data, shapes.reindex(data.index)):
             if isinstance(sh, MultiPolygon):
                 aligned_shapes += list(sh)
                 aligned_data += [d] * len(sh)

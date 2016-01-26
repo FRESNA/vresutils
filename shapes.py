@@ -7,16 +7,16 @@ import shapefile
 from shapely.ops import transform
 from shapely.geometry import LinearRing, Polygon, MultiPolygon, GeometryCollection
 from functools import partial
-from itertools import izip, chain, count, imap, takewhile
+from itertools import chain, count, takewhile
 from operator import itemgetter, attrgetter
 from collections import OrderedDict
 import numpy as np
 import pandas as pd
 import warnings
+from six import iteritems
+from six.moves import map, zip
 
 from vresutils import make_toModDir, Singleton, staticvars, cachable
-from six import iteritems
-from six.moves import map
 toModDir = make_toModDir(__file__)
 
 def haversine(*coords):
@@ -88,7 +88,7 @@ _shape2poly.wgs = pyproj.Proj('+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +uni
 def nuts0(tolerance=0.03, minarea=1.):
     sf = shapefile.Reader(toModDir('data/NUTS_2010_60M_SH/data/NUTS_RG_60M_2010'))
     return OrderedDict(sorted([(rec[0].decode('utf-8'), _shape2poly(sh, tolerance, minarea))
-                               for rec, sh in izip(sf.iterRecords(), sf.iterShapes())
+                               for rec, sh in zip(sf.iterRecords(), sf.iterShapes())
                                if rec[1] == 0],
                               key=itemgetter(0)))
 
@@ -96,7 +96,7 @@ def nuts0(tolerance=0.03, minarea=1.):
 def nuts1(tolerance=0.03, minarea=1., extended=True):
     sf = shapefile.Reader(toModDir('data/NUTS_2010_60M_SH/data/NUTS_RG_60M_2010'))
     nuts = OrderedDict(sorted([(rec[0].decode('utf-8'), _shape2poly(sh, tolerance, minarea))
-                               for rec, sh in izip(sf.iterRecords(), sf.iterShapes())
+                               for rec, sh in zip(sf.iterRecords(), sf.iterShapes())
                                if rec[1] == 1],
                               key=itemgetter(0)))
     if extended:
@@ -109,7 +109,7 @@ def nuts1(tolerance=0.03, minarea=1., extended=True):
 @cachable(keepweakref=True, version=3)
 def countries(subset=None, tolerance=0.03, minarea=1.):
     sf = shapefile.Reader(toModDir('data/ne_10m_admin_0_countries/ne_10m_admin_0_countries'))
-    fields = dict(izip(map(itemgetter(0), sf.fields[1:]), count()))
+    fields = dict(zip(map(itemgetter(0), sf.fields[1:]), count()))
     if subset is not None:
         subset = frozenset(subset)
         include = lambda x: x in subset
@@ -146,7 +146,7 @@ def laender(tolerance=0.03, shortnames=True):
 
     sf = shapefile.Reader(toModDir('data/vg250/VG250_LAN'))
     return OrderedDict(sorted([(name(rec[6].decode('utf-8')), _shape2poly(sh, tolerance, projection='invwgs'))
-                               for rec, sh in izip(sf.iterRecords(), sf.iterShapes())
+                               for rec, sh in zip(sf.iterRecords(), sf.iterShapes())
                                if rec[1] == 4],
                               key=itemgetter(0)))
 
@@ -161,12 +161,12 @@ def landkreise(tolerance=0.03):
 
     kreise = ((int(sr[fields['RS']]),
                _shape2poly(sf_kreise.shape(ind), tolerance, projection='invwgs'))
-              for ind, sr in izip(count(), sf_kreise.iterRecords())
+              for ind, sr in zip(count(), sf_kreise.iterRecords())
               if sr[fields['GF']] == 4)
 
     berlinhamburg = ((int(sr[fields['RS']]),
                       _shape2poly(sf_land.shape(ind), tolerance, projection='invwgs'))
-                     for ind, sr in izip(count(), sf_land.iterRecords())
+                     for ind, sr in zip(count(), sf_land.iterRecords())
                      if (sr[fields['RS']] in ('11', '02')
                          and sr[fields['GF']] == 4))
 
@@ -176,7 +176,7 @@ def landkreise(tolerance=0.03):
 def postcodeareas(tolerance=0.03):
     sf = shapefile.Reader(toModDir('data/plz-gebiete/plz-gebiete.shp'))
     return Dict((float(rec[0]), _shape2poly(sh, tolerance=tolerance))
-                for rec, sh in izip(sf.iterRecords(), sf.iterShapes()))
+                for rec, sh in zip(sf.iterRecords(), sf.iterShapes()))
 
 def save_graph_as_shapes(G, nodes_fn, links_fn):
     import networkx as nx
