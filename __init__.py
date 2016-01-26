@@ -15,22 +15,6 @@ def indicator(N, indices):
     m[indices] = 1.
     return m
 
-def rank(G, P=None):
-    # we import only here, to avoid a cyclic import dependency
-    import flow
-
-    flower = flow.FlowerBicg(G)
-    N = G.number_of_nodes()
-
-    if P is None or len(P) != N:
-        P = 2*np.random.random(N) - 1
-        P -= P.sum()/N
-
-    F = flower(P)
-    flowtracer = flow.FlowTracer(G, P, F)
-
-    return np.linalg.matrix_rank(densify(flowtracer.M))
-
 def iterable(obj):
     'return true if *obj* is iterable'
     try:
