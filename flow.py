@@ -2,10 +2,9 @@ from __future__ import absolute_import
 
 import networkx as nx
 import numpy as np
-from vresutils.array import spdiag
 import scipy as sp, scipy.sparse
 
-from .array import densify
+from .array import densify, spdiag
 
 def PTDF(G, susceptance='Y'):
     lap = densify(nx.laplacian_matrix(nx.Graph(G), nodelist=G.nodes(),

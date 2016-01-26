@@ -16,7 +16,8 @@ import warnings
 from six import iteritems
 from six.moves import map, zip
 
-from vresutils import make_toModDir, Singleton, staticvars, cachable
+from .decorators import staticvars, cachable
+from . import make_toModDir, Singleton
 toModDir = make_toModDir(__file__)
 
 def haversine(*coords):

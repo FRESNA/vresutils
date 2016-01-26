@@ -9,11 +9,12 @@ from operator import attrgetter
 from six import iteritems
 from six.moves import map, zip
 
-from vresutils import shapes as vshapes, mapping as vmapping
-from vresutils.graph import get_node_attributes
-from vresutils.array import positive, negative
+from . import shapes as vshapes, mapping as vmapping
+from .graph import get_node_attributes
+from .array import positive, negative
+from .decorators import cachable
 
-from vresutils import make_toModDir, cachable
+from . import make_toModDir
 toModDir = make_toModDir(__file__)
 
 @cachable(version=2)

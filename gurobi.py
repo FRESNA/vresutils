@@ -9,7 +9,7 @@ from itertools import count, starmap, repeat
 from six import iterkeys
 from six.moves import map, range, zip
 
-from vresutils import iterable
+from . import iterable
 
 def asLists(N, *arrs):
     return [asList(N, a) for a in arrs]

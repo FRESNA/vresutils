@@ -17,7 +17,7 @@ import numpy as np
 from . import array as varray
 
 from . import get_config
-from .decorator import timer, CachedAttribute
+from .decorators import timer, CachedAttribute
 
 def turbineconf_to_powercurve_object(fn):
     if '/' not in fn:

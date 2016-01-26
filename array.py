@@ -4,7 +4,8 @@ from __future__ import absolute_import
 
 import numpy as np
 import scipy as sp, scipy.sparse, scipy.linalg, scipy.sparse.linalg
-from vresutils import indicator
+
+from . import indicator
 
 def unique_sorted(x):
     return x[np.r_[True, x[1:] != x[:-1]]]

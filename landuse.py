@@ -6,10 +6,12 @@ import tempfile, os.path
 import rasterio
 import subprocess
 from shutil import rmtree
-
-from . import cachable, make_toModDir
 from six import iteritems
 from six.moves import map
+
+from .decorators import cachable
+
+from . import make_toModDir
 toModDir = make_toModDir(__file__)
 
 @cachable(ignore=set(('tmpdir',)))

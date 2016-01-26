@@ -7,7 +7,7 @@ from operator import itemgetter
 from six.moves import zip, map, cPickle as pickle
 import six
 
-from vresutils.graph import OrderedGraph
+from .graph import OrderedGraph
 
 from . import make_toModDir
 toModDir = make_toModDir(__file__)
