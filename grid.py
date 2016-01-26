@@ -157,7 +157,11 @@ def heuristically_extend_edge_attributes(G, it=None):
     return G
 
 def eu():
-    return nx.read_gpickle(toModDir("data/EU.gpickle"))
+    with open(toModDir("data/EU.gpickle"), 'rb') as f:
+        if six.PY2:
+            return pickle.load(f)
+        else:
+            return pickle.load(f, encoding='latin-1')
 
 def read_scigrid(nodes_csv="data/vertices_de_power_150601.csv",
                  links_csv="data/links_de_power_150601.csv"):
