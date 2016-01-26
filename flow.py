@@ -10,10 +10,5 @@ from .array import densify
 def PTDF(G, susceptance='Y'):
     lap = densify(nx.laplacian_matrix(nx.Graph(G), nodelist=G.nodes(),
                                       weight=susceptance)) # shallow undirected copy
-    K = nx.incidence_matrix(G, oriented=True)
-    if susceptance is not None:
-        Y = np.fromiter((d[susceptance] for i,o,d in G.edges_iter(data=True)),
-                        dtype=np.float, count=G.number_of_edges())
-        K = K.dot(spdiag(Y) if sp.sparse.isspmatrix(K) else np.diag(Y))
-
+    K = nx.incidence_matrix(G, weight=susceptance, oriented=True)
     return np.asarray(- K.T.dot(np.linalg.pinv(lap)))
