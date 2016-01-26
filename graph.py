@@ -5,7 +5,7 @@ from __future__ import absolute_import
 import numpy as np
 import networkx as nx
 import warnings
-from distutils.version import StrictVersion
+from distutils.version import StrictVersion, LooseVersion
 from itertools import islice, chain, count
 from operator import itemgetter
 from shapely.geometry import Point, Polygon
@@ -533,11 +533,16 @@ def derive_edgemap(G, nodemap, shapes=None):
         edges = G.edges()
         return pd.Series(list(map(edge_to_shape, edges)), index=pd.MultiIndex.from_tuples(edges))
 
-if False and StrictVersion(nx.__version__) >= '1.12':
+try:
+    _nx_version = StrictVersion(nx.__version__)
+except ValueError:
+    _nx_version = LooseVersion(nx.__version__)
+
+if False and _nx_version >= '1.12':
     class OrderedGraph(nx.Graph):
         node_dict_factory = OrderedDict
         adjlist_dict_factory = OrderedDict
-elif StrictVersion(nx.__version__) >= '1.10':
+elif _nx_version >= '1.10':
     class OrderedGraph(nx.Graph):
         node_dict_factory = OrderedDict
         adjlist_dict_factory = OrderedDict
