@@ -10,8 +10,10 @@ import reatlas_client
 from tempfile import TemporaryFile
 import numpy as np
 
-from . import timer, CachedAttribute
 from . import array as varray
+
+from . import get_config
+from .decorator import timer, CachedAttribute
 
 def turbineconf_to_powercurve_object(fn):
     if '/' not in fn:
@@ -74,15 +76,7 @@ class Cutout(object):
 
 class REatlas(reatlas_client.REatlas):
     def __init__(self, **kwds):
-        config = dict(
-            notify=False
-        )
-
-        config_fn = os.path.expanduser('~/.reatlas.config')
-        if os.path.exists(config_fn):
-            exec(compile(open(config_fn).read(), config_fn, 'exec'), dict(), config)
-
-        config.update(kwds)
+        config = get_config('.reatlas.config', defaults=dict(notify=False), overwrites=kwds)
 
         super(REatlas, self).__init__(config['hostname'])
         if not self.connect_and_login(username=config['username'],

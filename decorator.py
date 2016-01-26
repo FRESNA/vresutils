@@ -13,6 +13,8 @@ import time, sys
 import os, os.path, stat, string
 from six import iteritems
 
+from . import config
+
 def _format_filename(s):
     """
     Take a string and return a valid filename constructed from the string.
@@ -23,7 +25,7 @@ def _format_filename(s):
     return ''.join(c for c in s if c in valid_chars).replace(' ','_')
 
 
-def cachable(func=None, version=None, cache_dir="/home/vres/data/cache",
+def cachable(func=None, version=None, cache_dir=config['cache_dir'],
              keepweakref=False, ignore=set(), verbose=True):
     """
     Decorator to mark long running functions, which should be saved to
@@ -35,7 +37,7 @@ def cachable(func=None, version=None, cache_dir="/home/vres/data/cache",
     version     - if given it is saved together with the arguments and
                   must be the same as the cache to be valid.
     cache_dir   - where to save the cached files, if it does not exist
-                  it is created (default: /tmp/compcache)
+                  it is created (default defined by ~/.vresutils.config)
     keepweakref - Also store a weak reference and return it instead of
                   rereading from disk (default: False).
     ignore      - Set of kwd arguments not to take into account.
