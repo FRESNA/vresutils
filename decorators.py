@@ -8,10 +8,10 @@ from hashlib import sha1
 from functools import wraps
 from six.moves import cPickle
 import weakref
-from warnings import warn
 import time, sys
-import os, os.path, stat, string
+import sys, os, os.path, stat, string
 from six import iteritems
+import six
 
 from . import config
 
@@ -26,6 +26,7 @@ def _format_filename(s):
 
 
 def cachable(func=None, version=None, cache_dir=config['cache_dir'],
+             fallback_cache_dirs=config['fallback_cache_dirs'],
              keepweakref=False, ignore=set(), verbose=True):
     """
     Decorator to mark long running functions, which should be saved to
@@ -44,17 +45,19 @@ def cachable(func=None, version=None, cache_dir=config['cache_dir'],
     verbose     - Output cache hits and timing information (default:
                   True).
     """
-
     if not os.path.isdir(cache_dir):
         os.mkdir(cache_dir)
         gid = None
         mode = None
     else:
-        st = os.stat(cache_dir)
+        st = os.stat(cache_dir[0])
         gid = st.st_gid
         # mode is bitmask of the same rights as the directory without
         # exec rights for anybody
         mode = stat.S_IMODE(st.st_mode) & ~(stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
+    # remove missing directories
+    fallback_cache_dirs = [d for d in fallback_cache_dirs if os.path.isdir(d)]
 
     def deco(func):
         """
@@ -64,7 +67,7 @@ def cachable(func=None, version=None, cache_dir=config['cache_dir'],
         (it would be better to use np.save/np.load for numpy arrays)
         """
 
-        cache_fn = cache_dir + "/" + func.__module__ + "." + func.__name__ + "_"
+        cache_fn = func.__module__ + "." + func.__name__ + "_"
         if version is not None:
             cache_fn += _format_filename("ver" + str(version) + "_")
 
@@ -72,10 +75,32 @@ def cachable(func=None, version=None, cache_dir=config['cache_dir'],
             cache = weakref.WeakValueDictionary()
 
         def name(x):
-            y = str(x)
+            y = six.text_type(x)
             if len(y) > 40:
-                y = sha1(y).hexdigest()
+                y = sha1(y.encode('utf-8')).hexdigest()
             return y
+
+        def load_from(fn, dn, try_latin=False):
+            full_fn = os.path.join(dn, fn)
+            if os.path.exists(full_fn):
+                try:
+                    with open(full_fn, 'rb') as f:
+                        dn_label = os.path.basename(dn)
+                        if try_latin:
+                            dn_label += " (with forced encoding)"
+                        with optional(
+                                verbose,
+                                timer("Serving call to {} from file {} of {}"
+                                      .format(func.__name__, fn, dn_label))
+                        ):
+                            if try_latin:
+                                return cPickle.load(f, encoding='latin-1')
+                            else:
+                                return cPickle.load(f)
+                except Exception as e:
+                    if not try_latin and isinstance(e, UnicodeDecodeError):
+                        return load_from(fn, dn, try_latin=True)
+                    print("Couldn't unpickle from %s: %s" % (fn, e.args[0]), file=sys.stderr)
 
         @wraps(func)
         def wrapper(*args, **kwds):
@@ -91,34 +116,29 @@ def cachable(func=None, version=None, cache_dir=config['cache_dir'],
             )
 
             ret = None
-            if not recompute and keepweakref and fn in cache:
-                return cache[fn]
-            elif not recompute and os.path.exists(fn):
-                try:
-                    with open(fn, 'rb') as f:
-                        with optional(
-                                verbose,
-                                timer("Serving call to {} from file {}"
-                                      .format(func.__name__, os.path.basename(fn)))
-                        ):
-                            ret = cPickle.load(f)
-                except Exception as e:
-                    warn("Couldn't unpickle from %s: %s" % (fn, e.args[0]))
+            if not recompute:
+                if keepweakref and fn in cache:
+                    return cache[fn]
+
+                ret = load_from(fn, cache_dir)
 
             if ret is None:
-                with optional(
-                        verbose,
-                        timer("Caching call to {} in {}"
-                              .format(func.__name__, os.path.basename(fn)))
-                ):
-                    ret = func(*args, **kwds)
-                    try:
-                        with open(fn, 'wb') as f:
-                            if gid: os.fchown(f.fileno(), -1, gid)
-                            if mode: os.fchmod(f.fileno(), mode)
-                            cPickle.dump(ret, f, protocol=-1)
-                    except Exception as e:
-                        warn("Couldn't pickle to %s: %s" % (fn, e.args[0]))
+                for fallback in fallback_cache_dirs:
+                    ret = load_from(fn, fallback)
+                    if ret is not None: break
+                else:
+                    with optional(
+                            verbose,
+                            timer("Caching call to {} in {}".format(func.__name__, fn))
+                    ):
+                        ret = func(*args, **kwds)
+                try:
+                    with open(os.path.join(cache_dir, fn), 'wb') as f:
+                        if gid: os.fchown(f.fileno(), -1, gid)
+                        if mode: os.fchmod(f.fileno(), mode)
+                        cPickle.dump(ret, f, protocol=-1)
+                except Exception as e:
+                    print("Couldn't pickle to %s: %s" % (fn, e.args[0]), file=sys.stderr)
 
             if keepweakref and ret is not None:
                 cache[fn] = ret

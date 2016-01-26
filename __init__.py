@@ -57,7 +57,8 @@ def get_config(config_fn, defaults=dict(), overwrites=dict()):
 config = get_config(
     '.vresutils.config',
     defaults=dict(
-        cache_dir="/home/vres/data/" + ("cache" if six.PY2 else "cache3")
+        cache_dir="/home/vres/data/" + ("cache" if six.PY2 else "cache3"),
+        fallback_cache_dirs=[] if six.PY2 else ["/home/vres/data/cache"]
     )
 )
 
