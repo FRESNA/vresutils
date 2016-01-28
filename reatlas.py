@@ -1,18 +1,20 @@
 from __future__ import absolute_import
 
+from tempfile import TemporaryFile
+import numpy as np
+import os
+
 # Import REatlas
 try:
     # Rename or link REatlas-client directory to REatlas_client
     from REatlas_client import reatlas_client
 except ImportError:
     # Let's try to be clever
-    import sys, os
+    import sys
     _toplevel = os.path.dirname(os.path.dirname(__file__))
     clientdir = os.path.join(_toplevel, 'REatlas-client')
     sys.path.insert(sys.path.index(_toplevel), clientdir)
 
-from tempfile import TemporaryFile
-import numpy as np
 
 from . import array as varray
 
