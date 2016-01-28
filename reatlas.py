@@ -8,6 +8,7 @@ import os
 try:
     # Rename or link REatlas-client directory to REatlas_client
     from REatlas_client import reatlas_client
+    clientdir = os.path.dirname(reatlas_client.__file__)
 except ImportError:
     # Let's try to be clever
     import sys
