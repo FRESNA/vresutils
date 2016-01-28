@@ -452,8 +452,59 @@ def get_voronoi_regions(G, outline=None):
             outline = outline()
         assert outline is not None
         G = voronoi_partition(G, Polygon(outline))
-        warnings.warn("TODO Relies on side-effect, broken in most recent NX")
     return list(get_node_attributes(G, 'region').values())
+
+def voronoi_partition_pts(points, outline, no_multipolygons=False):
+    """
+    Compute the polygons of a voronoi partition of `points` within the
+    polygon `outline`
+
+    Attributes
+    ----------
+    points : Nx2 - ndarray[dtype=float]
+    outline : Polygon
+    no_multipolygons : bool (default: False)
+        If true, replace each MultiPolygon by its largest component
+
+    Returns
+    -------
+    polygons : N - ndarray[dtype=Polygon|MultiPolygon]
+    """
+
+    points = np.asarray(points)
+
+    xmin, ymin = np.amin(points, axis=0)
+    xmax, ymax = np.amax(points, axis=0)
+    xspan = xmax - xmin
+    yspan = ymax - ymin
+
+    # to avoid any network positions outside all Voronoi cells, append
+    # the corners of a rectangle framing these points
+    vor = Voronoi(np.vstack((points,
+                             [[xmin-3.*xspan, ymin-3.*yspan],
+                              [xmin-3.*xspan, ymax+3.*yspan],
+                              [xmax+3.*xspan, ymin-3.*yspan],
+                              [xmax+3.*xspan, ymax+3.*yspan]])))
+
+    polygons = []
+    for i in range(len(points)):
+        poly = Polygon(vor.vertices[vor.regions[vor.point_region[i]]])
+
+        if not poly.is_valid:
+            poly = poly.buffer(0)
+
+        poly = poly.intersection(outline)
+
+        if no_multipolygons:
+            try:
+                # for a MultiPolygon pick the part with the largest area
+                poly = max(poly.geoms, key=lambda pg: pg.area)
+            except:
+                pass
+
+        polygons.append(poly)
+
+    return np.asarray(polygons)
 
 def voronoi_partition(G, outline):
     """
@@ -463,43 +514,9 @@ def voronoi_partition(G, outline):
     """
 
     G = polygon_subgraph(G, outline, copy=False)
-
-    # this loop is necessary to get the points into the right order to match
-    # the nodes with the correct Voronoi regions later on
     points = list(get_node_attributes(G, 'pos').values())
-
-    # to avoid any network positions outside all Voronoi cells, append
-    # the corners of a rectangle framing these points
-    xmin, xmax = np.amin(np.array(points)[:,0]), np.amax(np.array(points)[:,0])
-    xspan = xmax-xmin
-
-    ymin, ymax = np.amin(np.array(points)[:,1]), np.amax(np.array(points)[:,1])
-    yspan = ymax-ymin
-
-    points.extend([[xmin-3.*xspan, ymin-3.*yspan],
-                   [xmin-3.*xspan, ymax+3.*yspan],
-                   [xmax+3.*xspan, ymin-3.*yspan],
-                   [xmax+3.*xspan, ymax+3.*yspan]])
-
-    vor = Voronoi(points)
-
-    # convert Voronoi output to Polygons as additional node attribute
-    for i,n in enumerate(G.nodes()):
-
-        region = Polygon(vor.vertices[vor.regions[vor.point_region[i]]])
-
-        if not region.is_valid:
-            region = region.buffer(0)
-
-        region = region.intersection(outline)
-
-        try:
-            # for a MultiPolygon pick the part with the largest area
-            region = max(region.geoms, key=lambda pg: pg.area)
-        except:
-            pass
-
-        G.node[n]['region'] = region
+    regions = voronoi_partition_pts(points, outline, no_multipolygons=True)
+    nx.set_node_attributes(G, 'region', dict(zip(G.nodes(), regions)))
 
     return G
 
