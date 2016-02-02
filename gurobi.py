@@ -36,6 +36,10 @@ class GbVec(object):
         self.model = model
         self.items = items
 
+    def remove(self):
+        for v in self.items:
+            self.model.remove(v)
+
     def __getitem__(self, key):
         try:
             item = self.items[key]
