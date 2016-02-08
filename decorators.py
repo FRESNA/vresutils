@@ -123,10 +123,12 @@ def cachable(func=None, version=None, cache_dir=config['cache_dir'],
                 ret = load_from(fn, cache_dir)
 
             if ret is None:
-                for fallback in fallback_cache_dirs:
-                    ret = load_from(fn, fallback)
-                    if ret is not None: break
-                else:
+                if not recompute:
+                    for fallback in fallback_cache_dirs:
+                        ret = load_from(fn, fallback)
+                        if ret is not None: break
+
+                if ret is None:
                     with optional(
                             verbose,
                             timer("Caching call to {} in {}".format(func.__name__, fn))
