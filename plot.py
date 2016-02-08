@@ -39,7 +39,7 @@ try:
             laender = LineCollection(map(vshapes.points, flatten(itervalues(vshapes.laender()))),
                                      colors="gray", zorder=0, linewidths=linewidth)
             ax.add_collection(laender)
-        line, = plt.plot(*vshapes.points(vshapes.germany()).T, color='k', linewidth=linewidth)
+        line, = ax.plot(*vshapes.points(vshapes.germany()).T, color='k', linewidth=linewidth)
         line.set_zorder(1)
 
     def landkreise(data,
