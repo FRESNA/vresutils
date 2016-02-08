@@ -70,6 +70,7 @@ try:
     def shapes(shapes, data=None,
                colorbar=False, colorbar_ticklabels=None, norm=None,
                with_labels=False, outline=False, colour=None,
+               fontsize=None,
                ax=None):
         """
         Plot `data` on the basis of a dictionary of shapes.  `data`
@@ -142,7 +143,9 @@ try:
         if with_labels:
             for k,v in iteritems(shapes.reindex(data.index)):
                 x,y = np.asarray(v.centroid)
-                plt.text(x,y, k)
+                plt.text(x, y, k, fontsize=fontsize,
+                         horizontalalignment='center',
+                         verticalalignment='center')
 
         ax.autoscale_view()
         return coll
