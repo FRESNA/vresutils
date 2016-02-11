@@ -53,16 +53,7 @@ class Cutout(object):
                                              username=self.username)
 
         fn = 'meta_{}.npz'.format(self.cutoutname)
-        f = TemporaryFile()
-        self.reatlas.download_file_and_rename(remote_file=fn, local_file=f)
-        self.reatlas.delete_file(filename=fn)
-        f.seek(0)
-        try:
-            meta = np.load(f)
-        except IOError:
-            raise RuntimeError("Couldn't read downloaded metadata")
-
-        return meta
+        return self.reatlas.download_delete_and_load(remote_file=fn, name='metadata')
 
     def grid_coordinates(self, latlon=False):
         meta = self.meta
@@ -129,23 +120,16 @@ class REatlas(reatlas_client.REatlas):
         return super(REatlas, self).add_pv_orientations_by_config_file(fn)
 
     def convert_and_aggregate(self, resource, capacity_layouts=[], save_sum=False):
-        def upload_capacity_layout(layout):
-            f = TemporaryFile()
-            np.save(f, layout)
-            f.seek(0)
-            fn = self._get_unique_npy_file()
-            self.upload_from_file_and_rename(f, fn)
-            return fn
         self.reconnect_if_disconnected()
 
         if save_sum:
             assert len(capacity_layouts) == 0, "Only save_sum or capacity_layouts supported"
             capacity_layouts_fn = []
         elif self._protocol_version < 3:
-            capacity_layouts_fn = [upload_capacity_layout(l)
+            capacity_layouts_fn = [self.upload_from_data_and_rename(l)
                                    for l in capacity_layouts]
         else:
-            capacity_layouts_fn = [upload_capacity_layout(capacity_layouts)]
+            capacity_layouts_fn = [self.upload_from_data_and_rename(capacity_layouts)]
 
         job_fn = self._get_unique_npy_file()
 
@@ -178,29 +162,36 @@ class REatlas(reatlas_client.REatlas):
         self.wait_for_job(job_id=job_id)
 
         if save_sum:
-            f = TemporaryFile()
-            self.download_file_and_rename(remote_file=job_fn[:-4]+"_sum.npy",
-                                          local_file=f)
-            self.delete_file(filename=job_fn)
-            f.seek(0)
-            try:
-                return np.load(f)
-            except IOError:
-                raise RuntimeError("Couldn't read save_sum data")
+            return self.download_delete_and_load(remote_file=job_fn[:-4]+"_sum.npy",
+                                                 name='save_sum')
         else:
             for fn in capacity_layouts_fn:
                 self.delete_file(filename=fn)
 
-            f = TemporaryFile()
-            self.download_file_and_rename(remote_file=job_fn, local_file=f)
-            self.delete_file(filename=job_fn)
-            f.seek(0)
-            try:
-                timeseries = np.load(f)
-            except IOError:
-                raise RuntimeError("Couldn't read downloaded job data")
+            timeseries = self.download_delete_and_load(remote_file=job_fn, name='job')
 
             if solar:
                 timeseries = varray.interpolate(timeseries)
 
             return timeseries
+
+    def download_delete_and_load(remote_file, name=''):
+        f = TemporaryFile()
+        self.download_file_and_rename(remote_file=remote_file, local_file=f)
+        self.delete_file(filename=remote_file)
+        f.seek(0)
+        try:
+            return np.load(f)
+        except IOError:
+            raise RuntimeError("Couldn't read downloaded {} data".format(name))
+
+    def upload_from_data_and_rename(data, remote_file=None):
+        if remote_file is None:
+            remote_file = self._get_unique_npy_file()
+
+        f = TemporaryFile()
+        np.save(f, data)
+        f.seek(0)
+
+        self.upload_from_file_and_rename(f, remote_file)
+        return remote_file
