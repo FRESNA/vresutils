@@ -15,6 +15,7 @@ except ImportError:
     _toplevel = os.path.dirname(os.path.dirname(__file__))
     clientdir = os.path.join(_toplevel, 'REatlas-client')
     sys.path.insert(sys.path.index(_toplevel), clientdir)
+    import reatlas_client
 
 
 from . import array as varray
@@ -47,6 +48,7 @@ class Cutout(object):
 
     @CachedAttribute
     def meta(self):
+        self.reatlas.reconnect_if_disconnected()
         self.reatlas.prepare_cutout_metadata(cutoutname=self.cutoutname,
                                              username=self.username)
 
@@ -83,26 +85,45 @@ class Cutout(object):
 
 class REatlas(reatlas_client.REatlas):
     def __init__(self, **kwds):
-        config = get_config('.reatlas.config', defaults=dict(notify=False), overwrites=kwds)
+        self.config = get_config('.reatlas.config', defaults=dict(notify=False), overwrites=kwds)
+        self.cutout = self.config.get('cutout', None)
 
-        super(REatlas, self).__init__(config['hostname'])
-        if not self.connect_and_login(username=config['username'],
-                                      password=config['password']):
-            raise Exception("Could not log into REatlas")
+        super(REatlas, self).__init__(self.config['hostname'])
 
-        self.notify_by_mail(notify=config['notify']);
+        self.reconnect_if_disconnected(check_first=False)
 
-        if 'cutout' in config:
-            self.select_cutout(**config['cutout'])
+    def reconnect_if_disconnected(self, check_first=True):
+        if check_first:
+            try:
+                self.echo()
+            except reatlas_client.ConnectionError:
+                pass
+            else:
+                return
+
+        if not self.connect_and_login(username=self.config['username'],
+                                      password=self.config['password']):
+            raise reatlas_client.ConnectionError("Could not log into REatlas")
+
+        self.notify_by_mail(notify=self.config['notify']);
+
+        if self.cutout is not None:
+            self.select_cutout(**self.cutout)
 
     def select_cutout_from_obj(self, cutout=None, **kwargs):
+        self.reconnect_if_disconnected()
+
         if isinstance(cutout, Cutout):
             kwargs.update(cutoutname=cutout.cutoutname,
                           username=cutout.username)
+        # store the cutout so we are able to re-init the connection later
+        self.cutout = kwargs
 
         return self.select_cutout(**kwargs)
 
     def add_pv_orientations_by_config_file(self, fn):
+        self.reconnect_if_disconnected()
+
         if '/' not in fn:
             fn = os.path.join(clientdir, 'orientation_examples', fn + '.cfg')
         return super(REatlas, self).add_pv_orientations_by_config_file(fn)
@@ -115,6 +136,7 @@ class REatlas(reatlas_client.REatlas):
             fn = self._get_unique_npy_file()
             self.upload_from_file_and_rename(f, fn)
             return fn
+        self.reconnect_if_disconnected()
 
         if save_sum:
             assert len(capacity_layouts) == 0, "Only save_sum or capacity_layouts supported"
