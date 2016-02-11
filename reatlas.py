@@ -175,7 +175,7 @@ class REatlas(reatlas_client.REatlas):
 
             return timeseries
 
-    def download_delete_and_load(remote_file, name=''):
+    def download_delete_and_load(self, remote_file, name=''):
         f = TemporaryFile()
         self.download_file_and_rename(remote_file=remote_file, local_file=f)
         self.delete_file(filename=remote_file)
@@ -185,7 +185,7 @@ class REatlas(reatlas_client.REatlas):
         except IOError:
             raise RuntimeError("Couldn't read downloaded {} data".format(name))
 
-    def upload_from_data_and_rename(data, remote_file=None):
+    def upload_from_data_and_rename(self, data, remote_file=None):
         if remote_file is None:
             remote_file = self._get_unique_npy_file()
 
