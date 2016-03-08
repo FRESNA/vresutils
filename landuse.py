@@ -71,9 +71,9 @@ def corine_by_groups(cutout, groups, fn=toModDir('data/corine/g100_06.tif'), tmp
                         dst_data = np.in1d(src_data.ravel(), indices).astype("uint8").reshape(src_data.shape)
                         dst.write_band(1, dst_data, window=window)
 
-
-
-        minc, maxc = cutout.grid_coordinates()[[0,-1]]
+        cornersc = cutout.grid_coordinates()[[0,-1]]
+        minc = np.minimum(*cornersc)
+        maxc = np.maximum(*cornersc)
         span = (maxc - minc)/(np.asarray(cutout.shape)[[1,0]]-1)
         minx, miny = minc - span/2.
         maxx, maxy = maxc + span/2.
@@ -100,6 +100,11 @@ def corine_by_groups(cutout, groups, fn=toModDir('data/corine/g100_06.tif'), tmp
 
     if own_tmpdir:
         rmtree(tmpdir, ignore_errors=True)
+
+    # reversed_cutout_dims = np.r_[False,cornersc[0] > cornersc[1]]
+    # if reversed_cutout_dims.any():
+    #     landuse = landuse[tuple(slice(None, None, -1) if r else slice(None)
+    #                             for r in reversed_cutout_dims)]
 
     return landuse
 
