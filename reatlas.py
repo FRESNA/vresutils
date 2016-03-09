@@ -67,11 +67,11 @@ class Cutout(object):
     def grid_coordinates(self, latlon=False):
         meta = self.meta
         if latlon:
-            return np.array((np.ravel(meta['latitudes']),
-                             np.ravel(meta['longitudes']))).T
+            return np.asarray((np.ravel(meta['latitudes']),
+                               np.ravel(meta['longitudes']))).T
         else:
-            return np.array((np.ravel(meta['longitudes']),
-                             np.ravel(meta['latitudes']))).T
+            return np.asarray((np.ravel(meta['longitudes']),
+                               np.ravel(meta['latitudes']))).T
 
     def grid_cells(self):
         from shapely.geometry import box
@@ -79,6 +79,11 @@ class Cutout(object):
         coords = self.grid_coordinates()
         span = (coords[self.shape[1]+1] - coords[0]) / 2
         return [box(*c) for c in np.hstack((coords - span, coords + span))]
+
+    @property
+    def extent(self):
+        return (list(self.meta['longitudes'].ravel()[[0, -1]]) +
+                list(self.meta['latitudes'].ravel()[[-1, 0]]))
 
     def __repr__(self):
         return '<Cutout {}/{}>'.format(self.username, self.cutoutname)
