@@ -555,7 +555,7 @@ try:
 except ValueError:
     _nx_version = LooseVersion(nx.__version__)
 
-if False and _nx_version >= '1.12':
+if _nx_version >= '1.12':
     class OrderedGraph(nx.Graph):
         node_dict_factory = OrderedDict
         adjlist_dict_factory = OrderedDict
