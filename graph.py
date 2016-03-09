@@ -777,3 +777,7 @@ def convert_node_labels_to_integers(G):
 
 def get_node_attributes(G, attr):
     return OrderedDict((n, d[attr]) for n, d in iteritems(G.node))
+
+def get_edge_attributes(G, attr):
+    return OrderedDict(((u, v), d[attr]) for u, v, d in iteritems(G.edges_iter(data=True)))
+
