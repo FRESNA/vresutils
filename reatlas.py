@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from tempfile import TemporaryFile
+from operator import itemgetter
 import numpy as np
 import os
 
@@ -32,6 +33,14 @@ def solarpanelconf_to_solar_panel_config_object(fn):
     if '/' not in fn:
         fn = os.path.join(clientdir, 'SolarPanelData', fn + '.cfg')
     return reatlas_client.solarpanelconf_to_solar_panel_config_object(fn)
+
+def solarpanel_rated_capacity_per_m2(panel):
+    # one unit in the capacity layout is interpreted as one panel of a
+    # capacity (A + 1000 * B + log(1000) * C) * 1000W/m^2 * (k / 1000)
+
+    panelconf = solarpanelconf_to_solar_panel_config_object(panel)
+    A, B, C = itemgetter('A', 'B', 'C')(panelconf)
+    return (A + B * 1000. + C * np.log(1000.)) # in kW
 
 class Cutout(object):
     def __init__(self, cutoutname, username, reatlas=None):
