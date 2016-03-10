@@ -25,11 +25,19 @@ from . import get_config
 from .decorators import timer, CachedAttribute
 
 def turbineconf_to_powercurve_object(fn):
+    if isinstance(fn, dict):
+        # Already a config object!?
+        return fn
+
     if '/' not in fn:
         fn = os.path.join(clientdir, 'TurbineConfig', fn + '.cfg')
     return reatlas_client.turbineconf_to_powercurve_object(fn)
 
 def solarpanelconf_to_solar_panel_config_object(fn):
+    if isinstance(fn, dict):
+        # Already a config object!?
+        return fn
+
     if '/' not in fn:
         fn = os.path.join(clientdir, 'SolarPanelData', fn + '.cfg')
     return reatlas_client.solarpanelconf_to_solar_panel_config_object(fn)
