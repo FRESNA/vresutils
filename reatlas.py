@@ -3,7 +3,12 @@ from __future__ import absolute_import
 from tempfile import TemporaryFile
 from operator import itemgetter
 import numpy as np
+import pandas as pd
 import os
+
+from . import mapping as vmapping
+from . import make_toModDir
+toModDir = make_toModDir(__file__)
 
 # Import REatlas
 try:
@@ -23,6 +28,23 @@ from . import array as varray
 
 from . import get_config
 from .decorators import timer, CachedAttribute
+
+def partition_from_shapes(shapes, cutout):
+    if not isinstance(shapes, pd.Series):
+        shapes = pd.Series(shapes)
+
+    raise NotImplemented
+
+def partition_from_emil(cutout, path=toModDir("data/Europe_2011_2014")):
+    # if str(cutout) != '<Cutout becker/Europe_2011_2014>':
+    #     raise "Partition from emil does probably not correspond to cutout {}".format(cutout)
+
+    mapping = vmapping.countries_to_nuts1(series=True)
+    countries = np.asarray(mapping)[np.r_[True, mapping[1:] != mapping[:-1]]]
+    iso2toiso3 = vmapping.iso2_to_iso3()
+
+    return pd.Series(dict((iso2, np.load(os.path.join(path, "masks/{}.npy".format(iso2toiso3[iso2]))))
+                           for iso2 in countries))
 
 def turbineconf_to_powercurve_object(fn):
     if isinstance(fn, dict):
