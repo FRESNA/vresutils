@@ -74,7 +74,7 @@ def solarpanel_rated_capacity_per_m2(panel):
 
 def windturbine_rated_capacity_per_unit(turbine):
     powercurve = turbineconf_to_powercurve_object(turbine)
-    return max(turbine['POW'])
+    return max(powercurve['POW'])
 
 class Cutout(object):
     def __init__(self, cutoutname, username, reatlas=None):
