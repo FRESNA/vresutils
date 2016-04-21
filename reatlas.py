@@ -50,6 +50,10 @@ def solarpanel_rated_capacity_per_m2(panel):
     A, B, C = itemgetter('A', 'B', 'C')(panelconf)
     return (A + B * 1000. + C * np.log(1000.)) # in kW
 
+def windturbine_rated_capacity_per_unit(turbine):
+    powercurve = turbineconf_to_powercurve_object(turbine)
+    return max(turbine['POW'])
+
 class Cutout(object):
     def __init__(self, cutoutname, username, reatlas=None):
         self.cutoutname = cutoutname
