@@ -83,7 +83,12 @@ class Cutout(object):
 
         if reatlas is None:
             reatlas = REatlas()
-        self.reatlas = reatlas
+        self._reatlas = reatlas
+
+    @property
+    def reatlas(self):
+        self._reatlas.select_cutout_from_obj(self)
+        return self._reatlas
 
     @property
     def shape(self):
@@ -91,12 +96,12 @@ class Cutout(object):
 
     @CachedAttribute
     def meta(self):
-        self.reatlas.reconnect_if_disconnected()
-        self.reatlas.prepare_cutout_metadata(cutoutname=self.cutoutname,
-                                             username=self.username)
+        self._reatlas.reconnect_if_disconnected()
+        self._reatlas.prepare_cutout_metadata(cutoutname=self.cutoutname,
+                                              username=self.username)
 
         fn = 'meta_{}.npz'.format(self.cutoutname)
-        return self.reatlas.download_delete_and_load(remote_file=fn, name='metadata')
+        return self._reatlas.download_delete_and_load(remote_file=fn, name='metadata')
 
     def grid_coordinates(self, latlon=False):
         meta = self.meta
