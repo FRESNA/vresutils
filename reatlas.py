@@ -70,7 +70,7 @@ def solarpanel_rated_capacity_per_m2(panel):
 
     panelconf = solarpanelconf_to_solar_panel_config_object(panel)
     A, B, C = itemgetter('A', 'B', 'C')(panelconf)
-    return (A + B * 1000. + C * np.log(1000.)) # in kW
+    return (A + B * 1000. + C * np.log(1000.))*1e3
 
 def windturbine_rated_capacity_per_unit(turbine):
     powercurve = turbineconf_to_powercurve_object(turbine)
