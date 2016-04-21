@@ -36,8 +36,8 @@ def partition_from_shapes(shapes, cutout):
     raise NotImplemented
 
 def partition_from_emil(cutout, path=toModDir("data/Europe_2011_2014")):
-    # if str(cutout) != '<Cutout becker/Europe_2011_2014>':
-    #     raise "Partition from emil does probably not correspond to cutout {}".format(cutout)
+    if str(cutout) != '<Cutout becker/Europe_2011_2014>':
+        raise "Partition from emil does probably not correspond to cutout {}".format(cutout)
 
     mapping = vmapping.countries_to_nuts1(series=True)
     countries = np.asarray(mapping)[np.r_[True, mapping[1:] != mapping[:-1]]]
