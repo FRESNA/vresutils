@@ -43,7 +43,7 @@ def partition_from_emil(cutout, path=toModDir("data/Europe_2011_2014")):
     countries = np.asarray(mapping)[np.r_[True, mapping[1:] != mapping[:-1]]]
     iso2toiso3 = vmapping.iso2_to_iso3()
 
-    return pd.Series(dict((iso2, np.load(os.path.join(path, "masks/{}.npy".format(iso2toiso3[iso2]))))
+    return pd.Series(dict((iso2, np.load(os.path.join(path, "masks/{}.npy".format(iso2toiso3[iso2])))[::-1])
                            for iso2 in countries))
 
 def turbineconf_to_powercurve_object(fn):
