@@ -130,7 +130,7 @@ def read_enipedia():
              OPTIONAL{?plant prop:Country ?country_link .
                       ?country_link rdfs:label ?country }.
              OPTIONAL{?plant prop:Year_built ?year_built }.
-             ?plant prop:Status ?status .
+             OPTIONAL{?plant prop:Status ?status }.
         }
      """)
 
@@ -152,7 +152,7 @@ def read_enipedia():
                       columns=["Name", "Type", "Country", "Capacity",
                                "lon", "lat", "Built", "Status"])
 
-    return df[df.Status == 'Operational']
+    return df
 
 def backup_capacity_nuts_grid(G, plants=None):
     from shapely.geometry import Point
