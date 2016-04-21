@@ -46,6 +46,23 @@ def corine_label1(cutout, tmpdir=None):
 
     return list(groups), corine_by_groups(cutout, groups, tmpdir=tmpdir)
 
+@cachable(ignore=set(('tmpdir',)))
+def corine_sharp(cutout, tmpdir=None):
+    """
+    Corine classification by ed sharp PhD thesis p. 177
+
+    preferred : Scrub, Herbaceous Vegetation, Forest, Pasture, Arable
+                land and Inland Wetland
+    ifneeded : Industrial, Commercial, Transport, Urban Fabric,
+               heterogeneous agricultural and sparsely vegetated land
+    """
+
+    # ifneeded might be added later
+    groups = {'preferred': [12, 13, 14, 18, 23, 24, 25, 26, 27, 28, 29, 35, 36]}
+
+    return list(groups), corine_by_groups(cutout, groups, tmpdir=tmpdir)
+
+
 def corine_by_groups(cutout, groups, fn=toModDir('data/corine/g100_06.tif'), tmpdir=None):
     own_tmpdir = tmpdir is None
     if own_tmpdir:
