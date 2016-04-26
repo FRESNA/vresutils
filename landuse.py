@@ -75,10 +75,25 @@ def corine_by_groups(cutout, groups, fn=toModDir('data/corine/g100_06.tif'), tmp
     if own_tmpdir:
         tmpdir = tempfile.mkdtemp()
 
-    # Write out into different files, and convert those files using
-    # gdalwarp. Second step should be converted to using rasterio at
-    # some point, attempts for that are in
-    # ~vres/data/jonas/playground/corine.ipynb.
+    landuse = np.asarray([corine_for_cutout(cutout, indices, label=group, fn=fn, tmpdir=tmpdir)
+                          for group, indices in iteritems(groups)])
+
+    if own_tmpdir:
+        rmtree(tmpdir, ignore_errors=True)
+
+    return landuse
+
+def corine_for_cutout(cutout, grid_codes, label=None, fn=toModDir('data/corine/g250_06.tif'), tmpdir=None):
+    own_tmpdir = tmpdir is None
+    if own_tmpdir:
+        tmpdir = tempfile.mkdtemp()
+
+    if label is None:
+        # Unsafe, but alternative is unwieldy
+        label = os.path.basename(tempfile.mktemp(suffix=".tif", dir=tmpdir)[:-4])
+
+    # Write matching grid_codes out into a file in tmpdir, and convert
+    # this file using gdalwarp
 
     with rasterio.drivers():
         with rasterio.open(fn) as src:
@@ -86,14 +101,13 @@ def corine_by_groups(cutout, groups, fn=toModDir('data/corine/g100_06.tif'), tmp
             meta.update(transform=src.meta['affine'],
                         compress='lzw')
 
-            for group, indices in iteritems(groups):
-                windows = src.block_windows(1)
+            windows = src.block_windows(1)
 
-                with rasterio.open(os.path.join(tmpdir, '{}.tif'.format(group)), 'w', **meta) as dst:
-                    for idx, window in windows:
-                        src_data, = src.read(window=window)
-                        dst_data = np.in1d(src_data.ravel(), indices).astype("uint8").reshape(src_data.shape)
-                        dst.write_band(1, dst_data, window=window)
+            with rasterio.open(os.path.join(tmpdir, '{}.tif'.format(label)), 'w', **meta) as dst:
+                for idx, window in windows:
+                    src_data, = src.read(window=window)
+                    dst_data = np.in1d(src_data.ravel(), grid_codes).astype("uint8").reshape(src_data.shape)
+                    dst.write_band(1, dst_data, window=window)
 
         cornersc = cutout.grid_coordinates()[[0,-1]]
         minc = np.minimum(*cornersc)
@@ -102,25 +116,22 @@ def corine_by_groups(cutout, groups, fn=toModDir('data/corine/g100_06.tif'), tmp
         minx, miny = minc - span/2.
         maxx, maxy = maxc + span/2.
 
-        for group in groups:
-            ret = subprocess.call(['gdalwarp', '-overwrite',
-                                   '-t_srs', 'EPSG:4326',
-                                   '-te', str(minx), str(miny), str(maxx), str(maxy),
-                                   '-ts', str(cutout.shape[1]), str(cutout.shape[0]),
-                                   '-r', "average",
-                                   '-wt', 'Float64',
-                                   '-ot', 'Float64',
-                                   '-srcnodata', 'None',
-                                   '-dstnodata', 'None',
-                                   os.path.join(tmpdir, '{}.tif'.format(group)),
-                                   os.path.join(tmpdir, '{}_avg.tif'.format(group))])
-            assert ret == 0, "gdalwarp for group '{}' did not return successfully.".format(group)
+        ret = subprocess.call(['gdalwarp', '-overwrite',
+                               '-t_srs', 'EPSG:4326',
+                               '-te', str(minx), str(miny), str(maxx), str(maxy),
+                               '-ts', str(cutout.shape[1]), str(cutout.shape[0]),
+                               '-r', "average",
+                               '-wt', 'Float64',
+                               '-ot', 'Float64',
+                               '-srcnodata', 'None',
+                               '-dstnodata', 'None',
+                               os.path.join(tmpdir, '{}.tif'.format(label)),
+                               os.path.join(tmpdir, '{}_avg.tif'.format(label))])
+        assert ret == 0, "gdalwarp for group '{}' did not return successfully.".format(label)
 
 
-        def load_avg(group):
-            with rasterio.open(os.path.join(tmpdir, '{}_avg.tif'.format(group))) as avg:
-                return avg.read()[0]
-        landuse = np.asarray(list(map(load_avg, groups)))
+        with rasterio.open(os.path.join(tmpdir, '{}_avg.tif'.format(label))) as avg:
+            landuse = avg.read()[0]
 
     if own_tmpdir:
         rmtree(tmpdir, ignore_errors=True)
@@ -154,5 +165,8 @@ def potential(mapping, cutout, func=corine_label1):
     cutout = vreatlas.Cutout(cutoutname='Europe_2011_2014', username='becker')
     potential = vlanduse.potential(vlanduse.wind, cutout)
     """
-    groups, landuse = func(cutout)
+    if callable(func):
+        groups, landuse = func(cutout)
+    else:
+        groups, landuse = func
     return np.dot(landuse.transpose((1,2,0)), mapping.reindex(groups).fillna(0.))
