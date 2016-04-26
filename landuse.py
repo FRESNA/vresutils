@@ -47,18 +47,25 @@ def corine_label1(cutout, tmpdir=None):
     return list(groups), corine_by_groups(cutout, groups, tmpdir=tmpdir)
 
 @cachable(ignore=set(('tmpdir',)))
-def corine_sharp(cutout, tmpdir=None):
+def corine_renewable(cutout, tmpdir=None):
     """
-    Corine classification by ed sharp PhD thesis p. 177
+    Corine classification by hand :)
 
+    wind is preferred from PhD thesis by ed sharp p. 177
+    (
     preferred : Scrub, Herbaceous Vegetation, Forest, Pasture, Arable
-                land and Inland Wetland
+           land and Inland Wetland, Marine waters
     ifneeded : Industrial, Commercial, Transport, Urban Fabric,
                heterogeneous agricultural and sparsely vegetated land
+    )
+
+    solar comes from everything but forests and waters
+
     """
 
     # ifneeded might be added later
-    groups = {'preferred': [12, 13, 14, 18, 23, 24, 25, 26, 27, 28, 29, 35, 36]}
+    groups = {'wind': [12, 13, 14, 18, 23, 24, 25, 26, 27, 28, 29, 35, 36, 42, 43, 44],
+              'solar': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36]}
 
     return list(groups), corine_by_groups(cutout, groups, tmpdir=tmpdir)
 
