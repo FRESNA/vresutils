@@ -108,7 +108,7 @@ def nuts1(tolerance=0.03, minarea=1., extended=True):
     return nuts
 
 @cachable(keepweakref=True, version=3)
-def countries(subset=None, tolerance=0.03, minarea=1.):
+def countries(subset=None, name_field=None, tolerance=0.03, minarea=1.):
     sf = shapefile.Reader(toModDir('data/ne_10m_admin_0_countries/ne_10m_admin_0_countries'))
     fields = dict(zip(map(itemgetter(0), sf.fields[1:]), count()))
     if subset is not None:
@@ -117,13 +117,16 @@ def countries(subset=None, tolerance=0.03, minarea=1.):
     else:
         # '-99' means 'not available' in this dataset
         include = lambda x: True
-    def name(rec):
-        if rec[fields['ISO_A2']] != '-99':
-            return rec[fields['ISO_A2']]
-        elif rec[fields['WB_A2']] != '-99':
-            return rec[fields['WB_A2']]
-        else:
-            return rec[fields['ADM0_A3']][:-1]
+    if name_field is None:
+        def name(rec):
+            if rec[fields['ISO_A2']] != '-99':
+                return rec[fields['ISO_A2']]
+            elif rec[fields['WB_A2']] != '-99':
+                return rec[fields['WB_A2']]
+            else:
+                return rec[fields['ADM0_A3']][:-1]
+    else:
+        name = itemgetter(fields[name_field])
     return OrderedDict(sorted([(n, _shape2poly(sf.shape(i), tolerance, minarea))
                                for i, rec in enumerate(sf.iterRecords())
                                for n in (name(rec),)
