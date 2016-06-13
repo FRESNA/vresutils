@@ -83,7 +83,7 @@ def corine_by_groups(cutout, groups, fn=toModDir('data/corine/g100_06.tif'), tmp
 
     return landuse
 
-def corine_for_cutout(cutout, grid_codes, label=None, fn=toModDir('data/corine/g250_06.tif'), tmpdir=None):
+def corine_for_cutout(cutout, grid_codes, label=None, fn=toModDir('data/corine/g250_clc06_V18_5.tif'), tmpdir=None):
     own_tmpdir = tmpdir is None
     if own_tmpdir:
         tmpdir = tempfile.mkdtemp()
@@ -117,7 +117,7 @@ def corine_for_cutout(cutout, grid_codes, label=None, fn=toModDir('data/corine/g
         maxx, maxy = maxc + span/2.
 
         ret = subprocess.call(['gdalwarp', '-overwrite',
-                               '-t_srs', 'EPSG:4326',
+                               '-t_srs', 'EPSG:3035',
                                '-te', str(minx), str(miny), str(maxx), str(maxy),
                                '-ts', str(cutout.shape[1]), str(cutout.shape[0]),
                                '-r', "average",
