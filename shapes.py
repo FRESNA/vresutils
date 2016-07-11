@@ -102,7 +102,7 @@ def nuts1(tolerance=0.03, minarea=1., extended=True):
                               key=itemgetter(0)))
     if extended:
         cntry_map = {'BA': u'BA1', 'RS': u'RS1', 'AL': u'AL1', 'KV': u'KV1'}
-        cntries = countries(list(cntry_map.keys()), tolerance, minarea)
+        cntries = countries(list(cntry_map.keys()), tolerance=tolerance, minarea=minarea)
         nuts.update((cntry_map[k], v) for k,v in iteritems(cntries))
 
     return nuts
