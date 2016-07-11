@@ -83,7 +83,10 @@ def corine_by_groups(cutout, groups, fn=toModDir('data/corine/g100_06.tif'), tmp
 
     return landuse
 
-def corine_for_cutout(cutout, grid_codes, label=None, fn=toModDir('data/corine/g250_clc06_V18_5.tif'), tmpdir=None):
+def corine_for_cutout(cutout, grid_codes, label=None, natura=False,
+                      fn=toModDir('data/corine/g250_clc06_V18_5.tif'),
+                      natura_fn=toModDir('data/Natura2000/Natura2000_end2015.shp'),
+                      tmpdir=None):
     own_tmpdir = tmpdir is None
     if own_tmpdir:
         tmpdir = tempfile.mkdtemp()
@@ -115,6 +118,21 @@ def corine_for_cutout(cutout, grid_codes, label=None, fn=toModDir('data/corine/g
         span = (maxc - minc)/(np.asarray(cutout.shape)[[1,0]]-1)
         minx, miny = minc - span/2.
         maxx, maxy = maxc + span/2.
+
+        if natura:
+            # rasterio does not include the coordinate reference
+            # system in a proper manner
+            ret = subprocess.call(['gdal_translate', '-a_srs', 'EPSG:3035',
+                                   os.path.join(tmpdir, '{}.tif'.format(label)),
+                                   os.path.join(tmpdir, '{}_fixed.tif'.format(label))])
+            assert ret == 0, "gdal_translate for group '{}' did not return successfully.".format(label)
+
+            os.rename(os.path.join(tmpdir, '{}_fixed.tif'.format(label)),
+                      os.path.join(tmpdir, '{}.tif'.format(label)))
+
+            ret = subprocess.call(['gdal_rasterize', '-burn', '0',
+                                   natura_fn, os.path.join(tmpdir, '{}.tif'.format(label))])
+            assert ret == 0, "gdal_rasterize for group '{}' did not return successfully.".format(label)
 
         ret = subprocess.call(['gdalwarp', '-overwrite',
                                '-s_srs', 'EPSG:3035',
