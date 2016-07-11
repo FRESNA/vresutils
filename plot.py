@@ -8,8 +8,13 @@ from six.moves import range, map, zip
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.cbook as cb
+import matplotlib.colors as mcolors
+import matplotlib.gridspec as mgridspec
 from matplotlib.colors import colorConverter
-from matplotlib.collections import LineCollection, PolyCollection
+from matplotlib.collections import PatchCollection, LineCollection, PolyCollection
+from matplotlib.patches import Arrow, FancyArrow
+
+from operator import itemgetter
 
 from . import make_toModDir
 toModDir = make_toModDir(__file__)
@@ -149,6 +154,58 @@ try:
 
         ax.autoscale_view()
         return coll
+
+    def plot_flow(G, P, F, colorbar=True):
+        plt.figure()
+        gs = mgridspec.GridSpec(4, 4,
+                               width_ratios=[3,18,3,1],
+                               height_ratios=[1,14,1,1]
+                               )
+        ax = plt.subplot(gs[0:3,0:3])
+        if colorbar:
+            cax1 = plt.subplot(gs[1,3])
+        cax2 = plt.subplot(gs[3,1])
+
+        ax.set_aspect('equal')
+
+        # Nodes
+        vmax = abs(P).max()
+        pos = {c: np.asarray(sh.centroid) for c, sh in iteritems(shapes)}
+        x, y = np.asarray(itemgetter(*nodelist)(pos)).T
+        mappable = ax.scatter(x, y, s=45., c=P, cmap='coolwarm', vmin=-vmax, vmax=+vmax)
+        draw_countries([np.NaN]*30, facecolors='None', ax=ax, zorder=-3)
+        if colorbar:
+            plt.colorbar(mappable, cax=cax1).set_label(r'$P_n$ / GW')
+
+        # Edges
+        cc = mcolors.ColorConverter()
+        cmap = mcolors.LinearSegmentedColormap.from_list(
+            'darkblue-alpha',
+            [cc.to_rgba('darkblue', alpha=a) for a in (0., 1.)]
+        )
+        norm = mcolors.Normalize()
+
+        lines = []
+        arrows = []
+        for (u, v), f in zip(edgelist, F):
+            if f < 0: u, v = v, u
+            x1, y1 = pos[u]
+            x2, y2 = pos[v]
+
+            lines.append([(x1, y1), (x2, y2)])
+            arrows.append(FancyArrow(x1, y1, 0.5*(x2 - x1), 0.5*(y2 - y1), head_width=1.5))
+
+        linecol = LineCollection(lines, lw=3., cmap=cmap, zorder=-2, norm=norm)
+        linecol.set_array(abs(F))
+        ax.add_collection(linecol)
+
+        arrowcol = PatchCollection(arrows, cmap=cmap, zorder=-1, norm=norm, edgecolors='none')
+        arrowcol.set_array(abs(F))
+        ax.add_collection(arrowcol)
+        #plt.plot((x1, x2), (y1, y2), color='darkblue', alpha=norm(abs(f)), lw=3., zorder=-2)
+
+        plt.colorbar(linecol, cax=cax2, orientation='horizontal').set_label(r'$|F_l|$ / GW')
+
 except ImportError:
     pass
 
