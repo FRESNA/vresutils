@@ -121,14 +121,10 @@ def corine_for_cutout(cutout, grid_codes, label=None, natura=False,
 
         if natura:
             # rasterio does not include the coordinate reference
-            # system in a proper manner
-            ret = subprocess.call(['gdal_translate', '-a_srs', 'EPSG:3035',
-                                   os.path.join(tmpdir, '{}.tif'.format(label)),
-                                   os.path.join(tmpdir, '{}_fixed.tif'.format(label))])
-            assert ret == 0, "gdal_translate for group '{}' did not return successfully.".format(label)
-
-            os.rename(os.path.join(tmpdir, '{}_fixed.tif'.format(label)),
-                      os.path.join(tmpdir, '{}.tif'.format(label)))
+            # system in a proper manner, so we add it manually
+            ret = subprocess.call(['gdal_edit.py', '-a_srs', 'EPSG:3035',
+                                   os.path.join(tmpdir, '{}.tif'.format(label))])
+            assert ret == 0, "gdal_edit for group '{}' did not return successfully.".format(label)
 
             ret = subprocess.call(['gdal_rasterize', '-burn', '0',
                                    natura_fn, os.path.join(tmpdir, '{}.tif'.format(label))])
@@ -189,3 +185,15 @@ def potential(mapping, cutout, func=corine_label1):
     else:
         groups, landuse = func
     return np.dot(landuse.transpose((1,2,0)), mapping.reindex(groups).fillna(0.))
+
+@cachable
+def solarpotentials(cutout, natura=True):
+    return 17. * corine_for_cutout(cutout, [1, 2, 3, 4, 5, 6, 12, 13, 14, 18, 26, 27, 28, 29], natura=natura)
+
+@cachable
+def windonshorepotentials(cutout, natura=True):
+    return 5. * corine_for_cutout(cutout, [12, 13, 14, 18, 23, 24, 25, 26, 27, 28, 29, 35, 36], natura=True)
+
+@cachable
+def windoffshorepotentials(cutout, natura=True):
+    return 5.* corine_for_cutout(cutout, [44, 255], natura=True)
