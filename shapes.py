@@ -149,10 +149,13 @@ def eez(subset=None, filter_remote=True, tolerance=0.03):
                               key=itemgetter(0)))
 
 @cachable(keepweakref=True, version=3)
-def countries(subset=None, name_field=None, tolerance=0.03, minarea=1.):
+def countries(subset=None, name_field=None, add_KV_to_RS=False,
+              tolerance=0.03, minarea=1.):
     sf = shapefile.Reader(toModDir('data/ne_10m_admin_0_countries/ne_10m_admin_0_countries'))
     fields = dict(zip(map(itemgetter(0), sf.fields[1:]), count()))
     if subset is not None:
+        if add_KV_to_RS:
+            subset = chain(subset, ('KV',))
         subset = frozenset(subset)
         include = lambda x: x in subset
     else:
@@ -168,11 +171,14 @@ def countries(subset=None, name_field=None, tolerance=0.03, minarea=1.):
                 return rec[fields['ADM0_A3']][:-1]
     else:
         name = itemgetter(fields[name_field])
-    return OrderedDict(sorted([(n, _shape2poly(sf.shape(i), tolerance, minarea))
-                               for i, rec in enumerate(sf.iterRecords())
-                               for n in (name(rec),)
-                               if include(n) and rec[fields['scalerank']] == 0],
-                              key=itemgetter(0)))
+    shapes = OrderedDict(sorted([(n, _shape2poly(sf.shape(i), tolerance, minarea))
+                                 for i, rec in enumerate(sf.iterRecords())
+                                 for n in (name(rec),)
+                                 if include(n) and rec[fields['scalerank']] == 0],
+                                key=itemgetter(0)))
+    if add_KV_to_RS:
+        shapes['RS'] = shapes['RS'].union(shapes['KV'])
+    return shapes
 
 @cachable(keepweakref=True, version=2)
 def laender(tolerance=0.03, shortnames=True):
