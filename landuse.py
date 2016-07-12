@@ -122,9 +122,19 @@ def corine_for_cutout(cutout, grid_codes, label=None, natura=False,
         if natura:
             # rasterio does not include the coordinate reference
             # system in a proper manner, so we add it manually
-            ret = subprocess.call(['gdal_edit.py', '-a_srs', 'EPSG:3035',
-                                   os.path.join(tmpdir, '{}.tif'.format(label))])
-            assert ret == 0, "gdal_edit for group '{}' did not return successfully.".format(label)
+            try:
+                ret = subprocess.call(['gdal_edit.py', '-a_srs', 'EPSG:3035',
+                                       os.path.join(tmpdir, '{}.tif'.format(label))])
+                assert ret == 0, "gdal_edit for group '{}' did not return successfully.".format(label)
+            except OSError:
+                # GDAL python bindings are not installed, fallback to gdal_translate
+                ret = subprocess.call(['gdal_translate', '-a_srs', 'EPSG:3035',
+                                       os.path.join(tmpdir, '{}.tif'.format(label)),
+                                       os.path.join(tmpdir, '{}_fixed.tif'.format(label))])
+                assert ret == 0, "gdal_translate for group '{}' did not return successfully.".format(label)
+
+                os.rename(os.path.join(tmpdir, '{}_fixed.tif'.format(label)),
+                          os.path.join(tmpdir, '{}.tif'.format(label)))
 
             ret = subprocess.call(['gdal_rasterize', '-burn', '0',
                                    natura_fn, os.path.join(tmpdir, '{}.tif'.format(label))])
