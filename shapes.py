@@ -4,8 +4,12 @@ from __future__ import absolute_import
 
 import pyproj
 import shapefile
+import fiona
 from shapely.ops import transform
-from shapely.geometry import LinearRing, Polygon, MultiPolygon, GeometryCollection
+from shapely.geometry import (LinearRing, Polygon, MultiPolygon,
+                              GeometryCollection, shape)
+from countrycode.countrycode import countrycode
+
 from functools import partial
 from itertools import chain, count, takewhile
 from operator import itemgetter, attrgetter
@@ -106,6 +110,43 @@ def nuts1(tolerance=0.03, minarea=1., extended=True):
         nuts.update((cntry_map[k], v) for k,v in iteritems(cntries))
 
     return nuts
+
+@cachable(keepweakref=True)
+def eez(subset=None, filter_remote=True, tolerance=0.03):
+    names = []
+    shapes = []
+    countries3 = frozenset(countrycode(subset, origin='iso2c', target='iso3c'))
+    with fiona.drivers(), fiona.open(toModDir('data/World_EEZ/World_EEZ_v8_2014.shp')) as f:
+        for sh in f:
+            name = sh['properties']['ISO_3digit']
+            if name in countries3:
+                names.append(sh['properties']['ISO_3digit'])
+                shapes.append(simplify_poly(shape(sh['geometry']), tolerance=tolerance))
+
+    names = countrycode(names, origin='iso3c', target='iso2c')
+    if filter_remote:
+        country_shapes = countries(subset)
+        return pd.Series(dict((name, shape)
+                              for name, shape in zip(names, shapes)
+                              if shape.distance(country_shapes[name]) < 1e-3)).sort_index()
+    else:
+        return pd.Series(shapes, index=names)
+
+    sf = shapefile.Reader(toModDir('data/World_EEZ/World_EEZ_v8_2014'))
+    fields = dict(zip(map(itemgetter(0), sf.fields[1:]), count()))
+    if subset is not None:
+        subset = frozenset(subset)
+        include = lambda x: x in subset
+    else:
+        # '-99' means 'not available' in this dataset
+        include = lambda x: True
+    def name(rec):
+        return countrycode(rec[fields['ISO_3digit']], origin='iso3c', target='iso2c')
+    return OrderedDict(sorted([(n, _shape2poly(sf.shape(i), tolerance, minarea))
+                               for i, rec in enumerate(sf.iterRecords())
+                               for n in (name(rec),)
+                               if include(n)],
+                              key=itemgetter(0)))
 
 @cachable(keepweakref=True, version=3)
 def countries(subset=None, name_field=None, tolerance=0.03, minarea=1.):

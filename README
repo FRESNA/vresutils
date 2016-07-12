@@ -21,6 +21,9 @@ vg250 :
 ne_10m_admin_countries :
     Worldwide country shapes from naturalearthdata.com [2]
 
+World_EEZ :
+    World wide Exclusive Economic Zones from marineregions.org [10], i.e. VLIZ (2014)
+
 NUTS_2010_60M_SH :
     EU shapes from Eurostat [3]
 
@@ -86,3 +89,6 @@ Footnotes:
 [8] https://morph.io/coroa/global_energy_observatory_power_plants
 
 [9] http://ec.europa.eu/eurostat/product?code=nrg_113a&mode=view
+
+[10] http://www.marineregions.org/downloads.php (World EEZ v8, Low res)
+
