@@ -92,7 +92,7 @@ _shape2poly.wgs = pyproj.Proj('+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +uni
 @cachable(keepweakref=True)
 def nuts0(tolerance=0.03, minarea=1.):
     sf = shapefile.Reader(toModDir('data/NUTS_2010_60M_SH/data/NUTS_RG_60M_2010'))
-    return OrderedDict(sorted([(rec[0].decode('utf-8'), _shape2poly(sh, tolerance, minarea))
+    return OrderedDict(sorted([(rec[0], _shape2poly(sh, tolerance, minarea))
                                for rec, sh in zip(sf.iterRecords(), sf.iterShapes())
                                if rec[1] == 0],
                               key=itemgetter(0)))
@@ -100,7 +100,7 @@ def nuts0(tolerance=0.03, minarea=1.):
 @cachable(keepweakref=True)
 def nuts1(tolerance=0.03, minarea=1., extended=True):
     sf = shapefile.Reader(toModDir('data/NUTS_2010_60M_SH/data/NUTS_RG_60M_2010'))
-    nuts = OrderedDict(sorted([(rec[0].decode('utf-8'), _shape2poly(sh, tolerance, minarea))
+    nuts = OrderedDict(sorted([(rec[0], _shape2poly(sh, tolerance, minarea))
                                for rec, sh in zip(sf.iterRecords(), sf.iterShapes())
                                if rec[1] == 1],
                               key=itemgetter(0)))
@@ -108,6 +108,20 @@ def nuts1(tolerance=0.03, minarea=1., extended=True):
         cntry_map = {'BA': u'BA1', 'RS': u'RS1', 'AL': u'AL1', 'KV': u'KV1'}
         cntries = countries(list(cntry_map.keys()), tolerance=tolerance, minarea=minarea)
         nuts.update((cntry_map[k], v) for k,v in iteritems(cntries))
+
+    return nuts
+
+@cachable(keepweakref=True)
+def nuts3(tolerance=0.03, minarea=0., extended=True):
+    sf = shapefile.Reader(toModDir('data/NUTS_2013_60M_SH/data/NUTS_RG_60M_2013'))
+    nuts = OrderedDict(sorted([(rec[0], _shape2poly(sh, tolerance, minarea))
+                               for rec, sh in zip(sf.iterRecords(), sf.iterShapes())
+                               if rec[1] == 3],
+                              key=itemgetter(0)))
+    if extended:
+        cntry_map = {'BA': u'BA1', 'RS': u'RS1', 'AL': u'AL1'}
+        cntries = countries(list(cntry_map.keys()), tolerance=tolerance, minarea=minarea, add_KV_to_RS=True)
+        nuts.update((cntry_map[k], v) for k,v in iteritems(cntries) if k != 'KV')
 
     return nuts
 

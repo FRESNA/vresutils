@@ -9,7 +9,7 @@ from six import iteritems
 from six.moves import map, zip
 
 from .array import unique_sorted
-from .shapes import nuts1
+from .shapes import nuts1, nuts3
 
 from . import make_toModDir
 toModDir = make_toModDir(__file__)
@@ -49,6 +49,33 @@ def countries_to_nuts1(series=True):
         mapping = od
 
     return mapping
+
+def countries_to_nuts3(series=True):
+    """
+    Returns a mapping from european countries to lists of their nuts1
+    regions.  Some countries like Kosovo or Turkey are omitted, as
+    well as a couple of islands.
+    """
+
+    excludenuts = set(('FRA10', 'FRA20', 'FRA30', 'FRA40', 'FRA50',
+                       'PT200', 'PT300',
+                       'ES707', 'ES703', 'ES704','ES705', 'ES706', 'ES708', 'ES709', 'FI2', 'FR9'))
+    excludecountry = set(('MT', 'TR', 'LI', 'IS', 'CY', 'KV'))
+    mapcountry = dict(UK=u'GB', EL=u'GR')
+
+    mapping = pd.Series({x: mapcountry.get(x[:2], x[:2])
+                         for x in nuts3()
+                         if x not in excludenuts and
+                            x[:2] not in excludecountry})
+
+    if not series:
+        od = OrderedDict()
+        for nuts, country in iteritems(mapping):
+            od.setdefault(country, []).append(nuts)
+        mapping = od
+
+    return mapping
+
 
 def iso2_to_iso3():
     """
