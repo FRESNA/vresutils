@@ -64,7 +64,7 @@ try:
 
         # sum of input vectors must be preserved
         if normed:
-            ssum = np.squeeze(np.asarray(transfer.sum(axis=0)))
+            ssum = np.squeeze(np.asarray(transfer.sum(axis=0)), axis=0)
             for i,j in zip(*transfer.nonzero()):
                 transfer[i,j] /= ssum[j]
 
