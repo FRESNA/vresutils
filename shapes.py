@@ -5,7 +5,7 @@ from __future__ import absolute_import
 import pyproj
 import shapefile
 import fiona
-from shapely.ops import transform
+from shapely.ops import transform, cascaded_union
 from shapely.geometry import (LinearRing, Polygon, MultiPolygon,
                               GeometryCollection, shape)
 from countrycode.countrycode import countrycode
@@ -110,6 +110,15 @@ def nuts1(tolerance=0.03, minarea=1., extended=True):
         nuts.update((cntry_map[k], v) for k,v in iteritems(cntries))
 
     return nuts
+
+@cachable(keepweakref=True)
+def country_cover(cntries, include_eez=True, minarea=0.1, tolerance=0.03, **kwds):
+    shapes = countries(cntries, minarea=minarea, tolerance=tolerance, **kwds).values()
+    if include_eez:
+        shapes += list(eez(cntries, tolerance=tolerance))
+
+    europe_shape = max(cascaded_union(shapes), key=attrgetter('area'))
+    return Polygon(shell=europe_shape.exterior)
 
 @cachable(keepweakref=True)
 def nuts3(tolerance=0.03, minarea=0., extended=True):
