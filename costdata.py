@@ -15,7 +15,7 @@ CO2intens=np.array([0.27,0.32,0.27,0.,0.45])/1000. # [t/kWht] # Hirth+13
 
 #0.55,0.69 ,0.33, 0, 0.85
 
-def annuity(n,r):
+def annuity(n,r=discountrate):
     """Calculate the annuity factor for an asset with lifetime n years and
     discount rate of r, e.g. annuity(20,0.05)*20 = 1.6"""
 
