@@ -69,6 +69,18 @@ def get_cost(ref, CO2cost=0.):
         cost['vai']=np.array([3.,6,4,8,7])/1000.         #[Euro/kWh] #variable cost# diw
         cost['fui']=np.array([21.6,8.4,21.6,3,2.9])/1000.   #[Euro/kWht] #fuel cost# diw
         cost['efi']=np.array([0.3,0.46,0.6,0.33,0.39]) #[1] #efficiency# diw
+    #Gas-GT,Coal-new,Gas-CCGT,Nuclear,Lignite
+        #diw http://hdl.handle.net/10419/80348
+    elif ref=='diw2030':
+        cost={'ref':'diw2030'}
+        cost['fueltype']=np.char.array(['onwind','offwind','solar','PHS','hydro','ror','OCGT'])
+        cost['lifetime']=np.array([20.,20,20,100,100,100,30])
+        cost['ICi']=np.array([1182,2506,600,2000,2000,3000,400 ])  #[Euro/kW] # diw  #proposed values 2030
+        cost['FCi']=np.array([35,80,25,20,20,60,15 ])              #[Euro/kW/year] # diw #proposed values 2030
+        cost['vai']=np.array([1.5e-2,2e-2,1e-2,0,0,0,3 ])/1000.    #[Euro/kWh] #variable cost #diw #own assumptions for wind/solar
+        cost['fui']=np.array([0.,0,0,0,0,0,21.6])/1000.             #[Euro/kWht] #fuel cost# diw
+        cost['efi']=np.array([1,1,1,0.75,0.90,0.90,0.39 ])         #[1] #efficiency# diw
+        cost['CO2int']=np.array([0.,0,0,0,0,0,0.27 ])/1000.  # Hirth 2013
 
     elif ref=='iea':
         #http://www.worldenergyoutlook.org/media/weowebsite/2014/weio/WEIO2014PGAssumptions.xlsx
@@ -89,38 +101,45 @@ def get_cost(ref, CO2cost=0.):
 
     cost = pd.DataFrame(cost).set_index('fueltype')
 
-    cost['CO2int'] = pd.Series(CO2intens, index=['OCGT','Coal','CCGT','Nuclear','Lignite']) * 1e3
-    # [t/MWht] from Hirth+13
+    ## Define fallbacks if the chosen source does not include all of
+    ## the data
+
+    # CO2
+    if not 'CO2int' in cost:
+        cost['CO2int'] = pd.Series(CO2intens, index=['OCGT','Coal','CCGT','Nuclear','Lignite']) * 1e3
+        # [t/MWht] from Hirth+13
 
     # Renewables
-
     # Onshore wind
-    cost.loc['windon',:] = pd.Series(
-        {'lifetime': 20.,
-         'ICi': 1e3,  #[Euro/kW]
-         'FCi': 0.,   #[Euro/kW/year]
-         'vai': 1.5e-5,   #[Euro/kWh] #variable cost#
-         'fui': 0.,   #[Euro/kWht] #fuel cost#
-         'efi': 1.,   #efficiency#
-         'CO2int': 0.})
+    if 'onwind' not in cost.index:
+        cost.loc['onwind',:] = pd.Series(
+            {'lifetime': 20.,
+             'ICi': 1e3,  #[Euro/kW]
+             'FCi': 0.,   #[Euro/kW/year]
+             'vai': 1.5e-5,   #[Euro/kWh] #variable cost#
+             'fui': 0.,   #[Euro/kWht] #fuel cost#
+             'efi': 1.,   #efficiency#
+             'CO2int': 0.})
 
-    cost.loc['windoff',:] = pd.Series(
-        {'lifetime': 20.,
-         'ICi': 2e3,  #[Euro/kW]
-         'FCi': 0.,   #[Euro/kW/year]
-         'vai': 2e-5, #[Euro/kWh] #variable cost#
-         'fui': 0.,   #[Euro/kWht] #fuel cost#
-         'efi': 1.,   #efficiency#
-         'CO2int': 0.})
+    if 'offwind' not in cost.index:
+        cost.loc['offwind',:] = pd.Series(
+            {'lifetime': 20.,
+             'ICi': 2e3,  #[Euro/kW]
+             'FCi': 0.,   #[Euro/kW/year]
+             'vai': 2e-5, #[Euro/kWh] #variable cost#
+             'fui': 0.,   #[Euro/kWht] #fuel cost#
+             'efi': 1.,   #efficiency#
+             'CO2int': 0.})
 
-    cost.loc['solar',:] = pd.Series(
-        {'lifetime': 20.,
-         'ICi': 1e3,  #[Euro/kW]
-         'FCi': 0.,   #[Euro/kW/year]
-         'vai': 1e-5, #[Euro/kWh] #variable cost#
-         'fui': 0.,   #[Euro/kWht] #fuel cost#
-         'efi': 1.,   #efficiency#
-         'CO2int': 0.})
+    if 'solar' not in cost.index:
+        cost.loc['solar',:] = pd.Series(
+            {'lifetime': 20.,
+             'ICi': 1e3,  #[Euro/kW]
+             'FCi': 0.,   #[Euro/kW/year]
+             'vai': 1e-5, #[Euro/kWh] #variable cost#
+             'fui': 0.,   #[Euro/kWht] #fuel cost#
+             'efi': 1.,   #efficiency#
+             'CO2int': 0.})
 
     # Globals
     cost['rate'] = discountrate
