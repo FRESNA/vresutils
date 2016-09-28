@@ -73,7 +73,7 @@ def get_cost(ref, CO2cost=0.):
         #diw http://hdl.handle.net/10419/80348
     elif ref=='diw2030':
         cost={'ref':'diw2030'}
-        cost['fueltype']=np.char.array(['onwind','offwind','solar','PHS','hydro','ror','OCGT','Coal','CCGT','Nuclear','Lignite'])
+        cost['fueltype']=np.char.array(['windon','windoff','solar','PHS','hydro','ror','OCGT','Coal','CCGT','Nuclear','Lignite'])
         cost['lifetime']=np.array([20.,20,20,100,100,100,30,40,30,50,40])
         cost['ICi']=np.array([1182,2506,600,2000,2000,3000,400,1300,800,4000,2000 ])  #[Euro/kW] # diw  #proposed values 2030
         cost['FCi']=np.array([35,80,25,20,20,60,15,25,20,0,30 ])              #[Euro/kW/year] # diw #proposed values 2030
@@ -111,8 +111,8 @@ def get_cost(ref, CO2cost=0.):
 
     # Renewables
     # Onshore wind
-    if 'onwind' not in cost.index:
-        cost.loc['onwind',:] = pd.Series(
+    if 'windon' not in cost.index:
+        cost.loc['windon',:] = pd.Series(
             {'lifetime': 20.,
              'ICi': 1e3,  #[Euro/kW]
              'FCi': 0.,   #[Euro/kW/year]
@@ -121,8 +121,8 @@ def get_cost(ref, CO2cost=0.):
              'efi': 1.,   #efficiency#
              'CO2int': 0.})
 
-    if 'offwind' not in cost.index:
-        cost.loc['offwind',:] = pd.Series(
+    if 'windoff' not in cost.index:
+        cost.loc['windoff',:] = pd.Series(
             {'lifetime': 20.,
              'ICi': 2e3,  #[Euro/kW]
              'FCi': 0.,   #[Euro/kW/year]
