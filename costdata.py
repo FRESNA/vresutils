@@ -26,7 +26,7 @@ def annuity(n,r=discountrate):
 
 def get_cost(ref, CO2cost=0.):
     '''Return cost dictionary for different fuel types.
-    Power costs in [Eur/kW/year], Energy costs in [Eur/kWh]'''
+    Power costs in [Eur/MW/year], Energy costs in [Eur/MWh]'''
     #Gas-GT,Coal-new,Gas-CCGT,Nuclear,Lignite
     if ref=='Sch' or ref=='Schaber+12':
         # Schaber+12
@@ -106,8 +106,8 @@ def get_cost(ref, CO2cost=0.):
 
     # CO2
     if not 'CO2int' in cost:
-        cost['CO2int'] = pd.Series(CO2intens, index=['OCGT','Coal','CCGT','Nuclear','Lignite']) * 1e3
-        # [t/MWht] from Hirth+13
+        cost['CO2int'] = pd.Series(CO2intens, index=['OCGT','Coal','CCGT','Nuclear','Lignite'])
+        # [t/kWht] from Hirth+13
 
     # Renewables
     # Onshore wind
@@ -144,12 +144,15 @@ def get_cost(ref, CO2cost=0.):
     # Globals
     cost['rate'] = discountrate
 
+    # Switch units to refer to MW
+    cost.loc[:,['ICi', 'FCi', 'vai', 'fui', 'CO2int']] *= 1e3
+
     # Derived columns
     cost['afi'] = annuity(cost['lifetime'], cost['rate'])
-    cost['VCi'] = cost['vai'] + cost['fui'] / cost['efi']  #[Euro/kWhel] #total variable cost (w/o CO2 costs)
+    cost['VCi'] = cost['vai'] + cost['fui'] / cost['efi']  #[Euro/MWhel] #total variable cost (w/o CO2 costs)
     cost['wki'] = (cost['afi'] * cost['ICi'] + cost['FCi']) * 1e3
     #[Euro/MW/year] annualized fix costs
-    cost['wbi'] = (cost['VCi'] + (CO2cost * cost['CO2int']/cost['efi'])) * 1e3
+    cost['wbi'] = (cost['VCi'] + (CO2cost * cost['CO2int']/cost['efi']))
     #[Euro/MWh] variable energy cost per kWh including CO2 cost
 
     return cost
@@ -157,7 +160,7 @@ def get_cost(ref, CO2cost=0.):
 def get_full_cost_CO2(ref,CO2cost):
     '''Return cost dictionary for different fuel types,
     including total fix costs 'wki', and CO2 price dep. variable costs 'wbi'.
-    Power costs in [Eur/kW/year], Energy costs in [Eur/kWh]'''
+    Power costs in [Eur/MW/year], Energy costs in [Eur/MWh]'''
     cost=get_cost(ref, CO2cost=CO2cost)
     return cost
 
