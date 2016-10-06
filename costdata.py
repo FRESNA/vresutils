@@ -150,7 +150,7 @@ def get_cost(ref, CO2cost=0.):
     # Derived columns
     cost['afi'] = annuity(cost['lifetime'], cost['rate'])
     cost['VCi'] = cost['vai'] + cost['fui'] / cost['efi']  #[Euro/MWhel] #total variable cost (w/o CO2 costs)
-    cost['wki'] = (cost['afi'] * cost['ICi'] + cost['FCi']) * 1e3
+    cost['wki'] = (cost['afi'] * cost['ICi'] + cost['FCi'])
     #[Euro/MW/year] annualized fix costs
     cost['wbi'] = (cost['VCi'] + (CO2cost * cost['CO2int']/cost['efi']))
     #[Euro/MWh] variable energy cost per kWh including CO2 cost
