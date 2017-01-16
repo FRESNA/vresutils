@@ -172,7 +172,7 @@ class REatlas(reatlas_client.REatlas):
             fn = os.path.join(clientdir, 'orientation_examples', fn + '.cfg')
         return super(REatlas, self).add_pv_orientations_by_config_file(fn)
 
-    def convert_and_aggregate(self, resource, capacity_layouts=[], save_sum=False):
+    def convert_and_aggregate(self, resource, capacity_layouts=[], save_sum=False, **kwargs):
         self.reconnect_if_disconnected()
 
         if save_sum:
@@ -195,7 +195,8 @@ class REatlas(reatlas_client.REatlas):
                 onshorepowercurve=onshorepowercurve,
                 offshorepowercurve=offshorepowercurve,
                 capacitylayouts=capacity_layouts_fn,
-                save_sum=save_sum
+                save_sum=save_sum,
+                **kwargs
             )
 
             solar = False
@@ -206,7 +207,8 @@ class REatlas(reatlas_client.REatlas):
                 result_name=job_fn[:-4],
                 solar_panel_config=panel,
                 capacitylayouts=capacity_layouts_fn,
-                save_sum=save_sum
+                save_sum=save_sum,
+                **kwargs
             )
             solar = True
         else:
