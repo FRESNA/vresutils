@@ -206,11 +206,11 @@ def solarpotentials(cutout, natura=True):
 def windonshorepotentials(cutout, natura=True):
     from vresutils import shapes as vshapes
     reatlas_cell_areas = np.asarray(list(map(vshapes.area, cutout.grid_cells()))).reshape(cutout.shape)*1e-6
-    return 10. * 0.2 * corine_for_cutout(cutout, [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 31, 32], natura=True) * reatlas_cell_areas
+    return 10. * 0.2 * corine_for_cutout(cutout, [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 31, 32], natura=natura) * reatlas_cell_areas
 
 
 @cachable
 def windoffshorepotentials(cutout, natura=True):
     from vresutils import shapes as vshapes
     reatlas_cell_areas = np.asarray(list(map(vshapes.area, cutout.grid_cells()))).reshape(cutout.shape)*1e-6
-    return 10. * 0.2 * corine_for_cutout(cutout, [44, 255], natura=True) * reatlas_cell_areas
+    return 10. * 0.2 * corine_for_cutout(cutout, [44, 255], natura=natura) * reatlas_cell_areas
