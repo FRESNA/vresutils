@@ -80,7 +80,7 @@ def get_cost(ref, CO2cost=0.):
         cost['vai']=np.array([1.5e-2,2e-2,1e-2,0,0,0,3,6,4,8,7 ])/1000.    #[Euro/kWh] #variable cost #diw #own assumptions for wind/solar
         cost['fui']=np.array([0.,0,0,0,0,0,21.6,8.4,21.6,3,2.9])/1000.             #[Euro/kWht] #fuel cost# diw
         cost['efi']=np.array([1,1,1,0.75,0.90,0.90,0.39,0.46,0.6,0.33,0.39 ])         #[1] #efficiency# diw
-        cost['CO2int']=np.array([0.,0,0,0,0,0,0.1872,0.32,0.27,0.,0.45 ])/1000.  # Hirth 2013
+        cost['CO2int']=np.array([0.,0,0,0,0,0,0.1872,0.32,0.1872,0.,0.45 ])/1000.  # Hirth 2013
 
     elif ref=='iea':
         #http://www.worldenergyoutlook.org/media/weowebsite/2014/weio/WEIO2014PGAssumptions.xlsx
