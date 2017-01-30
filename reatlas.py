@@ -40,7 +40,7 @@ def partition_from_emil(cutout, path=toModDir("data/Europe_2011_2014")):
         raise "Partition from emil does probably not correspond to cutout {}".format(cutout)
 
     mapping = vmapping.countries_to_nuts1(series=True)
-    countries = np.asarray(mapping)[np.r_[True, mapping[1:] != mapping[:-1]]]
+    countries = mapping.unique()
     iso2toiso3 = vmapping.iso2_to_iso3()
 
     return pd.Series(dict((iso2, np.load(os.path.join(path, "masks/{}.npy".format(iso2toiso3[iso2])))[::-1])
