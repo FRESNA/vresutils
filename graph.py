@@ -473,38 +473,46 @@ def voronoi_partition_pts(points, outline, no_multipolygons=False):
 
     points = np.asarray(points)
 
-    xmin, ymin = np.amin(points, axis=0)
-    xmax, ymax = np.amax(points, axis=0)
-    xspan = xmax - xmin
-    yspan = ymax - ymin
+    if len(points) == 1:
+        polygons = [outline]
+    else:
+        xmin, ymin = np.amin(points, axis=0)
+        xmax, ymax = np.amax(points, axis=0)
+        xspan = xmax - xmin
+        yspan = ymax - ymin
 
-    # to avoid any network positions outside all Voronoi cells, append
-    # the corners of a rectangle framing these points
-    vor = Voronoi(np.vstack((points,
-                             [[xmin-3.*xspan, ymin-3.*yspan],
-                              [xmin-3.*xspan, ymax+3.*yspan],
-                              [xmax+3.*xspan, ymin-3.*yspan],
-                              [xmax+3.*xspan, ymax+3.*yspan]])))
+        # to avoid any network positions outside all Voronoi cells, append
+        # the corners of a rectangle framing these points
+        vor = Voronoi(np.vstack((points,
+                                 [[xmin-3.*xspan, ymin-3.*yspan],
+                                  [xmin-3.*xspan, ymax+3.*yspan],
+                                  [xmax+3.*xspan, ymin-3.*yspan],
+                                  [xmax+3.*xspan, ymax+3.*yspan]])))
 
-    polygons = []
-    for i in range(len(points)):
-        poly = Polygon(vor.vertices[vor.regions[vor.point_region[i]]])
+        polygons = []
+        for i in range(len(points)):
+            poly = Polygon(vor.vertices[vor.regions[vor.point_region[i]]])
 
-        if not poly.is_valid:
-            poly = poly.buffer(0)
+            if not poly.is_valid:
+                poly = poly.buffer(0)
 
-        poly = poly.intersection(outline)
+            poly = poly.intersection(outline)
 
-        if no_multipolygons:
+            polygons.append(poly)
+
+    if no_multipolygons:
+        def demultipolygon(poly):
             try:
                 # for a MultiPolygon pick the part with the largest area
                 poly = max(poly.geoms, key=lambda pg: pg.area)
             except:
                 pass
+            return poly
+        polygons = [demultipolygon(poly) for poly in polygons]
 
-        polygons.append(poly)
-
-    return np.asarray(polygons)
+    polygons_arr = np.empty((len(polygons),), 'object')
+    polygons_arr[:] = polygons
+    return polygons_arr
 
 def voronoi_partition(G, outline):
     """
