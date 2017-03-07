@@ -117,7 +117,9 @@ def country_cover(cntries, include_eez=True, minarea=0.1, tolerance=0.03, **kwds
     if include_eez:
         shapes += list(eez(cntries, tolerance=tolerance))
 
-    europe_shape = max(cascaded_union(shapes), key=attrgetter('area'))
+    europe_shape = cascaded_union(shapes)
+    if isinstance(europe_shape, MultiPolygon):
+        europe_shape = max(europe_shape, key=attrgetter('area'))
     return Polygon(shell=europe_shape.exterior)
 
 @cachable(keepweakref=True)
