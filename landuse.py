@@ -84,6 +84,7 @@ def corine_by_groups(cutout, groups, fn=toModDir('data/corine/g100_06.tif'), tmp
     return landuse
 
 def corine_for_cutout(cutout, grid_codes, label=None, natura=False,
+                      distance=None, distance_grid_codes=None,
                       fn=toModDir('data/corine/g250_clc06_V18_5.tif'),
                       natura_fn=toModDir('data/Natura2000/Natura2000_end2015.shp'),
                       tmpdir=None):
@@ -98,6 +99,7 @@ def corine_for_cutout(cutout, grid_codes, label=None, natura=False,
     # Write matching grid_codes out into a file in tmpdir, and convert
     # this file using gdalwarp
 
+    result_fn = os.path.join(tmpdir, '{}.tif'.format(label))
     with rasterio.drivers():
         with rasterio.open(fn) as src:
             meta = src.meta.copy()
@@ -106,11 +108,54 @@ def corine_for_cutout(cutout, grid_codes, label=None, natura=False,
 
             windows = src.block_windows(1)
 
-            with rasterio.open(os.path.join(tmpdir, '{}.tif'.format(label)), 'w', **meta) as dst:
+            with rasterio.open(result_fn, 'w', **meta) as dst:
                 for idx, window in windows:
                     src_data, = src.read(window=window)
                     dst_data = np.in1d(src_data.ravel(), grid_codes).astype("uint8").reshape(src_data.shape)
                     dst.write_band(1, dst_data, window=window)
+
+
+        if natura:
+            # rasterio does not include the coordinate reference
+            # system in a proper manner, so we add it manually
+            try:
+                ret = subprocess.call(['gdal_edit.py', '-a_srs', 'EPSG:3035', result_fn])
+                assert ret == 0, "gdal_edit for group '{}' did not return successfully.".format(label)
+            except OSError:
+                fixed_fn = os.path.join(tmpdir, '{}_fixed.tif'.format(label))
+
+                # GDAL python bindings are not installed, fallback to gdal_translate
+                ret = subprocess.call(['gdal_translate', '-a_srs', 'EPSG:3035',
+                                       result_fn, fixed_fn])
+                assert ret == 0, "gdal_translate for group '{}' did not return successfully.".format(label)
+
+                os.rename(fixed_fn, result_fn)
+
+            ret = subprocess.call(['gdal_rasterize', '-burn', '0',
+                                   natura_fn, result_fn])
+            assert ret == 0, "gdal_rasterize for group '{}' did not return successfully.".format(label)
+
+        # If distance is specified
+        if distance > 0 and len(distance_grid_codes) > 0:
+            proximity_fn = os.path.join(tmpdir, '{}_proximity.tif'.format(label))
+            ret = subprocess.call(['gdal_proximity.py',
+                                   fn, proximity_fn,
+                                   '-ot', 'Byte', '-co', 'COMPRESSION=PACKBITS',
+                                   '-values', ','.join(map(str, distance_grid_codes)),
+                                   '-distunits', 'GEO',
+                                   '-maxdist', str(distance),
+                                   '-nodata', '255',
+                                   '-fixed-buf-val', '0'])
+            assert ret == 0, "gdal_proximity.py for group '{}' did not return successfully.".format(label)
+
+            merge_fn = os.path.join(tmpdir, '{}_merge.tif')
+            ret = subprocess.call(['gdal_merge.py',
+                                   '-o', merge_fn,
+                                   '-co', 'COMPRESSION=PACKBITS',
+                                   '-n', '255',
+                                   result_fn, proximity_fn])
+            assert ret == 0, "gdal_merge.py for group '{}' did not return successfully.".format(label)
+            os.rename(merge_fn, result_fn)
 
         cornersc = cutout.grid_coordinates()[[0,-1]]
         minc = np.minimum(*cornersc)
@@ -118,27 +163,6 @@ def corine_for_cutout(cutout, grid_codes, label=None, natura=False,
         span = (maxc - minc)/(np.asarray(cutout.shape)[[1,0]]-1)
         minx, miny = minc - span/2.
         maxx, maxy = maxc + span/2.
-
-        if natura:
-            # rasterio does not include the coordinate reference
-            # system in a proper manner, so we add it manually
-            try:
-                ret = subprocess.call(['gdal_edit.py', '-a_srs', 'EPSG:3035',
-                                       os.path.join(tmpdir, '{}.tif'.format(label))])
-                assert ret == 0, "gdal_edit for group '{}' did not return successfully.".format(label)
-            except OSError:
-                # GDAL python bindings are not installed, fallback to gdal_translate
-                ret = subprocess.call(['gdal_translate', '-a_srs', 'EPSG:3035',
-                                       os.path.join(tmpdir, '{}.tif'.format(label)),
-                                       os.path.join(tmpdir, '{}_fixed.tif'.format(label))])
-                assert ret == 0, "gdal_translate for group '{}' did not return successfully.".format(label)
-
-                os.rename(os.path.join(tmpdir, '{}_fixed.tif'.format(label)),
-                          os.path.join(tmpdir, '{}.tif'.format(label)))
-
-            ret = subprocess.call(['gdal_rasterize', '-burn', '0',
-                                   natura_fn, os.path.join(tmpdir, '{}.tif'.format(label))])
-            assert ret == 0, "gdal_rasterize for group '{}' did not return successfully.".format(label)
 
         ret = subprocess.call(['gdalwarp', '-overwrite',
                                '-s_srs', 'EPSG:3035',
