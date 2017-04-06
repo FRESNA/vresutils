@@ -8,12 +8,12 @@ def ensure_mkdir(path):
         if not os.path.isdir(path):
             raise
 
-def copy_without_overwrite(src, dest):
+def copy_without_overwrite(src, dest, quiet=True):
     # Open the file and dont do anything if it exists
     try:    
         fd = os.open(dest, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
     except OSError:
-        if os.path.isfile(dest):
+        if os.path.isfile(dest) and quiet:
             return
         else: raise
 
@@ -21,4 +21,5 @@ def copy_without_overwrite(src, dest):
     with os.fdopen(fd,'w') as f:
         with open(src) as sf:
             shutil.copyfileobj(sf, f)
+    shutil.copymode(src, dest)
 
