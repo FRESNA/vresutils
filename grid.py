@@ -9,8 +9,8 @@ import six
 
 from .graph import OrderedGraph
 
-from . import make_toModDir
-toModDir = make_toModDir(__file__)
+from . import make_toDataDir
+toDataDir = make_toDataDir(__file__)
 
 def penalize(x, n):
     """
@@ -47,7 +47,7 @@ def bialek_data():
     from operator import itemgetter
 
     buses, lines, coords = itemgetter('Bus Records', 'Line Records', 'DisplayBus') \
-        (pd.read_excel(toModDir('data/bialek.xlsx'),
+        (pd.read_excel(toDataDir('bialek.xlsx'),
                        sheetname=None, skiprows=1, header=0))
 
     buses.set_index('Number', inplace=True)
@@ -89,7 +89,7 @@ def bialek():
     return G
 
 def entsoe_tue():
-    with open(toModDir("data/entsoe_2009_final.gpickle"), 'rb') as f:
+    with open(toDataDir("entsoe_2009_final.gpickle"), 'rb') as f:
         if six.PY2:
             G = pickle.load(f)
         else:
@@ -157,14 +157,14 @@ def heuristically_extend_edge_attributes(G, it=None):
     return G
 
 def eu():
-    with open(toModDir("data/EU.gpickle"), 'rb') as f:
+    with open(toDataDir("EU.gpickle"), 'rb') as f:
         if six.PY2:
             return pickle.load(f)
         else:
             return pickle.load(f, encoding='latin-1')
 
-def read_scigrid(nodes_csv="data/vertices_de_power_150601.csv",
-                 links_csv="data/links_de_power_150601.csv"):
+def read_scigrid(nodes_csv="vertices_de_power_150601.csv",
+                 links_csv="links_de_power_150601.csv"):
     """
     Read SCIGrid output csv files into a NX Graph.
     """
@@ -172,11 +172,11 @@ def read_scigrid(nodes_csv="data/vertices_de_power_150601.csv",
 
     G = OrderedGraph()
 
-    N = pd.read_csv(toModDir(nodes_csv), delimiter=';', index_col=0)
+    N = pd.read_csv(toDataDir(nodes_csv), delimiter=';', index_col=0)
     N['pos'] = [np.asarray(v) for k,v in N.ix[:,['lon', 'lat']].iterrows()]
     G.add_nodes_from(N.iterrows())
 
-    L = pd.read_csv(toModDir(links_csv), delimiter=';', index_col=0)
+    L = pd.read_csv(toDataDir(links_csv), delimiter=';', index_col=0)
     # TODO: for some reason the SCIGrid data is missing impedance
     # values for a third of its lines, although L.x / L.length_m is a
     # constant for each voltage level. For now we just extend these to

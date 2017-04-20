@@ -5,6 +5,9 @@ from __future__ import absolute_import
 import numpy as np
 import os.path
 import six
+import logging
+
+logger = logging.getLogger(__name__)
 
 def indicator(N, indices):
     m = np.zeros(N)
@@ -19,21 +22,36 @@ def iterable(obj):
         return False
     return True
 
-def make_toModDir(modulefilename):
+def make_toDataDir(modulefilename):
     """
     Returns a function which translates relative names to a path
     starting from modulefilename.
 
     The idea is to start a module with
-    toModDir = make_toModDir(__file__)
+    toDataDir = make_toDataDir(__file__)
 
-    Then a call like toModDir('data/file') will return the full path
+    Then a call like toDataDir('file') will return the full path
     from the directory of the module instead of the working directory.
     """
-    modDir = os.path.realpath(os.path.dirname(modulefilename))
-    return lambda fn: os.path.join(modDir, fn) \
-        if not (os.path.isabs(fn) or fn[0] == '.') \
-        else fn
+    dataDir = os.path.join(os.path.realpath(os.path.dirname(modulefilename)), 'data')
+    def translate_toDataDir_and_maybe_check_for_existence(fn, check_for_existence=True):
+        if not (os.path.isabs(fn) or fn[0] == '.'):
+            fn = os.path.join(dataDir, fn)
+        if check_for_existence and not os.path.exists(fn):
+            logger.warning("""
+               The data file %s was not found. The README at
+
+                 %s
+
+               should detail were it can be obtained from,
+               alternatively there are archive data bundles for
+               each repository available from
+
+                 http://fias.uni-frankfurt.de/~hoersch/data/
+            """, fn, os.path.realpath(os.path.dirname(modulefilename)))
+        return fn
+
+    return translate_toDataDir_and_maybe_check_for_existence
 
 class Singleton(object):
     def __new__(cls, *p, **k):

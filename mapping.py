@@ -11,8 +11,8 @@ from six.moves import map, zip
 from .array import unique_sorted
 from .shapes import nuts1, nuts3
 
-from . import make_toModDir
-toModDir = make_toModDir(__file__)
+from . import make_toDataDir
+toDataDir = make_toDataDir(__file__)
 
 def aggregate(data, mapping, how="sum", axis=0):
     try:
@@ -82,7 +82,7 @@ def iso2_to_iso3():
     Extract a mapping from iso2 country codes to iso3 country codes
     from the countries dataset.
     """
-    sf = shapefile.Reader(toModDir('data/ne_10m_admin_0_countries/ne_10m_admin_0_countries'))
+    sf = shapefile.Reader(toDataDir('ne_10m_admin_0_countries/ne_10m_admin_0_countries'))
     fields = dict(zip(map(itemgetter(0), sf.fields[1:]), count()))
     def name(rec):
         if rec[fields['ISO_A2']] != '-99':
@@ -103,7 +103,7 @@ def iso2_to_name():
     Extract a mapping from iso2 country codes to country names
     from the countries dataset.
     """
-    sf = shapefile.Reader(toModDir('data/ne_10m_admin_0_countries/ne_10m_admin_0_countries'))
+    sf = shapefile.Reader(toDataDir('ne_10m_admin_0_countries/ne_10m_admin_0_countries'))
     fields = dict(zip(map(itemgetter(0), sf.fields[1:]), count()))
     def name(rec):
         if rec[fields['ISO_A2']] != '-99':

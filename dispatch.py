@@ -14,14 +14,14 @@ from .graph import get_node_attributes
 from .array import positive, negative
 from .decorators import cachable
 
-from . import make_toModDir
-toModDir = make_toModDir(__file__)
+from . import make_toDataDir
+toDataDir = make_toDataDir(__file__)
 
 @cachable(version=2)
 def read_kraftwerksliste(with_latlon=True):
     import pandas as pd
 
-    kraftwerke = pd.read_csv(toModDir('data/Kraftwerksliste_CSV_deCP850ed.csv'),
+    kraftwerke = pd.read_csv(toDataDir('Kraftwerksliste_CSV_deCP850ed.csv'),
                              delimiter=';', encoding='utf-8', thousands='.', decimal=',')
     def sanitize_names(x):
         try:
@@ -69,7 +69,7 @@ def read_globalenergyobservatory():
     import pandas as pd
     import sqlite3
 
-    db = sqlite3.connect(toModDir('data/global_energy_observatory_power_plants.sqlite'))
+    db = sqlite3.connect(toDataDir('global_energy_observatory_power_plants.sqlite'))
 
     cur = db.execute(
         "select"
@@ -90,7 +90,7 @@ def read_globalenergyobservatory():
 def read_eurostat_nrg113a():
     import pandas as pd
 
-    fn = toModDir('data/nrg_113a.xls')
+    fn = toDataDir('nrg_113a.xls')
 
     # Data2 is the 2013 data in which NOrway is missing, while the
     # 2012 data in Data doesn't contain Romania

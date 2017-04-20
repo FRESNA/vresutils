@@ -11,8 +11,8 @@ from six.moves import map
 
 from .decorators import cachable
 
-from . import make_toModDir
-toModDir = make_toModDir(__file__)
+from . import make_toDataDir
+toDataDir = make_toDataDir(__file__)
 
 @cachable(ignore=set(('tmpdir',)))
 def corine_label1(cutout, tmpdir=None):
@@ -31,7 +31,7 @@ def corine_label1(cutout, tmpdir=None):
     -------
     groups, landuse : [str], ndarray shape=(len(groups), LATS, LONS)
     """
-    legend = pd.read_excel(toModDir('data/corine/clc_legend.xls')) \
+    legend = pd.read_excel(toDataDir('corine/clc_legend.xls')) \
                .set_index('GRID_CODE').loc[:47] # above 47, there is only NAN data
 
     def simplify_name(x):
@@ -70,7 +70,7 @@ def corine_renewable(cutout, tmpdir=None):
     return list(groups), corine_by_groups(cutout, groups, tmpdir=tmpdir)
 
 
-def corine_by_groups(cutout, groups, fn=toModDir('data/corine/g100_06.tif'), tmpdir=None):
+def corine_by_groups(cutout, groups, fn=toDataDir('corine/g100_06.tif'), tmpdir=None):
     own_tmpdir = tmpdir is None
     if own_tmpdir:
         tmpdir = tempfile.mkdtemp()
@@ -85,8 +85,8 @@ def corine_by_groups(cutout, groups, fn=toModDir('data/corine/g100_06.tif'), tmp
 
 def corine_for_cutout(cutout, grid_codes, label=None, natura=False,
                       distance=None, distance_grid_codes=None,
-                      fn=toModDir('data/corine/g250_clc06_V18_5.tif'),
-                      natura_fn=toModDir('data/Natura2000/Natura2000_end2015.shp'),
+                      fn=toDataDir('corine/g250_clc06_V18_5.tif'),
+                      natura_fn=toDataDir('Natura2000/Natura2000_end2015.shp'),
                       tmpdir=None):
     own_tmpdir = tmpdir is None
     if own_tmpdir:

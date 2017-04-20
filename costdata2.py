@@ -1,8 +1,8 @@
 from __future__ import division
 import pandas as pd
 
-from . import make_toModDir
-toModDir = make_toModDir(__file__)
+from . import make_toDataDir
+toDataDir = make_toDataDir(__file__)
 
 discountrate = 0.07
 
@@ -15,7 +15,7 @@ def annualize(rate, lifetime):
 
 
 def get_full_cost_CO2(ref, CO2cost=0.,
-                      filename=toModDir('data/costdata.xls'),
+                      filename=toDataDir('costdata.xls'),
                       discountrate=discountrate):
     '''Return cost dataframe for different fuel types,
     including annualized capital costs 'captial', and CO2 price dependent

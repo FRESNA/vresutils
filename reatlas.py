@@ -7,8 +7,8 @@ import pandas as pd
 import os
 
 from . import mapping as vmapping
-from . import make_toModDir
-toModDir = make_toModDir(__file__)
+from . import make_toDataDir
+toDataDir = make_toDataDir(__file__)
 
 # Import REatlas
 try:
@@ -35,7 +35,7 @@ def partition_from_shapes(shapes, cutout):
 
     raise NotImplemented
 
-def partition_from_emil(cutout, path=toModDir("data/Europe_2011_2014")):
+def partition_from_emil(cutout, path=toDataDir("Europe_2011_2014")):
     if str(cutout) != '<Cutout becker/Europe_2011_2014>':
         raise "Partition from emil does probably not correspond to cutout {}".format(cutout)
 

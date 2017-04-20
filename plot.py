@@ -16,11 +16,11 @@ from matplotlib.patches import Arrow, FancyArrow
 
 from operator import itemgetter
 
-from . import make_toModDir
-toModDir = make_toModDir(__file__)
+from . import make_toDataDir
+toDataDir = make_toDataDir(__file__)
 
 def set_style():
-    mpl.style.use(toModDir('mplstyle'))
+    mpl.style.use(toDataDir('../mplstyle'))
 
 
 try:

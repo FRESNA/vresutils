@@ -18,9 +18,6 @@ from six import iterkeys, iteritems, itervalues
 from six.moves import map, range, zip
 from functools import reduce
 
-from . import make_toModDir
-toModDir = make_toModDir(__file__)
-
 def to_directed(G):
     """
     Returns directed version of graph G, with randomly assigned directions.
