@@ -15,6 +15,9 @@ import six
 
 from . import config
 
+import logging
+logger = logging.getLogger(__name__)
+
 def _format_filename(s):
     """
     Take a string and return a valid filename constructed from the string.
@@ -45,11 +48,9 @@ def cachable(func=None, version=None, cache_dir=config['cache_dir'],
     verbose     - Output cache hits and timing information (default:
                   True).
     """
-    if not os.path.isdir(cache_dir):
-        os.mkdir(cache_dir)
-        gid = None
-        mode = None
-    else:
+    enable = os.path.isdir(cache_dir)
+
+    if enable:
         st = os.stat(cache_dir[0])
         gid = st.st_gid
         # mode is bitmask of the same rights as the directory without
@@ -148,6 +149,12 @@ def cachable(func=None, version=None, cache_dir=config['cache_dir'],
             return ret
 
         return wrapper
+
+    if not enable:
+        def deco(func):
+            logger.warn("Deactivating cache for function %s, since cache directory %s does not exist",
+                        cache_dir, func.__name__)
+            return func
 
     if callable(func):
         return deco(func)
