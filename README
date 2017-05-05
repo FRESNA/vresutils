@@ -6,6 +6,21 @@ to use them).
 
 Some of the modules have extra data requirements:
 
+LANDUSE
+-------
+Natura2000/Natura2000_end2016.* :
+    Natura 2000 GIS data - the European network of protected sites [11]
+    As a shapefile.
+
+corine/g250_clc06_V18_5.* :
+    Corine Land Cover (CLC) 2012, Version 18.5.1 [12]
+    250m or 100m raster data.
+
+HYDRO
+-----
+Hydro_Inflow :
+    Results from the RESTORE 2050 project (private communication, sorry!)
+
 SHAPES
 ------
 
@@ -59,13 +74,7 @@ nrg_113a.xls :
 
 Run
 
-ln -s /home/vres/data/Shapefiles/germany.npy data
-ln -s /home/vres/data/Shapefiles/vg250_0101.utm32s.shape.ebenen/vg250_ebenen data/vg250
-ln -s /home/vres/data/Shapefiles/ne_10m_admin_0_countries data
-ln -s /home/vres/data/Shapefiles/NUTS_2010_60M_SH data
-ln -s /home/vres/data/Shapefiles/plz-gebiete data
-ln -s /home/vres/data/grid_maps/Bialek_data_from_Tue/ENTSOeGrid/entsoe_2009_final.gpickle data
-ln -s /home/vres/data/grid_maps/SciGRID/*.csv data
+   ln -s /home/vres/data/by_repository/vresutils data
 
 to be happy.
 
@@ -92,3 +101,6 @@ Footnotes:
 
 [10] http://www.marineregions.org/downloads.php (World EEZ v8, Low res)
 
+[11] https://www.eea.europa.eu/data-and-maps/data/natura-8#tab-gis-data
+
+[12] http://land.copernicus.eu/pan-european/corine-land-cover/clc-2012/
