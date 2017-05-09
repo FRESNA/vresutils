@@ -27,7 +27,7 @@ def urlopen(path):
 
 def listfiles(path='.', omit_dirname=False):
     fns = pd.Series(urlopen(path).readlines()).str.strip().str.split(' +').str[8]
-    if include_dirname:
+    if not omit_dirname:
         fns = path + '/' + fns
     return fns
 
