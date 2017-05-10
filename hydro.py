@@ -1,6 +1,10 @@
 import pandas as pd
-import cPickle as pickle
 import os
+import six
+if six.PY3:
+    from countrycode.countrycode import countrycode
+else:
+    from countrycode import countrycode
 
 from .decorators import cachable, timer
 from . import make_toDataDir
@@ -15,6 +19,22 @@ def get_ror_shares(fn=None):
     if fn is None:
         fn = toDataDir('Hydro_Inflow/run_of_shares/ror_ENTSOe_Restore2050.csv')
     return pd.read_csv(fn, index_col=0, squeeze=True)
+
+def get_eia_annual_hydro_generation(fn=None):
+    if fn is None:
+        fn = toDataDir('Hydro_Inflow/EIA_hydro_generation_2000_2014.csv')
+
+    # in billion KWh/a = TWh/a
+    eia_hydro_gen = pd.read_csv(fn, skiprows=4, index_col=1, na_values=[u' ','--']).drop(['Unnamed: 0','Unnamed: 2'],axis=1).dropna(how='all')
+
+    countries_iso2c = countrycode(eia_hydro_gen.index.values, origin='country_name', target='iso2c')
+
+    eia_hydro_gen.index = pd.Index(countries_iso2c, name='countries')
+    eia_hydro_gen.rename(index={'Kosovo':'KV'}, inplace=True)
+
+    eia_hydro_gen = eia_hydro_gen.T
+
+    return eia_hydro_gen * 1e6
 
 @cachable
 def get_hydro_inflow(inflow_dir=None):
