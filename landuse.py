@@ -85,9 +85,15 @@ def corine_by_groups(cutout, groups, fn=toDataDir('corine/g100_06.tif'), tmpdir=
 
 def corine_for_cutout(cutout, grid_codes, label=None, natura=False,
                       distance=None, distance_grid_codes=None,
-                      fn=toDataDir('corine/g250_clc06_V18_5.tif'),
+                      fn=None, highres=False,
                       natura_fn=toDataDir('Natura2000/Natura2000_end2015.shp'),
                       tmpdir=None):
+    if fn is None:
+        fn = toDataDir(os.path.join('corine/',
+                                    'g100_clc12_V18_5.tif'
+                                    if highres
+                                    else 'g250_clc06_V18_5.tif'))
+
     own_tmpdir = tmpdir is None
     if own_tmpdir:
         tmpdir = tempfile.mkdtemp()
@@ -220,21 +226,40 @@ def potential(mapping, cutout, func=corine_label1):
         groups, landuse = func
     return np.dot(landuse.transpose((1,2,0)), mapping.reindex(groups).fillna(0.))
 
-@cachable
-def solarpotentials(cutout, natura=True):
+def _cutout_cell_areas(cutout):
     from vresutils import shapes as vshapes
-    reatlas_cell_areas = np.asarray(list(map(vshapes.area, cutout.grid_cells()))).reshape(cutout.shape)*1e-6
-    return 170. * 0.1 * corine_for_cutout(cutout, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 26, 31, 32], natura=natura) * reatlas_cell_areas
+    return np.asarray(list(map(vshapes.area, cutout.grid_cells()))).reshape(cutout.shape)*1e-6
 
 @cachable
-def windonshorepotentials(cutout, cushion_factor=0.2, distance=None, natura=True):
-    from vresutils import shapes as vshapes
-    reatlas_cell_areas = np.asarray(list(map(vshapes.area, cutout.grid_cells()))).reshape(cutout.shape)*1e-6
-    return 10. * cushion_factor * corine_for_cutout(cutout, [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 31, 32], distance=distance, distance_codes=[1, 2, 3, 4, 5, 6], natura=natura) * reatlas_cell_areas
-
+def solarpotentials(cutout, cushion_factor=0.1, natura=True, **kwargs):
+    settings = {
+        'grid_codes': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+                       15, 16, 17, 18, 19, 20, 26, 31, 32],
+        'natura': natura
+    }
+    settings.update(kwargs)
+    total_capacity = 170. * cushion_factor * _cutout_cell_areas(cutout)
+    return total_capacity * corine_for_cutout(cutout, **settings)
 
 @cachable
-def windoffshorepotentials(cutout, natura=True):
-    from vresutils import shapes as vshapes
-    reatlas_cell_areas = np.asarray(list(map(vshapes.area, cutout.grid_cells()))).reshape(cutout.shape)*1e-6
-    return 10. * 0.2 * corine_for_cutout(cutout, [44, 255], natura=natura) * reatlas_cell_areas
+def windonshorepotentials(cutout, cushion_factor=0.2, distance=None, natura=True, **kwargs):
+    settings = {
+        'grid_codes': [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
+                       24, 25, 26, 27, 28, 29, 31, 32],
+        'distance_grid_codes': [1, 2, 3, 4, 5, 6],
+        'distance': distance,
+        'natura': natura
+    }
+    settings.update(kwargs)
+    total_capacity = 10. * cushion_factor * _cutout_cell_areas(cutout)
+    return total_capacity * corine_for_cutout(cutout, **settings)
+
+@cachable
+def windoffshorepotentials(cutout, cushion_factor=0.2, natura=True, **kwargs):
+    settings = {
+        'grid_codes': [44, 255],
+        'natura': natura
+    }
+    settings.update(kwargs)
+    total_capacity = 10. * cushion_factor * _cutout_cell_areas(cutout)
+    return total_capacity * corine_for_cutout(cutout, **settings)
