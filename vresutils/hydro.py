@@ -55,7 +55,8 @@ def get_eia_annual_hydro_generation(fn=None):
 
     eia_hydro_gen = eia_hydro_gen.T
 
-    return eia_hydro_gen * 1e6
+    return eia_hydro_gen * 1e6 #in MWh/a
+
 
 @cachable
 def get_hydro_inflow(inflow_dir=None):
@@ -87,3 +88,46 @@ def get_hydro_inflow(inflow_dir=None):
         normalization_factor = hydro.sum() / hyd.sum() #conserve total inflow for each country separately
     hydro /= normalization_factor
     return hydro
+
+
+
+def inflow_timeseries(cutout, country_shapes, rolling_mean_period='24h', clip_quantile=0.01):
+    '''Return hydro inflow timeseries for countries in `country_shapes.index` in
+    units of MWh.
+
+    They are normalized such that the average inflow energy over several years
+    equals the national average hydro energy generation reported by EIA. The
+    longer the calibration period the better, as inflow in a given year might
+    not be used for generation in the same year, i.e., might be stored.
+
+    The surface runoff data from atlite/NCEP fluctuates strongly, probably due
+    to relatively discrete precipitation events. Assuming that the aggregated
+    surface runoff does not immediately reach the hydro power facility, and to
+    reduce nummerical issues, the runoff is smoothed via a rolling mean window
+    of 24h (`rolling_mean_period`).
+
+    The NCEP runoff contains unrealistic negative values. They are removed by
+    clipping the runoff to a minimum value defined by the 1% (`clip_quantile`)
+    quantile in each country. This increases the inflow energy by no more than
+    0.03%.  
+    '''
+
+    return cutout.runoff(shapes=country_shapes, smooth=rolling_mean_period,
+            lower_threshold_quantile=clip_quantile,
+            normalize_using_yearly=get_eia_annual_hydro_generation())
+    
+
+
+@cachable
+def get_inflow_NCEP_EIA(cutoutname='europe-2011-2016'):
+    import atlite
+    from . import mapping as vmapping, shapes as vshapes
+    cutout = atlite.Cutout(cutoutname)
+
+    mapping = vmapping.countries_to_nuts3()
+    countries = mapping.value_counts().index.sort_values()
+
+    country_shapes = pd.Series(vshapes.countries(countries, minarea=0.1,
+        tolerance=0.01, add_KV_to_RS=True)).reindex_axis('countries')
+
+    return inflow_timeseries(cutout,country_shapes)
