@@ -34,7 +34,8 @@ def get_eia_annual_hydro_generation(fn=None):
 
     eia_hydro_gen = eia_hydro_gen.T
 
-    return eia_hydro_gen * 1e6
+    return eia_hydro_gen * 1e6 #in MWh/a
+
 
 @cachable
 def get_hydro_inflow(inflow_dir=None):
@@ -66,3 +67,79 @@ def get_hydro_inflow(inflow_dir=None):
         normalization_factor = hydro.sum() / hyd.sum() #conserve total inflow for each country separately
     hydro /= normalization_factor
     return hydro
+
+
+
+def inflow_timeseries(cutout, country_shapes, rolling_mean_period='24h', clip_quantile=0.01):
+    '''Return hydro inflow timeseries for countries in `country_shapes.index` in
+    units of MWh.
+
+    They are normalized such that the average inflow energy over several years
+    equals the national average hydro energy generation reported by EIA. The 
+    longer the calibration period the better, as inflow in a given year might 
+    not be used for generation in the same year, i.e., might be stored.
+
+    The surface runoff data from atlite/NCEP fluctuates strongly, probably
+    due to relatively discrete precipitation events. Assuming that the 
+    aggregated surface runoff does not immediately reach the hydro power
+    facility, and to reduce nummerical issues, the runoff is smoothed via a
+    rolling mean window of 24h (`rolling_mean_period`).
+
+    The NCEP runoff contains unrealistic negative values. They are removed by
+    clipping the runoff to a minimum value defined by the 1% (`clip_quantile`)
+    quantile in each country. This increases the inflow energy by no more than
+    0.03%.
+    '''
+    
+
+
+    ## Calculate runoff with atlite, smooth it, and clip it:
+
+    #trans_matrix_onshore = vtransfer.Shapes2Shapes(country_shapes.values,cutout.grid_cells(),normed=False).T
+    #runoff = cutout.runoff(matrix=trans_matrix_onshore,index=country_shapes.index.rename('countries'))
+    # same as above but without reusable indicator/transfer matrix (and different normalization):
+    runoff = cutout.runoff(shapes=country_shapes,index=country_shapes.index.rename('countries'))
+
+    runoff.name = 'runoff' #need name to convert to pd.Dataframe
+    runoff=runoff.to_dataframe().unstack(0)[runoff.name].rolling(rolling_mean_period).mean()
+
+    # fixing non-sensical negative inflow values: set minimum inflow to 0.5% quantile;
+    # this also helps avoiding +1e-15 values
+    # this increases the inflow energy by no more than 0.03%
+    runoff=runoff.clip(lower=runoff.quantile(clip_quantile),axis=1)
+
+
+    ## Normalize the runoff with annual generation data from EIA:
+    eia_hydro_gen = get_eia_annual_hydro_generation() #in MWh/a
+    eia_hydro_gen.index = pd.to_datetime(eia_hydro_gen.index).rename('time')
+
+
+    # find the time overlap between yearly EIA generation data and the hourly runoff data; 
+    # this assumes that if Jan 1 0:00 AM is present in the runoff data, the full year is available
+    time_overlap = pd.DatetimeIndex(set(eia_hydro_gen.index.values) & set(runoff.index.values))
+
+    norm_eia = eia_hydro_gen.loc[time_overlap].sum()
+
+    norm_runoff = runoff.loc[slice(str(time_overlap.year.min()),str(time_overlap.year.max()))].sum()
+
+
+    inflow = runoff / norm_runoff * norm_eia.loc[runoff.columns]
+
+    return inflow
+
+
+@cachable
+def get_inflow_NCEP_EIA(cutoutname='europe-2011-2016'):
+    import atlite
+    from . import mapping as vmapping, shapes as vshapes
+    cutout = atlite.Cutout(cutoutname)
+
+    mapping = vmapping.countries_to_nuts3()
+    countries = mapping.value_counts().index.sort_values()
+
+
+    country_shapes = pd.Series(vshapes.countries(countries, minarea=0.1, tolerance=0.01, add_KV_to_RS=True))
+
+    inflow = inflow_timeseries(cutout,country_shapes)
+
+    return inflow
