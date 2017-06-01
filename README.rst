@@ -1,41 +1,49 @@
-# vresutils Package
+vresutils Package
+=================
 
-collects various small helpers, which make your programming life
-easier (or arguably harder, as long you still have to figure out, how
-to use them).
+collects various small helpers, which make your programming life easier
+(or arguably harder, as long you still have to figure out, how to use
+them).
 
-**Unfortunately we do not have the resources to provide any support
-for this library. Feel inspired, file bug reports for broken bits or
-better yet pull requests, but please do not ask for help, sorry!**
+**Unfortunately we do not have the resources to provide any support for
+this library. Feel inspired, file bug reports for broken bits or better
+yet pull requests, but please do not ask for help, sorry!**
 
-## Configuration
+Configuration
+-------------
 
-A simple configuration file `~/.vresutils.config` allows to configure
+A simple configuration file ``~/.vresutils.config`` allows to configure
 several data related paths:
-```python
-# data directory
-data_dir = "<path to data discussed in the data section>"
 
-# caching (functions decorated with @cachable persist their results in some directory)
-cache_dir = "<path to writable empty directory>"
+.. code:: python
 
-# entsoetransparency url (fill in the blanks from [13])
-entsoeftp = 'ftp://<username>:<password>@<hostname>/export/export/'
-```
+    # data directory
+    data_dir = "<path to data discussed in the data section>"
 
-The `reatlas` module expects a configuration file `~/.reatlas.config`:
-```python
-hostname = '<hostname with a running Aarhus Renewable Energy Atlas server>'
-username = '<username>'
-password = '<password>'
-notify = False
-```
+    # caching (functions decorated with @cachable persist their results in some directory)
+    cache_dir = "<path to writable empty directory>"
 
-## Required data
+    # entsoetransparency url (fill in the blanks from [13])
+    entsoeftp = 'ftp://<username>:<password>@<hostname>/export/export/'
+
+The ``reatlas`` module expects a configuration file ``~/.reatlas.config``:
+
+.. code:: python
+
+    hostname = '<hostname with a running Aarhus Renewable Energy Atlas server>'
+    username = '<username>'
+    password = '<password>'
+    notify = False
+
+Required data
+-------------
 
 Expected to be found below the data sub-directory.
 
-### landuse
+landuse
+~~~~~~~
+
+::
 
     Natura2000/Natura2000_end2016.* :
         Natura 2000 GIS data - the European network of protected sites [11]
@@ -45,12 +53,18 @@ Expected to be found below the data sub-directory.
         Corine Land Cover (CLC) 2012, Version 18.5.1 [12]
         250m or 100m raster data.
 
-### hydro
+hydro
+~~~~~
+
+::
 
     Hydro_Inflow :
         Results from the RESTORE 2050 project (private communication, sorry!)
 
-### shapes
+shapes
+~~~~~~
+
+::
 
     germany.npy :
         German outline as sequence of points, again, extracted from vg250.
@@ -73,7 +87,10 @@ Expected to be found below the data sub-directory.
     plz-gebiete :
         The german postcode areas obtained from [4], based on OSM
 
-### grid
+grid
+~~~~
+
+::
 
     links_de_power_150601.csv, vertices_de_power_150601.csv :
         For graph.read_scigrid the data csv files available at [5] must be
@@ -83,7 +100,10 @@ Expected to be found below the data sub-directory.
         An networkx representation of the network published by Bialek
         at [6] with approximate geographical coordinates.
 
-### dispatch
+dispatch
+~~~~~~~~
+
+::
 
     Kraftwerksliste_CSV_deCP850ed.csv :
         A list of the German powerplants as published by BNetzA at [7].
@@ -98,17 +118,25 @@ Expected to be found below the data sub-directory.
         Extracted Eurostat dataset of the Electrical backup capacity per
         European country in the years 2012/13 from [9].
 
-## License
+License
+-------
 
 Copyright 2015-2017 Frankfurt Institute for Advanced Studies
 
-This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 3 of the License, or (at your
+option) any later version.
 
-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+Public License for more details.
 
-## Footnotes
+Footnotes
+---------
 
-[1] http://www.geodatenzentrum.de/geodaten/gdz_rahmen.gdz_div?gdz_spr=deu&gdz_akt_zeile=5&gdz_anz_zeile=1&gdz_unt_zeile=14&gdz_user_id=0
+[1] http://www.geodatenzentrum.de/geodaten/gdz\_rahmen.gdz\_div?gdz\_spr=deu&gdz\_akt\_zeile=5&gdz\_anz\_zeile=1&gdz\_unt\_zeile=14&gdz\_user\_id=0
 
 [2] http://www.naturalearthdata.com/downloads/10m-cultural-vectors/
 (Admin 0 - Countries)
@@ -121,11 +149,11 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 [6] http://www.powerworld.com/bialek
 
-[7] http://www.bundesnetzagentur.de/DE/Sachgebiete/ElektrizitaetundGas/Unternehmen_Institutionen/Versorgungssicherheit/Erzeugungskapazitaeten/Kraftwerksliste/kraftwerksliste-node.html
+[7] http://www.bundesnetzagentur.de/DE/Sachgebiete/ElektrizitaetundGas/Unternehmen\_Institutionen/Versorgungssicherheit/Erzeugungskapazitaeten/Kraftwerksliste/kraftwerksliste-node.html
 
-[8] https://morph.io/coroa/global_energy_observatory_power_plants
+[8] https://morph.io/coroa/global\_energy\_observatory\_power\_plants
 
-[9] http://ec.europa.eu/eurostat/product?code=nrg_113a&mode=view
+[9] http://ec.europa.eu/eurostat/product?code=nrg\_113a&mode=view
 
 [10] http://www.marineregions.org/downloads.php (World EEZ v8, Low res)
 
