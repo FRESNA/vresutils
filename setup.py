@@ -8,7 +8,7 @@ with open('README.rst', encoding='utf-8') as f:
 
 setup(
     name='vresutils',
-    version='0.2',
+    version='0.2.1',
     author='Jonas Hoersch (FIAS), David Schlachtberger (FIAS), Sarah Becker (FIAS)',
     author_email='hoersch@fias.uni-frankfurt.de',
     description='Varying Renewable Energy System Utilities',
