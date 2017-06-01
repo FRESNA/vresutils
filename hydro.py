@@ -58,7 +58,7 @@ def get_hydro_inflow(inflow_dir=None):
     #hyd.rename(columns={'EL':'GR','UK':'GB'}, inplace=True)
 
     with timer('resampling hydro data with cubic interpolation'):
-        hydro = hyd.resample('D').interpolate('cubic')
+        hydro = hyd.resample('H').interpolate('cubic')
 
     if True: #default norm
         normalization_factor = (hydro.index.size/float(hyd.index.size)) #normalize to new sampling frequency
