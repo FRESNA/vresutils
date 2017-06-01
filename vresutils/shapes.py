@@ -1,5 +1,23 @@
 # -*- coding: utf-8 -*-
 
+## Copyright 2015-2017 Frankfurt Institute for Advanced Studies
+
+## This program is free software; you can redistribute it and/or
+## modify it under the terms of the GNU General Public License as
+## published by the Free Software Foundation; either version 3 of the
+## License, or (at your option) any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+"""
+"""
+
 from __future__ import absolute_import
 
 import pyproj
@@ -91,7 +109,7 @@ _shape2poly.wgs = pyproj.Proj('+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +uni
 
 @cachable(keepweakref=True)
 def nuts0(tolerance=0.03, minarea=1.):
-    sf = shapefile.Reader(toDataDir('NUTS_2010_60M_SH/data/NUTS_RG_60M_2010'))
+    sf = shapefile.Reader(toDataDir('NUTS_2010_60M_SH/data/NUTS_RG_60M_2010.shp'))
     return OrderedDict(sorted([(rec[0], _shape2poly(sh, tolerance, minarea))
                                for rec, sh in zip(sf.iterRecords(), sf.iterShapes())
                                if rec[1] == 0],
@@ -99,7 +117,7 @@ def nuts0(tolerance=0.03, minarea=1.):
 
 @cachable(keepweakref=True)
 def nuts1(tolerance=0.03, minarea=1., extended=True):
-    sf = shapefile.Reader(toDataDir('NUTS_2010_60M_SH/data/NUTS_RG_60M_2010'))
+    sf = shapefile.Reader(toDataDir('NUTS_2010_60M_SH/data/NUTS_RG_60M_2010.shp'))
     nuts = OrderedDict(sorted([(rec[0], _shape2poly(sh, tolerance, minarea))
                                for rec, sh in zip(sf.iterRecords(), sf.iterShapes())
                                if rec[1] == 1],
@@ -124,7 +142,7 @@ def country_cover(cntries, include_eez=True, minarea=0.1, tolerance=0.03, **kwds
 
 @cachable(keepweakref=True)
 def nuts3(tolerance=0.03, minarea=0., extended=True):
-    sf = shapefile.Reader(toDataDir('NUTS_2013_60M_SH/data/NUTS_RG_60M_2013'))
+    sf = shapefile.Reader(toDataDir('NUTS_2013_60M_SH/data/NUTS_RG_60M_2013.shp'))
     nuts = OrderedDict(sorted([(rec[0], _shape2poly(sh, tolerance, minarea))
                                for rec, sh in zip(sf.iterRecords(), sf.iterShapes())
                                if rec[1] == 3],
@@ -157,26 +175,10 @@ def eez(subset=None, filter_remote=True, tolerance=0.03):
     else:
         return pd.Series(shapes, index=names)
 
-    sf = shapefile.Reader(toDataDir('World_EEZ/World_EEZ_v8_2014'))
-    fields = dict(zip(map(itemgetter(0), sf.fields[1:]), count()))
-    if subset is not None:
-        subset = frozenset(subset)
-        include = lambda x: x in subset
-    else:
-        # '-99' means 'not available' in this dataset
-        include = lambda x: True
-    def name(rec):
-        return countrycode(rec[fields['ISO_3digit']], origin='iso3c', target='iso2c')
-    return OrderedDict(sorted([(n, _shape2poly(sf.shape(i), tolerance, minarea))
-                               for i, rec in enumerate(sf.iterRecords())
-                               for n in (name(rec),)
-                               if include(n)],
-                              key=itemgetter(0)))
-
 @cachable(keepweakref=True, version=3)
 def countries(subset=None, name_field=None, add_KV_to_RS=False,
               tolerance=0.03, minarea=1.):
-    sf = shapefile.Reader(toDataDir('ne_10m_admin_0_countries/ne_10m_admin_0_countries'))
+    sf = shapefile.Reader(toDataDir('ne_10m_admin_0_countries/ne_10m_admin_0_countries.shp'))
     fields = dict(zip(map(itemgetter(0), sf.fields[1:]), count()))
     if subset is not None:
         if add_KV_to_RS:
@@ -220,7 +222,7 @@ def laender(tolerance=0.03, shortnames=True):
     else:
         name = lambda x: x
 
-    sf = shapefile.Reader(toDataDir('vg250/VG250_LAN'))
+    sf = shapefile.Reader(toDataDir('vg250/VG250_LAN.shp'))
     return OrderedDict(sorted([(name(rec[6].decode('utf-8')), _shape2poly(sh, tolerance, projection='invwgs'))
                                for rec, sh in zip(sf.iterRecords(), sf.iterShapes())
                                if rec[1] == 4],
@@ -228,9 +230,9 @@ def laender(tolerance=0.03, shortnames=True):
 
 @cachable(keepweakref=True)
 def landkreise(tolerance=0.03):
-    sf_kreise = shapefile.Reader(toDataDir('vg250/VG250_KRS'))
+    sf_kreise = shapefile.Reader(toDataDir('vg250/VG250_KRS.shp'))
     # for special casing hamburg and berlin
-    sf_land = shapefile.Reader(toDataDir('vg250/VG250_LAN'))
+    sf_land = shapefile.Reader(toDataDir('vg250/VG250_LAN.shp'))
 
     fields = [f[0] for f in sf_kreise.fields[1:]]
     fields = {n:fields.index(n) for n in ('GF', 'RS')}

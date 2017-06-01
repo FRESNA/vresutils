@@ -5,7 +5,7 @@ easier (or arguably harder, as long you still have to figure out, how
 to use them).
 
 **Unfortunately we do not have the resources to provide any support
-with this library. Feel inspired, file bug reports for broken bits or
+for this library. Feel inspired, file bug reports for broken bits or
 better yet pull requests, but please do not ask for help, sorry!**
 
 ## Configuration
@@ -35,7 +35,7 @@ notify = False
 
 Expected to be found below the data sub-directory.
 
-### LANDUSE
+### landuse
 
     Natura2000/Natura2000_end2016.* :
         Natura 2000 GIS data - the European network of protected sites [11]
@@ -50,7 +50,7 @@ Expected to be found below the data sub-directory.
     Hydro_Inflow :
         Results from the RESTORE 2050 project (private communication, sorry!)
 
-### SHAPES
+### shapes
 
     germany.npy :
         German outline as sequence of points, again, extracted from vg250.
@@ -73,7 +73,7 @@ Expected to be found below the data sub-directory.
     plz-gebiete :
         The german postcode areas obtained from [4], based on OSM
 
-### GRID
+### grid
 
     links_de_power_150601.csv, vertices_de_power_150601.csv :
         For graph.read_scigrid the data csv files available at [5] must be
@@ -83,7 +83,7 @@ Expected to be found below the data sub-directory.
         An networkx representation of the network published by Bialek
         at [6] with approximate geographical coordinates.
 
-### DISPATCH
+### dispatch
 
     Kraftwerksliste_CSV_deCP850ed.csv :
         A list of the German powerplants as published by BNetzA at [7].
@@ -98,6 +98,13 @@ Expected to be found below the data sub-directory.
         Extracted Eurostat dataset of the Electrical backup capacity per
         European country in the years 2012/13 from [9].
 
+## License
+
+Copyright 2015-2017 Frankfurt Institute for Advanced Studies
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 ## Footnotes
 
