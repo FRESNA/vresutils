@@ -102,6 +102,14 @@ grid
         An networkx representation of the network published by Bialek
         at [6] with approximate geographical coordinates.
 
+load
+~~~~
+
+::
+
+    entsoe_country_packages :
+        Country packages from ENTSO-E as xls files from [14].
+
 dispatch
 ~~~~~~~~
 
@@ -166,3 +174,5 @@ Footnotes
 [13] https://entsoe.zendesk.com/hc/en-us/articles/115000173266-Overview-of-data-download-options-on-Transparency-Platform
 
 [14] Fill in this NTC gap, where is eadmat.txt from
+
+[15] https://www.entsoe.eu/db-query/country-packages/production-consumption-exchange-package
