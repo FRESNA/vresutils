@@ -92,7 +92,7 @@ grid
 
 ::
     eu_ntc_2016.graphml
-        ENTSO-E NTC values (hand-written from [14])
+        ENTSO-E NTC values (hand-written from [14,15])
 
     links_de_power_150601.csv, vertices_de_power_150601.csv :
         For graph.read_scigrid the data csv files available at [5] must be
@@ -108,7 +108,7 @@ load
 ::
 
     entsoe_country_packages :
-        Country packages from ENTSO-E as xls files from [14].
+        Country packages from ENTSO-E as xls files from [16].
 
 dispatch
 ~~~~~~~~
@@ -173,6 +173,8 @@ Footnotes
 
 [13] https://entsoe.zendesk.com/hc/en-us/articles/115000173266-Overview-of-data-download-options-on-Transparency-Platform
 
-[14] Fill in this NTC gap, where is eadmat.txt from
+[14] Becker, Sarah. "Transmission grid extensions in renewable electricity systems." PhD thesis, 2015.
 
-[15] https://www.entsoe.eu/db-query/country-packages/production-consumption-exchange-package
+[15] ENTSO-E, Indicative values for Net Transfer Capacities (NTC) in Continental Europe. European Transmission System Operators, 2011, https://www.entsoe.eu/publications/market-reports/ntc-values/ntc-matrix/Pages/default.aspx, accessed Jul 2014.
+
+[16] https://www.entsoe.eu/db-query/country-packages/production-consumption-exchange-package
