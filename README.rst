@@ -91,6 +91,8 @@ grid
 ~~~~
 
 ::
+    eu_ntc_2016.graphml
+        ENTSO-E NTC values (hand-written from [14])
 
     links_de_power_150601.csv, vertices_de_power_150601.csv :
         For graph.read_scigrid the data csv files available at [5] must be
@@ -162,3 +164,5 @@ Footnotes
 [12] http://land.copernicus.eu/pan-european/corine-land-cover/clc-2012/
 
 [13] https://entsoe.zendesk.com/hc/en-us/articles/115000173266-Overview-of-data-download-options-on-Transparency-Platform
+
+[14] Fill in this NTC gap, where is eadmat.txt from
