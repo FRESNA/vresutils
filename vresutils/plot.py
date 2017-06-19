@@ -91,8 +91,7 @@ try:
     def shapes(shapes, data=None,
                colorbar=False, colorbar_ticklabels=None, norm=None,
                with_labels=False, outline=False, colour=None,
-               fontsize=None,
-               ax=None):
+               fontsize=None, ax=None, **kwds):
         """
         Plot `data` on the basis of a dictionary of shapes.  `data`
         must be given as a pandas Series with the corresponding keys
@@ -139,7 +138,7 @@ try:
                                for x in aligned_shapes),
                               transOffset=ax.transData,
                               facecolors='none' if outline else None,
-                              edgecolors=colour)
+                              edgecolors=colour, **kwds)
         if colour is None:
             coll.set_array(np.asarray(aligned_data))
 
