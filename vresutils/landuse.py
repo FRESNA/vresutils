@@ -26,7 +26,7 @@ import pandas as pd
 import tempfile, os.path
 import rasterio
 import subprocess
-from shutil import rmtree
+from shutil import rmtree, copyfile
 from six import iteritems
 from six.moves import map
 
@@ -115,6 +115,15 @@ def corine_for_cutout(cutout, grid_codes, label=None, natura=False,
                                     if highres
                                     else 'g250_clc06_V18_5.tif'))
 
+    # THE CLC v18 dataset does not include the coordinate system
+    # reference EPSG:3035 system in manner handlable by GDAL, so we
+    # add it manually
+    fixed_fn = os.path.join(tmpdir, '{}_fixed.tif'.format(label))
+    copyfile(fn, fixed_fn)
+    ret = subprocess.call(['gdal_edit.py', '-a_srs', 'EPSG:3035', fixed_fn])
+    assert ret == 0, "gdal_edit for group '{}' did not return successfully.".format(label)
+    fn = fixed_fn
+
     own_tmpdir = tmpdir is None
     if own_tmpdir:
         tmpdir = tempfile.mkdtemp()
@@ -146,18 +155,8 @@ def corine_for_cutout(cutout, grid_codes, label=None, natura=False,
         if natura:
             # rasterio does not include the coordinate reference
             # system in a proper manner, so we add it manually
-            try:
-                ret = subprocess.call(['gdal_edit.py', '-a_srs', 'EPSG:3035', result_fn])
-                assert ret == 0, "gdal_edit for group '{}' did not return successfully.".format(label)
-            except OSError:
-                fixed_fn = os.path.join(tmpdir, '{}_fixed.tif'.format(label))
-
-                # GDAL python bindings are not installed, fallback to gdal_translate
-                ret = subprocess.call(['gdal_translate', '-a_srs', 'EPSG:3035',
-                                       result_fn, fixed_fn])
-                assert ret == 0, "gdal_translate for group '{}' did not return successfully.".format(label)
-
-                os.rename(fixed_fn, result_fn)
+            ret = subprocess.call(['gdal_edit.py', '-a_srs', 'EPSG:3035', result_fn])
+            assert ret == 0, "gdal_edit for group '{}' did not return successfully.".format(label)
 
             with timer("Marking natura shapes as unavailable in tiff"):
                 ret = subprocess.call(['gdal_rasterize', '-burn', '0',
