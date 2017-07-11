@@ -258,7 +258,7 @@ def _cutout_cell_areas(cutout):
     return np.asarray(list(map(vshapes.area, cutout.grid_cells()))).reshape(cutout.shape)*1e-6
 
 @cachable
-def solarpotentials(cutout, cushion_factor=0.1, natura=True, **kwargs):
+def solarpotentials(cutout, cushion_factor=0.01, natura=True, **kwargs):
     settings = {
         'grid_codes': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
                        15, 16, 17, 18, 19, 20, 26, 31, 32],
