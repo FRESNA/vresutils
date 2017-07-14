@@ -115,6 +115,14 @@ def corine_for_cutout(cutout, grid_codes, label=None, natura=False,
                                     if highres
                                     else 'g250_clc06_V18_5.tif'))
 
+    own_tmpdir = tmpdir is None
+    if own_tmpdir:
+        tmpdir = tempfile.mkdtemp()
+
+    if label is None:
+        # Unsafe, but alternative is unwieldy
+        label = os.path.basename(tempfile.mktemp(suffix=".tif", dir=tmpdir)[:-4])
+
     # THE CLC v18 dataset does not include the coordinate system
     # reference EPSG:3035 system in manner handlable by GDAL, so we
     # add it manually
@@ -123,14 +131,6 @@ def corine_for_cutout(cutout, grid_codes, label=None, natura=False,
     ret = subprocess.call(['gdal_edit.py', '-a_srs', 'EPSG:3035', fixed_fn])
     assert ret == 0, "gdal_edit for group '{}' did not return successfully.".format(label)
     fn = fixed_fn
-
-    own_tmpdir = tmpdir is None
-    if own_tmpdir:
-        tmpdir = tempfile.mkdtemp()
-
-    if label is None:
-        # Unsafe, but alternative is unwieldy
-        label = os.path.basename(tempfile.mktemp(suffix=".tif", dir=tmpdir)[:-4])
 
     # Write matching grid_codes out into a file in tmpdir, and convert
     # this file using gdalwarp
