@@ -110,6 +110,12 @@ load
     entsoe_country_packages :
         Country packages from ENTSO-E as xls files from [16].
 
+    time_series_60min_singleindex_filtered.csv :
+        Load data for European countries from the OPSD Time series
+        data package [17].  (Using filters to include only `load` of
+        full countries, i.e. `DE` but not `DE hertz` and the time
+        range from 2011 to end of 2015 is recommended).
+
 dispatch
 ~~~~~~~~
 
@@ -178,3 +184,5 @@ Footnotes
 [15] ENTSO-E, Indicative values for Net Transfer Capacities (NTC) in Continental Europe. European Transmission System Operators, 2011, https://www.entsoe.eu/publications/market-reports/ntc-values/ntc-matrix/Pages/default.aspx, accessed Jul 2014.
 
 [16] https://www.entsoe.eu/db-query/country-packages/production-consumption-exchange-package
+
+[17] https://data.open-power-system-data.org/time_series/
