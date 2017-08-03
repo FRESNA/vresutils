@@ -33,7 +33,7 @@ from . import make_toDataDir
 toDataDir = make_toDataDir(__file__)
 
 @cachable(keepweakref=True)
-def timeseries_entsoe(years=range(2011, 2016+1), countries=None, directory=None):
+def timeseries_entsoe(years=list(range(2011, 2015+1)), countries=None, directory=None):
     """
     Read consumption data from ENTSO-E country packages
 
@@ -41,7 +41,7 @@ def timeseries_entsoe(years=range(2011, 2016+1), countries=None, directory=None)
     ----------
     years : list of int
         Years for which to read consumption data (defaults to
-        2011-2016)
+        2011-2015)
     countries : list or None
         Country names in the encoding of ENTSO-E as full names
         (refer to the data/entsoe_country_packages directory).
