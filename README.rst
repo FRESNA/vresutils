@@ -116,6 +116,13 @@ load
         full countries, i.e. `DE` but not `DE hertz` and the time
         range from 2011 to end of 2015 is recommended).
 
+    nama_10r_3popgdp.tsv.gz , nama_10r_3gdp.tsv.gz :
+        Population and GDP data from EUROSTAT by NUTS3 regions
+
+    ch_cantons.csv, je-e-21.03.02.xls :
+        Population and GDP data per Kanton from the BFS
+        in Switzerland.
+
 dispatch
 ~~~~~~~~
 
