@@ -103,3 +103,59 @@ def timeseries_entsoe(years=range(2011, 2016+1), countries=None, directory=None)
         data['AL'] = data['MK'] * (4.1 / 7.4)
 
     return data
+
+
+def timeseries_opsd(years=slice("2011", "2015"), countries=None):
+    """
+    Read load data from OPSD time-series package.
+
+    Parameters
+    ----------
+    years : None or slice()
+        Years for which to read load data (defaults to
+        slice("2011","2016"))
+    countries : list or None
+        ISO-2 country codes as used by OPSD.
+
+    Returns
+    -------
+    load : pd.DataFrame
+        Load time-series with UTC timestamps x ISO-2 countries
+    """
+
+    load = (pd.read_csv(toDataDir('time_series_60min_singleindex_filtered.csv'), index_col=0, parse_dates=True)
+            .loc[:, lambda df: df.columns.to_series().str.endswith('_load_old')]
+            .rename(columns=lambda s: s[:-len('_load_old')])
+            .dropna(how="all", axis=0))
+
+    if countries is not None:
+        load = load[countries]
+
+    if years is not None:
+        load = load.loc[years]
+
+    if countries is None or set(('KV', 'AL')).issubset(countries):
+        # manual alterations:
+        # Kosovo gets the same load curve as Serbia
+        # scaled by energy consumption ratio from IEA 2012
+        load['KV'] = load['RS'] * (4.8 / 27.)
+        # Albania gets the same load curve as Macedonia
+        load['AL'] = load['MK'] * (4.1 / 7.4)
+
+    if countries is None or 'GR' in countries:
+        # To fill the half week gap in Greece from start to stop,
+        # we copy the week before into it
+        start = pd.Timestamp('2015-08-11 21:00')
+        stop = pd.Timestamp('2015-08-15 20:00')
+        w = pd.Timedelta(weeks=1)
+
+        if start in load.index and stop in load.index:
+            load.loc[start:stop, 'GR'] = load.loc[start-w:stop-w, 'GR'].values
+
+    if countries is None or 'EE' in countries:
+        # There are three missing hours in 2014 and four in 2015
+        # we interpolate linearly (copying from the previous week
+        # might be better)
+        load['EE'] = load['EE'].interpolate()
+
+    return load
