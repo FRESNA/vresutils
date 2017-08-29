@@ -42,11 +42,9 @@ from .decorators import staticvars, cachable
 from . import make_toDataDir, Singleton
 toDataDir = make_toDataDir(__file__)
 
-def haversine(*coords):
-    if len(coords) == 1:
-        coords = coords[0]
-    lon, lat = np.deg2rad(np.asarray(coords)).T
-    a = np.sin((lat[1]-lat[0])/2.)**2 + np.cos(lat[0]) * np.cos(lat[1]) * np.sin((lon[0] - lon[1])/2.)**2
+def haversine(a0, a1):
+    a0, a1 = np.deg2rad([a0, a1])
+    a = np.sin((a1[:,1]-a0[:,1])/2.)**2 + np.cos(a0[:,1]) * np.cos(a1[:,1]) * np.sin((a0[:,0] - a1[:,0])/2.)**2
     return 6371.000 * 2 * np.arctan2( np.sqrt(a), np.sqrt(1-a) )
 
 def simplify_poly(poly, tolerance):
