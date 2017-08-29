@@ -59,7 +59,7 @@ hydro
 ::
 
     Hydro_Inflow :
-        Results from the RESTORE 2050 project (private communication, sorry!)
+        Results from the RESTORE 2050 project [18].
 
 shapes
 ~~~~~~
@@ -193,3 +193,5 @@ Footnotes
 [16] https://www.entsoe.eu/db-query/country-packages/production-consumption-exchange-package
 
 [17] https://data.open-power-system-data.org/time_series/
+
+[18] https://zenodo.org/record/804244
