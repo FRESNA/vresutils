@@ -29,6 +29,7 @@ __copyright__ = "Copyright 2015-2017 Frankfurt Institute for Advanced Studies"
 import numpy as np
 import os.path
 import six
+import re
 import logging
 
 logger = logging.getLogger(__name__)
@@ -102,6 +103,58 @@ def make_toDataDir(modulefilename):
         return fn
 
     return translate_toDataDir_and_maybe_check_for_existence
+
+class Dict(dict):
+    """
+    Dict is a subclass of dict, which allows you to get AND SET
+    items in the dict using the attribute syntax!
+
+    Stripped down from addict https://github.com/mewwts/addict/ .
+    """
+
+    def __setattr__(self, name, value):
+        """
+        setattr is called when the syntax a.b = 2 is used to set a value.
+        """
+        if hasattr(Dict, name):
+            raise AttributeError("'Dict' object attribute "
+                                 "'{0}' is read-only".format(name))
+        else:
+            self[name] = value
+
+    def __getattr__(self, item):
+        try:
+            return self.__getitem__(item)
+        except KeyError as e:
+            raise AttributeError(e.args[0])
+
+    def __delattr__(self, name):
+        """
+        Is invoked when del some_addict.b is called.
+        """
+        del self[name]
+
+    _re_pattern = re.compile('[a-zA-Z_][a-zA-Z0-9_]*')
+
+    def __dir__(self):
+        """
+        Return a list of object attributes.
+
+        This includes key names of any dict entries, filtered to the
+        subset of valid attribute names (e.g. alphanumeric strings
+        beginning with a letter or underscore).  Also includes
+        attributes of parent dict class.
+        """
+        dict_keys = []
+        for k in self.keys():
+            if isinstance(k, str):
+                m = self._re_pattern.match(k)
+                if m:
+                    dict_keys.append(m.string)
+
+        obj_attrs = list(dir(Dict))
+
+        return dict_keys + obj_attrs
 
 class Singleton(object):
     def __new__(cls, *p, **k):
