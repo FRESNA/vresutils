@@ -118,7 +118,7 @@ def timeseries_opsd(years=slice("2011", "2015")):
     ----------
     years : None or slice()
         Years for which to read load data (defaults to
-        slice("2011","2016"))
+        slice("2011","2015"))
 
     Returns
     -------
