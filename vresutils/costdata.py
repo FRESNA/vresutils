@@ -39,10 +39,12 @@ def annuity(n,r=discountrate):
     """Calculate the annuity factor for an asset with lifetime n years and
     discount rate of r, e.g. annuity(20,0.05)*20 = 1.6"""
 
-    if isinstance(n, pd.Series):
-        return (1/n).where(r == 0, r/(1. - 1./(1.+r)**n))
+    if isinstance(r, pd.Series):
+        return pd.Series(1/n, index=r.index).where(r == 0, r/(1. - 1./(1.+r)**n))
+    elif r > 0:
+        return r/(1. - 1./(1.+r)**n)
     else:
-        return np.where(r == 0, 1/n, r/(1. - 1./(1.+r)**n))
+        return 1/n
 
 def get_cost(ref, CO2cost=0.):
     '''Return cost dictionary for different fuel types.
