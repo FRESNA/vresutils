@@ -88,9 +88,8 @@ try:
                       colorbar=colorbar, colorbar_ticklabels=colorbar_ticklabels,
                       norm=norm, ax=ax)
 
-    def shapes(shapes, data=None,
-               colorbar=False, colorbar_ticklabels=None, norm=None,
-               with_labels=False, outline=False, colour=None,
+    def shapes(shapes, data=None, colorbar=False, colorbar_ticklabels=None,
+               norm=None, with_labels=False, edgecolors=None, facecolors=None,
                fontsize=None, ax=None, **kwds):
         """
         Plot `data` on the basis of a dictionary of shapes.  `data`
@@ -111,36 +110,60 @@ try:
         -------
         collection : PolyCollection
         """
+
+        if 'outline' in kwds:
+            # deprecated
+            if outline = True: edgecolors = 'none'
+
+        if 'colour' in kwds:
+            # deprecated
+            edgecolors = kwds.pop('colour')
+
         if ax is None:
             ax = plt.gca()
 
         if not isinstance(shapes, pd.Series):
             shapes = pd.Series(shapes)
 
-        if data is None:
-            data = pd.Series(np.arange(len(shapes)), index=shapes.index)
+        def flatten_multipolygons(shapes):
+            flat_shapes = []
+            flat_index = []
 
-        # Since shapes can be made up of multipolygons, which matplotlib
-        # can not consume directly, we need to realign data and
-        # shapes.
+            for n, sh in shapes.iteritems():
+                if isinstance(sh, MultiPolygon):
+                    flat_shapes += list(sh)
+                    flat_index += [n] * len(sh)
+                else:
+                    flat_shapes.append(sh)
+                    flat_index.append(n)
 
-        aligned_data = []
-        aligned_shapes = []
-        for d, sh in zip(data, shapes.reindex(data.index)):
-            if isinstance(sh, MultiPolygon):
-                aligned_shapes += list(sh)
-                aligned_data += [d] * len(sh)
-            else:
-                aligned_shapes.append(sh)
-                aligned_data.append(d)
+            return pd.Series(flat_shapes, index=flat_index)
+
+
+        if isinstance(edgecolors, pd.Series):
+            shapes = shapes.reindex(edgecolors.index)
+            flat_shapes = flatten_multipolygons(shapes)
+            edgecolors = edgecolors.reindex(flat_shapes.index)
+        elif isinstance(facecolors, pd.Series):
+            shapes = shapes.reindex(facecolors.index)
+            flat_shapes = flatten_multipolygons(shapes)
+            facecolors = facecolors.reindex(flat_shapes.index)
+        elif isinstance(data, pd.Series):
+            shapes = shapes.reindex(data.index)
+            flat_shapes = flatten_multipolygons(shapes)
+            data = data.reindex(flat_shapes.index)
+        else:
+            flat_shapes = flatten_multipolygons(shapes)
+            data = pd.Series(np.arange(len(shapes)), index=shapes.index).reindex(flat_shapes.index)
 
         coll = PolyCollection((np.asarray(x.exterior)
-                               for x in aligned_shapes),
+                               for x in flat_shapes),
                               transOffset=ax.transData,
-                              facecolors='none' if outline else None,
-                              edgecolors=colour, **kwds)
-        if colour is None:
-            coll.set_array(np.asarray(aligned_data))
+                              facecolors='none' if outline else facecolors,
+                              edgecolors=edgecolors, **kwds)
+
+        if data is not None:
+            coll.set_array(data)
 
         if norm is not None:
             coll.set_norm(norm)
@@ -154,7 +177,7 @@ try:
 
             ## FIXME : sounds like a bug to me, but hey
             if norm is not None:
-                norm.autoscale(np.asarray(data))
+                norm.autoscale(data)
 
             cbar = plt.colorbar(mappable=coll, **kwargs)
             if colorbar_ticklabels is not None:
