@@ -113,7 +113,7 @@ try:
 
         if 'outline' in kwds:
             # deprecated
-            if outline = True: edgecolors = 'none'
+            if kwds.pop('outline'): facecolors = 'none'
 
         if 'colour' in kwds:
             # deprecated
@@ -159,7 +159,7 @@ try:
         coll = PolyCollection((np.asarray(x.exterior)
                                for x in flat_shapes),
                               transOffset=ax.transData,
-                              facecolors='none' if outline else facecolors,
+                              facecolors=facecolors,
                               edgecolors=edgecolors, **kwds)
 
         if data is not None:
