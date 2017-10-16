@@ -154,7 +154,8 @@ try:
             data = data.reindex(flat_shapes.index)
         else:
             flat_shapes = flatten_multipolygons(shapes)
-            data = pd.Series(np.arange(len(shapes)), index=shapes.index).reindex(flat_shapes.index)
+            if facecolors is None:
+                data = pd.Series(np.arange(len(shapes)), index=shapes.index).reindex(flat_shapes.index)
 
         coll = PolyCollection((np.asarray(x.exterior)
                                for x in flat_shapes),
