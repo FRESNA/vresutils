@@ -129,7 +129,7 @@ def nuts1(tolerance=0.03, minarea=1., extended=True):
 
 @cachable(keepweakref=True)
 def country_cover(cntries, include_eez=True, minarea=0.1, tolerance=0.03, **kwds):
-    shapes = countries(cntries, minarea=minarea, tolerance=tolerance, **kwds).values()
+    shapes = list(countries(cntries, minarea=minarea, tolerance=tolerance, **kwds).values())
     if include_eez:
         shapes += list(eez(cntries, tolerance=tolerance))
 
