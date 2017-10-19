@@ -91,7 +91,7 @@ def get_hydro_inflow(inflow_dir=None):
 
 
 
-def inflow_timeseries(cutout, country_shapes, rolling_mean_period='24h', clip_quantile=0.01):
+def inflow_timeseries(cutout, country_shapes, rolling_mean_period=24, clip_quantile=0.01):
     '''
     Return hydro inflow timeseries for countries in
     `country_shapes.index` in units of MWh.
