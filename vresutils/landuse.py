@@ -164,7 +164,7 @@ def corine_for_cutout(cutout, grid_codes, label=None, natura=False,
                 assert ret == 0, "gdal_rasterize for group '{}' did not return successfully.".format(label)
 
         # If distance is specified
-        if distance > 0 and len(distance_grid_codes) > 0:
+        if distance is not None and len(distance_grid_codes) > 0:
             with timer("Writing a second tiff with blocked proximity rules"):
                 proximity_fn = os.path.join(tmpdir, '{}_proximity.tif'.format(label))
                 ret = subprocess.call(['gdal_proximity.py',
