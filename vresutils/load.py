@@ -239,7 +239,7 @@ def gdppop_nuts3():
     cantons = pd.read_csv(toDataDir('ch_cantons.csv'))
     cantons = cantons.set_index(cantons['HASC'].str[3:])['NUTS']
     swiss = pd.read_excel(toDataDir('je-e-21.03.02.xls'), skiprows=3, index_col=0)
-    swiss.set_axis('columns', swiss.columns.to_series().map(cantons))
+    swiss.columns = swiss.columns.to_series().map(cantons)
 
     pop = pop.append(pd.to_numeric(swiss.loc['Residents in 1000', 'CH04':]))
     gdp = gdp.append(pd.to_numeric(swiss.loc['Gross domestic product per capita in Swiss francs', 'CH04':]))
