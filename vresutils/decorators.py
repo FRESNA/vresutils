@@ -21,17 +21,16 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
-import numpy as np
 from hashlib import sha1
 from functools import wraps
 from six.moves import cPickle
 import weakref
-import time, sys
-import sys, os, os.path, stat, string
+import sys, os, stat, string
 from six import iteritems
 import six
 
 from . import config
+from .benchmark import timer, optional
 
 import logging
 logger = logging.getLogger(__name__)
@@ -178,72 +177,6 @@ def cachable(func=None, version=None, cache_dir=config['cache_dir'],
         return deco(func)
     else:
         return deco
-
-class timer(object):
-    level = 0
-    opened = False
-
-    def __init__(self, name="", verbose=True):
-        self.name = name
-        self.verbose = verbose
-
-    def __enter__(self):
-        if self.verbose:
-            if self.opened:
-                sys.stdout.write("\n")
-
-            if len(self.name) > 0:
-                sys.stdout.write((".. " * self.level) + self.name + ": ")
-            sys.stdout.flush()
-
-            self.__class__.opened = True
-
-        self.__class__.level += 1
-
-        self.start = time.time()
-        return self
-
-    def print_usec(self, usec):
-        if usec < 1000:
-            print("%.1f usec" % usec)
-        else:
-            msec = usec / 1000
-            if msec < 1000:
-                print("%.1f msec" % msec)
-            else:
-                sec = msec / 1000
-                print("%.1f sec" % sec)
-
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if not self.opened and self.verbose:
-            sys.stdout.write(".. " * self.level)
-
-        if exc_type is None:
-            stop = time.time()
-            self.usec = usec = (stop - self.start) * 1e6
-            if self.verbose: self.print_usec(usec)
-        elif self.verbose:
-            print("failed")
-        sys.stdout.flush()
-
-        self.__class__.level -= 1
-        if self.verbose: self.__class__.opened = False
-        return False
-
-class optional(object):
-    def __init__(self, variable, contextman):
-        self.variable = variable
-        self.contextman = contextman
-
-    def __enter__(self):
-        if self.variable:
-            return self.contextman.__enter__()
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.variable:
-            return self.contextman.__exit__(exc_type, exc_val, exc_tb)
-        return False
 
 def staticvars(**vars):
     def deco(fn):

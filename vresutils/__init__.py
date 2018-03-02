@@ -163,4 +163,5 @@ class Singleton(object):
         return cls._the_instance
 
 # backwards compatibility for moved functions
-from .decorators import _format_filename as format_filename, cachable, optional, timer, staticvars, CachedAttribute, indexer
+from .decorators import _format_filename as format_filename, cachable, staticvars, CachedAttribute, indexer
+from .benchmark import timer, optional
