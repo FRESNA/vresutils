@@ -55,16 +55,15 @@ class MemTimer(Process):
         self.include_children = kw.pop("include_children", True)
 
         # get baseline memory usage
-        self.mem_usage = (
+        cur_mem = (
             _get_memory(self.monitor_pid, self.backend,
                         timestamps=self.timestamps,
                         include_children=self.include_children)
         )
-        if not self.max_usage:
-            self.mem_usage = [self.mem_usage]
+        self.mem_usage = cur_mem if self.max_usage else [cur_mem]
 
         if self.stream is not None:
-            self.stream.write("MEM {0:.6f} {1:.4f}\n".format(*self.mem_usage[0]))
+            self.stream.write("MEM {0:.6f} {1:.4f}\n".format(*cur_mem))
             self.stream.flush()
 
         super(MemTimer, self).__init__(*args, **kw)
