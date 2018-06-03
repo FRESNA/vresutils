@@ -27,20 +27,24 @@ from six import iteritems
 from . import Dict
 
 class MockSnakemake(object):
-    def __init__(self, path='..', wildcards={}, **kwargs):
-        self.path = path
+    def __init__(self, wildcards={}, path='..', config=None, **kwargs):
         self.wildcards = Dict(wildcards)
-        self.config = kwargs.get('config')
-        if self.config is None:
-            with open(os.path.join(self.path, 'config.yaml')) as f:
+        self.path = path
+        self.config = config
+
+        config_fn = os.path.join(self.path, 'config.yaml')
+        if self.config is None and os.path.exists(config_fn):
+            with open(config_fn) as f:
                 self.config = yaml.load(f)
 
         for k, v in iteritems(kwargs):
             setattr(self, k, self.expand(v))
 
     def expand(self, data):
+        def expand_path(n):
+            return os.path.join(self.path, n.format(**self.wildcards))
+
         if isinstance(data, dict):
-            return Dict((k, os.path.join(self.path, v.format(**self.wildcards)))
-                        for k, v in iteritems(data))
+            return Dict((k, expand_path(v)) for k, v in iteritems(data))
         else:
-            return [os.path.join(self.path, p.format(**self.wildcards)) for p in data]
+            return [expand_path(n) for n in data]
