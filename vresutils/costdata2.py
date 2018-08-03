@@ -34,13 +34,15 @@ def annualize(rate, lifetime):
     return rate/(1. - 1. / (1. + rate)**lifetime)
 
 
-def get_full_cost_CO2(ref, CO2cost=0.,
-                      filename=toDataDir('costdata.xls'),
-                      discountrate=discountrate):
+def get_full_cost_CO2(ref, CO2cost=0., filename=None, discountrate=discountrate):
     '''Return cost dataframe for different fuel types,
     including annualized capital costs 'captial', and CO2 price dependent
     variable costs 'marginal'.
     Power costs in [Eur/MW/year], Energy costs in [Eur/MWh]'''
+
+    if filename is None:
+        filename = toDataDir('costdata.xls')
+
     # costs = pd.read_csv('diw2030.csv',index_col=0, comment='#')
     costs = pd.read_excel(filename, sheetname=ref,
                           index_col=0, skiprows=2, header=0)

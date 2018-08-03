@@ -91,7 +91,10 @@ def corine_renewable(cutout, tmpdir=None):
     return list(groups), corine_by_groups(cutout, groups, tmpdir=tmpdir)
 
 
-def corine_by_groups(cutout, groups, fn=toDataDir('corine/g100_06.tif'), tmpdir=None):
+def corine_by_groups(cutout, groups, fn=None, tmpdir=None):
+    if fn is None:
+        fn = toDataDir('corine/g100_06.tif')
+
     own_tmpdir = tmpdir is None
     if own_tmpdir:
         tmpdir = tempfile.mkdtemp()
@@ -106,14 +109,16 @@ def corine_by_groups(cutout, groups, fn=toDataDir('corine/g100_06.tif'), tmpdir=
 
 def corine_for_cutout(cutout, grid_codes, label=None, natura=False,
                       distance=None, distance_grid_codes=None,
-                      fn=None, highres=False,
-                      natura_fn=toDataDir('Natura2000/Natura2000_end2015.shp'),
-                      tmpdir=None):
+                      fn=None, highres=False, natura_fn=None, tmpdir=None):
     if fn is None:
         fn = toDataDir(os.path.join('corine/',
                                     'g100_clc12_V18_5.tif'
                                     if highres
                                     else 'g250_clc06_V18_5.tif'))
+
+    if natura_fn is None:
+        natura_fn = toDataDir('Natura2000/Natura2000_end2015.shp')
+
 
     own_tmpdir = tmpdir is None
     if own_tmpdir:
