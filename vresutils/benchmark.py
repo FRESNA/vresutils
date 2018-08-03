@@ -117,7 +117,7 @@ class memory_logger(object):
         Whether to record tuples of memory usage and timestamps; if logging to
         a file timestamps are always kept (defaults to True)
     include_children : bool
-        Whether the memory of subprocesses is to be included (default: False)
+        Whether the memory of subprocesses is to be included (default: True)
 
     Arguments
     ---------
