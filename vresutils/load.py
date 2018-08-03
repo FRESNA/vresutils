@@ -110,7 +110,7 @@ def timeseries_entsoe(years=list(range(2011, 2015+1)), countries=None, directory
     return data
 
 
-def timeseries_opsd(years=slice("2011", "2015")):
+def timeseries_opsd(fn=None, years=slice("2011", "2015")):
     """
     Read load data from OPSD time-series package.
 
@@ -126,7 +126,10 @@ def timeseries_opsd(years=slice("2011", "2015")):
         Load time-series with UTC timestamps x ISO-2 countries
     """
 
-    load = (pd.read_csv(toDataDir('time_series_60min_singleindex_filtered.csv'), index_col=0, parse_dates=True)
+    if fn is None:
+        fn = toDataDir('time_series_60min_singleindex_filtered.csv')
+
+    load = (pd.read_csv(fn, index_col=0, parse_dates=True)
             .loc[:, lambda df: df.columns.to_series().str.endswith('_load_old')]
             .rename(columns=lambda s: s[:-len('_load_old')])
             .dropna(how="all", axis=0))
