@@ -169,8 +169,8 @@ def cachable(func=None, version=None, cache_dir=config['cache_dir'],
 
     if not enable:
         def deco(func):
-            logger.warn("Deactivating cache for function %s, since cache directory %s does not exist",
-                        cache_dir, func.__name__)
+            # logger.warn("Deactivating cache for function %s, since cache directory %s does not exist",
+            #             func.__name__, cache_dir)
             return func
 
     if callable(func):
