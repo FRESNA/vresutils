@@ -141,83 +141,81 @@ def corine_for_cutout(cutout, grid_codes, label=None, natura=False,
     # this file using gdalwarp
 
     result_fn = os.path.join(tmpdir, '{}.tif'.format(label))
-    with rasterio.drivers():
-        with timer("Writing binary tiff with allowed landuse types"):
-            with rasterio.open(fn) as src:
-                meta = src.meta.copy()
-                meta.update(transform=src.meta['affine'],
-                            compress='lzw')
+    with timer("Writing binary tiff with allowed landuse types"):
+        with rasterio.open(fn) as src:
+            meta = src.meta.copy()
+            meta.update(compress='lzw')
 
-                windows = src.block_windows(1)
+            windows = src.block_windows(1)
 
-                with rasterio.open(result_fn, 'w', **meta) as dst:
-                    for idx, window in windows:
-                        src_data, = src.read(window=window)
-                        dst_data = np.in1d(src_data.ravel(), grid_codes).astype("uint8").reshape(src_data.shape)
-                        dst.write_band(1, dst_data, window=window)
+            with rasterio.open(result_fn, 'w', **meta) as dst:
+                for idx, window in windows:
+                    src_data, = src.read(window=window)
+                    dst_data = np.in1d(src_data.ravel(), grid_codes).astype("uint8").reshape(src_data.shape)
+                    dst.write_band(1, dst_data, window=window)
 
 
-        if natura:
-            # rasterio does not include the coordinate reference
-            # system in a proper manner, so we add it manually
-            ret = subprocess.call(['gdal_edit.py', '-a_srs', 'EPSG:3035', result_fn])
-            assert ret == 0, "gdal_edit for group '{}' did not return successfully.".format(label)
+    if natura:
+        # rasterio does not include the coordinate reference
+        # system in a proper manner, so we add it manually
+        ret = subprocess.call(['gdal_edit.py', '-a_srs', 'EPSG:3035', result_fn])
+        assert ret == 0, "gdal_edit for group '{}' did not return successfully.".format(label)
 
-            with timer("Marking natura shapes as unavailable in tiff"):
-                ret = subprocess.call(['gdal_rasterize', '-burn', '0',
-                                       natura_fn, result_fn])
-                assert ret == 0, "gdal_rasterize for group '{}' did not return successfully.".format(label)
+        with timer("Marking natura shapes as unavailable in tiff"):
+            ret = subprocess.call(['gdal_rasterize', '-burn', '0',
+                                    natura_fn, result_fn])
+            assert ret == 0, "gdal_rasterize for group '{}' did not return successfully.".format(label)
 
-        # If distance is specified
-        if distance is not None and len(distance_grid_codes) > 0:
-            with timer("Writing a second tiff with blocked proximity rules"):
-                proximity_fn = os.path.join(tmpdir, '{}_proximity.tif'.format(label))
-                ret = subprocess.call(['gdal_proximity.py',
-                                       fn, proximity_fn,
-                                       '-ot', 'Byte', '-co', 'COMPRESSION=PACKBITS',
-                                       '-values', ','.join(map(str, distance_grid_codes)),
-                                       '-distunits', 'GEO',
-                                       '-maxdist', str(distance),
-                                       '-nodata', '255',
-                                       '-fixed-buf-val', '0'])
-                assert ret == 0, "gdal_proximity.py for group '{}' did not return successfully.".format(label)
+    # If distance is specified
+    if distance is not None and len(distance_grid_codes) > 0:
+        with timer("Writing a second tiff with blocked proximity rules"):
+            proximity_fn = os.path.join(tmpdir, '{}_proximity.tif'.format(label))
+            ret = subprocess.call(['gdal_proximity.py',
+                                    fn, proximity_fn,
+                                    '-ot', 'Byte', '-co', 'COMPRESSION=PACKBITS',
+                                    '-values', ','.join(map(str, distance_grid_codes)),
+                                    '-distunits', 'GEO',
+                                    '-maxdist', str(distance),
+                                    '-nodata', '255',
+                                    '-fixed-buf-val', '0'])
+            assert ret == 0, "gdal_proximity.py for group '{}' did not return successfully.".format(label)
 
-            with timer("Merging the two tiffs into one another"):
-                merge_fn = os.path.join(tmpdir, '{}_merge.tif')
-                ret = subprocess.call(['gdal_merge.py',
-                                       '-o', merge_fn,
-                                       '-co', 'COMPRESSION=PACKBITS',
-                                       '-n', '255',
-                                       result_fn, proximity_fn])
-                assert ret == 0, "gdal_merge.py for group '{}' did not return successfully.".format(label)
-                os.rename(merge_fn, result_fn)
+        with timer("Merging the two tiffs into one another"):
+            merge_fn = os.path.join(tmpdir, '{}_merge.tif')
+            ret = subprocess.call(['gdal_merge.py',
+                                    '-o', merge_fn,
+                                    '-co', 'COMPRESSION=PACKBITS',
+                                    '-n', '255',
+                                    result_fn, proximity_fn])
+            assert ret == 0, "gdal_merge.py for group '{}' did not return successfully.".format(label)
+            os.rename(merge_fn, result_fn)
 
-        cornersc = cutout.grid_coordinates()[[0,-1]]
-        minc = np.minimum(*cornersc)
-        maxc = np.maximum(*cornersc)
-        span = (maxc - minc)/(np.asarray(cutout.shape)[[1,0]]-1)
-        minx, miny = minc - span/2.
-        maxx, maxy = maxc + span/2.
+    cornersc = cutout.grid_coordinates()[[0,-1]]
+    minc = np.minimum(*cornersc)
+    maxc = np.maximum(*cornersc)
+    span = (maxc - minc)/(np.asarray(cutout.shape)[[1,0]]-1)
+    minx, miny = minc - span/2.
+    maxx, maxy = maxc + span/2.
 
-        with timer("Aggregating the fine allowed grid per grid cell"):
-            ret = subprocess.call(['gdalwarp', '-overwrite',
-                                   '-s_srs', 'EPSG:3035',
-                                   '-t_srs', 'EPSG:4326',
-                                   '-te', str(minx), str(miny), str(maxx), str(maxy),
-                                   '-ts', str(cutout.shape[1]), str(cutout.shape[0]),
-                                   '-r', "average",
-                                   '-wt', 'Float64',
-                                   '-ot', 'Float64',
-                                   '-srcnodata', 'None',
-                                   '-dstnodata', 'None',
-                                   os.path.join(tmpdir, '{}.tif'.format(label)),
-                                   os.path.join(tmpdir, '{}_avg.tif'.format(label))])
-            assert ret == 0, "gdalwarp for group '{}' did not return successfully.".format(label)
+    with timer("Aggregating the fine allowed grid per grid cell"):
+        ret = subprocess.call(['gdalwarp', '-overwrite',
+                                '-s_srs', 'EPSG:3035',
+                                '-t_srs', 'EPSG:4326',
+                                '-te', str(minx), str(miny), str(maxx), str(maxy),
+                                '-ts', str(cutout.shape[1]), str(cutout.shape[0]),
+                                '-r', "average",
+                                '-wt', 'Float64',
+                                '-ot', 'Float64',
+                                '-srcnodata', 'None',
+                                '-dstnodata', 'None',
+                                os.path.join(tmpdir, '{}.tif'.format(label)),
+                                os.path.join(tmpdir, '{}_avg.tif'.format(label))])
+        assert ret == 0, "gdalwarp for group '{}' did not return successfully.".format(label)
 
 
-        with timer("Reading the aggregated coarse tiff"):
-            with rasterio.open(os.path.join(tmpdir, '{}_avg.tif'.format(label))) as avg:
-                landuse = avg.read()[0]
+    with timer("Reading the aggregated coarse tiff"):
+        with rasterio.open(os.path.join(tmpdir, '{}_avg.tif'.format(label))) as avg:
+            landuse = avg.read()[0]
 
     if own_tmpdir:
         rmtree(tmpdir, ignore_errors=True)
