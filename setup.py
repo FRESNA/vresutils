@@ -8,9 +8,9 @@ with open('README.rst', encoding='utf-8') as f:
 
 setup(
     name='vresutils',
-    version='0.2.3',
-    author='Jonas Hoersch (FIAS), David Schlachtberger (FIAS), Sarah Becker (FIAS)',
-    author_email='hoersch@fias.uni-frankfurt.de',
+    version='0.2.4',
+    author='Jonas Hoersch (KIT,FIAS), David Schlachtberger (FIAS), Sarah Becker (FIAS)',
+    author_email='jonas.hoersch@kit.edu',
     description='Varying Renewable Energy System Utilities',
     long_description=long_description,
     url='https://github.com/FRESNA/vresutils',
