@@ -69,16 +69,24 @@ def read_kraftwerksliste(with_latlon=True):
     kraftwerke[u'Type'] = kraftwerke[u"Auswertung Energieträger"].map({
         u'Erdgas': u'Gas',
         u'Grubengas': u'Gas',
-        u'Laufwasser': u'Hydro',
-        u'Pumpspeicher': u'Hydro',
-        u'Speicherwasser (ohne Pumpspeicher)': u'Hydro',
+        u'Laufwasser': u'Run of River',
+        u'Pumpspeicher': u'Pumped Hydro',
+        u'Speicherwasser (ohne Pumpspeicher)': u'Storage Hydro',
         u'Mineralölprodukte': u'Oil',
-        u'Steinkohle': u'Coal',
-        u'Braunkohle': u'Coal',
+        u'Steinkohle': u'Hard Coal',
+        u'Braunkohle': u'Brown Coal',
         u'Abfall': u'Waste',
         u'Kernenergie': u'Nuclear',
         u'Sonstige Energieträger\n(nicht erneuerbar) ': u'Other',
-        u'Mehrere Energieträger\n(nicht erneuerbar)': u'Multiple'
+        u'Mehrere Energieträger\n(nicht erneuerbar)': u'Multiple',
+        u'Biomasse' : u'Biomass',
+        u'Deponiegas' : u'Gas',
+        u'Klärgas' : u'Gas',
+        u'Geothermie' : u'Geothermal',
+        u'Windenergie (Onshore-Anlage)' : u'Wind Onshore',
+        u'Windenergie (Offshore-Anlage)' : u'Wind Offshore',
+        u'Solare Strahlungsenergie' : u'Solar',
+        u'Unbekannter Energieträger\n(nicht erneuerbar)' : u'Other'
     })
 
     return kraftwerke
