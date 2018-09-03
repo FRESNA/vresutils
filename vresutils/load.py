@@ -110,7 +110,7 @@ def timeseries_entsoe(years=list(range(2011, 2015+1)), countries=None, directory
     return data
 
 
-def timeseries_opsd(fn=None, years=slice("2011", "2015")):
+def timeseries_opsd(years=slice("2011", "2015"), fn=None):
     """
     Read load data from OPSD time-series package.
 
