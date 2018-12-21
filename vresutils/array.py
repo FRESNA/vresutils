@@ -22,6 +22,8 @@ from __future__ import absolute_import
 
 import numpy as np
 import scipy as sp, scipy.sparse, scipy.linalg, scipy.sparse.linalg
+from six.moves import zip, range
+from scipy.sparse import isspmatrix_coo, isspmatrix_lil, isspmatrix_csc, isspmatrix_csr
 
 from . import indicator
 
@@ -66,6 +68,46 @@ def negative(a):
             return - a.multiply(a<0)
     else:
         return - a * (a<0)
+
+def spiter(matrix):
+    """
+    Iterator for iterating the elements in a ``scipy.sparse.*_matrix``
+
+    This will always return:
+    >>> (row, column, matrix-element)
+
+    Currently this can iterate `coo`, `csc`, `lil` and `csr`, others may easily be added.
+
+    Parameters
+    ----------
+    matrix : ``scipy.sparse.sp_matrix``
+      the sparse matrix to iterate non-zero elements
+
+    References
+    ----------
+    By stackoverflow user zeroth on https://stackoverflow.com/a/42625707
+    """
+    if isspmatrix_coo(matrix):
+        for r, c, m in zip(matrix.row, matrix.col, matrix.data):
+            yield r, c, m
+
+    elif isspmatrix_csc(matrix):
+        for c in range(matrix.shape[1]):
+            for ind in range(matrix.indptr[c], matrix.indptr[c+1]):
+                yield matrix.indices[ind], c, matrix.data[ind]
+
+    elif isspmatrix_csr(matrix):
+        for r in range(matrix.shape[0]):
+            for ind in range(matrix.indptr[r], matrix.indptr[r+1]):
+                yield r, matrix.indices[ind], matrix.data[ind]
+
+    elif isspmatrix_lil(matrix):
+        for r in range(matrix.shape[0]):
+            for c, d in zip(matrix.rows[r], matrix.data[r]):
+                yield r, c, d
+
+    else:
+        raise NotImplementedError("The iterator for this sparse matrix has not been implemented")
 
 def spdiag(v, k=0):
     if k == 0:
