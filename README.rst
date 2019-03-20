@@ -5,7 +5,7 @@ collects various small helpers, which make your programming life easier
 (or arguably harder, as long you still have to figure out, how to use
 them).
 
-**Unfortunately we do not have the resources to provide any support for
+**Unfortunately, we do not have the resources to provide any support for
 this library. Feel inspired, file bug reports for broken bits or better
 yet pull requests, but please do not ask for help, sorry!**
 
@@ -71,7 +71,7 @@ shapes
 
     vg250 :
         Geometry of various German divisions, for example Landkreise and
-        Länder The geometry of these Landkreise must be available as
+        Länder. The geometry of these Landkreise must be available as
         shapefiles at data/vg250 in the UTM32 projection, they are
         available from the Bundesamt für Kartographie and Geodäsie at [1].
 
@@ -85,12 +85,13 @@ shapes
         EU shapes from Eurostat [3]
 
     plz-gebiete :
-        The german postcode areas obtained from [4], based on OSM
+        The German postcode areas obtained from [4], based on OSM
 
 grid
 ~~~~
 
 ::
+
     eu_ntc_2016.graphml
         ENTSO-E NTC values (hand-written from [14,15])
 
