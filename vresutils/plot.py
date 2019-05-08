@@ -285,6 +285,15 @@ except ImportError:
 try:
     import networkx as nx
 
+    def _is_string_like(obj):
+        """Check if obj is string."""
+        # 2.x/3.x compatibility
+        try:
+            basestring
+        except NameError:
+            basestring = str
+        return isinstance(obj, basestring)
+    
     def draw_edges(G, segments, pos=None, edgelist=None, width=1.0, color='k',
                    style='solid', alpha=None, ax=None, **kwds):
         """Draw the edges of the graph G.
@@ -352,18 +361,18 @@ try:
 
         if cb.iterable(color) \
                and len(color) == segments.shape[1]:
-            if np.alltrue([cb.is_string_like(c) for c in color]):
+            if np.alltrue([_is_string_like(c) for c in color]):
                 # (should check ALL elements)
                 # list of color letters such as ['k','r','k',...]
                 edge_colors = tuple([colorConverter.to_rgba(c, alpha) for c in color])
-            elif (np.alltrue([not cb.is_string_like(c) for c in color])
+            elif (np.alltrue([not _is_string_like(c) for c in color])
                   and np.alltrue([cb.iterable(c) and len(c) in (3, 4) for c in color])):
                 edge_colors = tuple(color)
             else:
                 raise ValueError('color must consist of either color names or numbers')
         else:
-            if cb.is_string_like(color) or len(color) == 1:
-                edge_colors = (colorConverter.to_rgba(edge_color, alpha), )
+            if _is_string_like(color) or len(color) == 1:
+                edge_colors = (colorConverter.to_rgba(color, alpha), )
             else:
                 raise ValueError('color must be a single color or list of exactly m colors where m is the number of segments')
 
