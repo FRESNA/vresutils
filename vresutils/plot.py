@@ -177,17 +177,17 @@ try:
                 kwargs.update(colorbar)
 
             ## FIXME : sounds like a bug to me, but hey
-            if norm is not None:
-                norm.autoscale(data)
+            #if norm is not None:
+            #    norm.autoscale(data)
 
-            cbar = plt.colorbar(mappable=coll, **kwargs)
+            cbar = plt.colorbar(mappable=coll, ax=ax, **kwargs)
             if colorbar_ticklabels is not None:
                 cbar.ax.set_yticklabels(colorbar_ticklabels)
 
         if with_labels:
             for k,v in iteritems(shapes.reindex(data.index)):
                 x,y = np.asarray(v.centroid)
-                plt.text(x, y, k, fontsize=fontsize,
+                ax.text(x, y, k, fontsize=fontsize,
                          horizontalalignment='center',
                          verticalalignment='center')
 
