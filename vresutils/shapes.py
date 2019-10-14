@@ -62,7 +62,7 @@ def points(poly):
 def area(geom):
     return reproject(geom).area
 
-def reproject(geom, fr=pyproj.Proj(proj='longlat'), to=pyproj.Proj(proj='aea')):
+def reproject(geom, fr=pyproj.Proj(proj='longlat'), to=pyproj.Proj(proj='aea', lat_1=33., lat_2=72.)):
     reproject_pts = partial(pyproj.transform, fr, to)
     return transform(reproject_pts, geom)
 
