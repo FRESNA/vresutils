@@ -1,3 +1,6 @@
-/data/vg250*
-/data/germany.npy
 *.py[co]
+build/*
+data/*
+dist/*
+vresutils.egg-info/
+.DS_Store
