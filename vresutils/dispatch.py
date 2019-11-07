@@ -193,10 +193,10 @@ def backup_capacity_nuts_grid(G, plants=None):
         try:
             nregs = iso2_to_nuts[name_to_iso2[x['Country']]]
             for n in nregs:
-                if G.node[n]['region'].contains(p):
+                if G.nodes[n]['region'].contains(p):
                     return n
             else:
-                return min(nregs, key=lambda n: G.node[n]['region'].distance(p))
+                return min(nregs, key=lambda n: G.nodes[n]['region'].distance(p))
         except KeyError:
             return np.NaN
 

@@ -187,7 +187,7 @@ def cell_subgraph(G, lat, lon, size, copy=True):
 
     pos = np.array((lon, lat))
     nodes = (n
-             for n, p in iteritems(G.node)
+             for n, p in iteritems(G.nodes)
              if np.abs(p['pos'] - pos).max() <= size/2)
     return giant_component(G.subgraph(nodes), copy=copy)
 
@@ -200,7 +200,7 @@ def polygon_subgraph(G, polygon, nneighbours=0, copy=True):
     """
 
     nodes = set(n
-                for n, p in iteritems(G.node)
+                for n, p in iteritems(G.nodes)
                 if polygon.contains(Point(p['pos'])))
 
     if nneighbours > 0:
@@ -250,7 +250,7 @@ def polygon_subgraph_environment(G, polygon, environment_polygons):
         if n in queue:
             return queue[n]
 
-        attr_dict = G.node[n]
+        attr_dict = G.nodes[n]
         pos = Point(attr_dict['pos'])
         if polygon.contains(pos):
             # in Polygon: keep it
@@ -353,7 +353,7 @@ def coarsify_graph(G, shapes, lost_nodes=None):
         if n in queue:
             return queue[n]
 
-        pos = Point(G.node[n]['pos'])
+        pos = Point(G.nodes[n]['pos'])
         # this two-step procedure checks the last successful shape
         # first, as we are link-hopping through the graph
         if do_node.shape.contains(pos):
@@ -452,7 +452,7 @@ def stitch_graphs(G, G2, nodes, region=None):
         return a
 
     for n in neigh_nodes:
-        pos = Point(G.node[n]['pos'])
+        pos = Point(G.nodes[n]['pos'])
         for n2, reg in iteritems(regions):
             if reg.contains(pos):
                 H.add_edges_from((n2, n3, edge_attrs(H, n2, n3, d))
@@ -462,7 +462,7 @@ def stitch_graphs(G, G2, nodes, region=None):
     return H
 
 def get_voronoi_regions(G, outline=None):
-    if 'region' not in next(itervalues(G.node)):
+    if 'region' not in next(itervalues(G.nodes)):
         if callable(outline):
             outline = outline()
         assert outline is not None
@@ -559,7 +559,7 @@ def derive_edgemap(G, nodemap, shapes=None):
             if nm1 == nm2:
                 return nm1
             else:
-                ls = LineString([G.node[n1]['pos'], G.node[n2]['pos']])
+                ls = LineString([G.nodes[n1]['pos'], G.nodes[n2]['pos']])
                 def length(nm):
                     return ls.intersection(shapes[nm]).length if nm is not None else 0
                 l1 = length(nm1)
@@ -799,7 +799,7 @@ def convert_node_labels_to_integers(G):
     return relabel_nodes(G, dict(zip(G.nodes(), count())))
 
 def get_node_attributes(G, attr):
-    return OrderedDict((n, d[attr]) for n, d in iteritems(G.node))
+    return OrderedDict((n, d[attr]) for n, d in iteritems(G.nodes))
 
 def get_edge_attributes(G, attr):
     return OrderedDict(((u, v), d[attr]) for u, v, d in iteritems(G.edges_iter(data=True)))

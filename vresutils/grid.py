@@ -163,7 +163,7 @@ def node_distance(G, n1, n2):
     d : float
         distance
     """
-    return 110. * np.sqrt(np.sum((G.node[n1]['pos'] - G.node[n2]['pos'])**2))
+    return 110. * np.sqrt(np.sum((G.nodes[n1]['pos'] - G.nodes[n2]['pos'])**2))
 
 def heuristically_extend_edge_attributes(G, it=None):
     if it is None:
