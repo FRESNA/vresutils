@@ -44,31 +44,35 @@ class MemTimer(Process):
 
     def __init__(self, monitor_pid, interval, pipe, filename, max_usage, backend, *args, **kw):
         self.monitor_pid = monitor_pid
-        self.pipe = pipe
         self.interval = interval
-        self.backend = backend
-        self.n_measurements = 1
-        self.stream = open(filename, 'w') if filename is not None else None
+        self.pipe = pipe
+        self.filename = filename
         self.max_usage = max_usage
+        self.backend = backend
 
         self.timestamps = kw.pop("timestamps", True)
         self.include_children = kw.pop("include_children", True)
 
+        super(MemTimer, self).__init__(*args, **kw)
+
+    def run(self):
         # get baseline memory usage
         cur_mem = (
             _get_memory(self.monitor_pid, self.backend,
                         timestamps=self.timestamps,
                         include_children=self.include_children)
         )
-        self.mem_usage = cur_mem if self.max_usage else [cur_mem]
 
-        if self.stream is not None:
-            self.stream.write("MEM {0:.6f} {1:.4f}\n".format(*cur_mem))
-            self.stream.flush()
+        n_measurements = 1
+        mem_usage = cur_mem if self.max_usage else [cur_mem]
 
-        super(MemTimer, self).__init__(*args, **kw)
+        if self.filename is not None:
+            stream = open(self.filename, 'w')
+            stream.write("MEM {0:.6f} {1:.4f}\n".format(*cur_mem))
+            stream.flush()
+        else:
+            stream = None
 
-    def run(self):
         self.pipe.send(0)  # we're ready
         stop = False
         while True:
@@ -78,26 +82,26 @@ class MemTimer(Process):
                             include_children=self.include_children)
             )
 
-            if self.stream is not None:
-                self.stream.write("MEM {0:.6f} {1:.4f}\n".format(*cur_mem))
-                self.stream.flush()
+            if stream is not None:
+                stream.write("MEM {0:.6f} {1:.4f}\n".format(*cur_mem))
+                stream.flush()
 
+            n_measurements += 1
             if not self.max_usage:
-                self.mem_usage.append(cur_mem)
+                mem_usage.append(cur_mem)
             else:
-                self.mem_usage = max(cur_mem, self.mem_usage)
+                mem_usage = max(cur_mem, mem_usage)
 
-            self.n_measurements += 1
             if stop:
                 break
             stop = self.pipe.poll(self.interval)
             # do one more iteration
 
-        if self.stream is not None:
-            self.stream.close()
+        if stream is not None:
+            stream.close()
 
-        self.pipe.send(self.mem_usage)
-        self.pipe.send(self.n_measurements)
+        self.pipe.send(mem_usage)
+        self.pipe.send(n_measurements)
 
 class memory_logger(object):
     """
