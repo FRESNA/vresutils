@@ -68,7 +68,7 @@ def cachable(func=None, version=None, cache_dir=config['cache_dir'],
     enable = os.path.isdir(cache_dir)
 
     if enable:
-        st = os.stat(cache_dir[0])
+        st = os.stat(cache_dir)
         gid = st.st_gid
         # mode is bitmask of the same rights as the directory without
         # exec rights for anybody
