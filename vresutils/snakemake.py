@@ -35,7 +35,7 @@ class MockSnakemake(object):
         config_fn = os.path.join(self.path, 'config.yaml')
         if self.config is None and os.path.exists(config_fn):
             with open(config_fn) as f:
-                self.config = yaml.load(f)
+                self.config = yaml.safe_load(f)
 
         for k, v in iteritems(kwargs):
             setattr(self, k, self.expand(v))
