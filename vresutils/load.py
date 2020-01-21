@@ -144,7 +144,7 @@ def timeseries_opsd(years=slice("2011", "2015"), fn=None):
     # interpolate the rest (copying from previous weeks might be better)
     load['GB'] = load['GB_UKM']
     load['GB'] = load['GB'].interpolate()
-    #load = load.drop(columns=['GB_GBN', 'GB_NIR', 'GB_UKM'])
+    load = load.drop(columns=['GB_GBN', 'GB_NIR', 'GB_UKM'])
     
     # Kosovo gets the same load curve as Serbia
     # scaled by energy consumption ratio from IEA 2012
