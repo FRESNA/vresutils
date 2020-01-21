@@ -109,7 +109,6 @@ def timeseries_entsoe(years=list(range(2011, 2015+1)), countries=None, directory
 
     return data
 
-
 def timeseries_opsd(years=slice("2011", "2015"), fn=None):
     """
     Read load data from OPSD time-series package.
@@ -130,14 +129,23 @@ def timeseries_opsd(years=slice("2011", "2015"), fn=None):
         fn = toDataDir('time_series_60min_singleindex_filtered.csv')
 
     load = (pd.read_csv(fn, index_col=0, parse_dates=True)
-            .loc[:, lambda df: df.columns.to_series().str.endswith('_load_old')]
-            .rename(columns=lambda s: s[:-len('_load_old')])
+            .loc[:, lambda df: df.columns.to_series().str.endswith('_load_actual_entsoe_power_statistics')]
+            .rename(columns=lambda s: s[:-len('_load_actual_entsoe_power_statistics')])
             .dropna(how="all", axis=0))
 
     if years is not None:
         load = load.loc[years]
 
     # manual alterations:
+    # GB input given in 3 regions, there is no "global one":
+    # GBN (Great Britain), NIR (northern ireland), together forming
+    # UKM (united kingdom). Therefore, we choose UKM to be global.
+    # the sum of GBN and NIR seems incomplete, more data is missing
+    # interpolate the rest (copying from previous weeks might be better)
+    load['GB'] = load['GB_UKM']
+    load['GB'] = load['GB'].interpolate()
+    #load = load.drop(columns=['GB_GBN', 'GB_NIR', 'GB_UKM'])
+    
     # Kosovo gets the same load curve as Serbia
     # scaled by energy consumption ratio from IEA 2012
     load['KV'] = load['RS'] * (4.8 / 27.)
