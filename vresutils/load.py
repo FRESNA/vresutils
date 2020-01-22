@@ -137,7 +137,7 @@ def timeseries_opsd(years=slice("2011", "2015"), fn=None):
         load = load.loc[years]
 
     # manual alterations:
-    load = manual_alternations_opsd(load)
+    load = manual_alterations_opsd(load)
 
     return load
 
@@ -145,11 +145,11 @@ def copy_timeslice(load, cntry, start, stop, delta):
     start = pd.Timestamp(start)
     stop = pd.Timestamp(stop)
     if start in load.index and stop in load.index:
-        load.loc[start:stop, cntry] = load.loc[start+delta:stop+delta, cntry].values
+        load.loc[start:stop, cntry] = load.loc[start-delta:stop-delta, cntry].values
     return load
     
 
-def manual_alternations_opsd(load):
+def manual_alterations_opsd(load):
     # GB in the input is split in 3 regions:
     # GBN (Great Britain), NIR (northern ireland), together forming
     # UKM (united kingdom). Therefore, we choose only UKM.
@@ -158,15 +158,15 @@ def manual_alternations_opsd(load):
     load['GB'] = load['GB_UKM']
     load = load.drop(columns=['GB_GBN', 'GB_NIR', 'GB_UKM'])
     
-    # To fill loder periods of gaps (more than 4 hours), we copy a period before into it
+    # To fill periods of load-gaps (more than 4 hours), we copy a period before into it
     load = copy_timeslice(load, 'GR', '2015-08-11 21:00', '2015-08-15 20:00', pd.Timedelta(weeks=1))
     load = copy_timeslice(load, 'AT', '2018-12-31 22:00', '2019-01-01 22:00', pd.Timedelta(days=2))
     load = copy_timeslice(load, 'CH', '2010-01-19 07:00', '2010-01-19 22:00', pd.Timedelta(days=1))
     load = copy_timeslice(load, 'CH', '2010-03-28 00:00', '2010-03-28 21:00', pd.Timedelta(days=1))
-    load = copy_timeslice(load, 'CH', '2010-10-08 13:00', '2010-10-10 21:00', pd.Timedelta(days=3))
+    load = copy_timeslice(load, 'CH', '2010-10-08 13:00', '2010-10-10 21:00', pd.Timedelta(weeks=1)) #is a WE, so take WE before
     load = copy_timeslice(load, 'CH', '2010-11-04 04:00', '2010-11-04 22:00', pd.Timedelta(days=1))
     load = copy_timeslice(load, 'NO', '2010-12-09 11:00', '2010-12-09 18:00', pd.Timedelta(days=1))
-    load = copy_timeslice(load, 'GB', '2009-12-31 23:00', '2010-01-31 23:00', pd.Timedelta(weeks=5)) #whole january missing
+    load = copy_timeslice(load, 'GB', '2009-12-31 23:00', '2010-01-31 23:00', pd.Timedelta(days=-365)) #whole january missing
     
     # Kosovo gets the same load curve as Serbia
     # scaled by energy consumption ratio from IEA 2012
