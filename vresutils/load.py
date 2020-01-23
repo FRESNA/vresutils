@@ -166,7 +166,7 @@ def manual_alterations_opsd(load):
     load = copy_timeslice(load, 'CH', '2010-10-08 13:00', '2010-10-10 21:00', pd.Timedelta(weeks=1)) #is a WE, so take WE before
     load = copy_timeslice(load, 'CH', '2010-11-04 04:00', '2010-11-04 22:00', pd.Timedelta(days=1))
     load = copy_timeslice(load, 'NO', '2010-12-09 11:00', '2010-12-09 18:00', pd.Timedelta(days=1))
-    load = copy_timeslice(load, 'GB', '2009-12-31 23:00', '2010-01-31 23:00', pd.Timedelta(days=-365)) #whole january missing
+    load = copy_timeslice(load, 'GB', '2009-12-31 23:00', '2010-01-31 23:00', pd.Timedelta(days=-364)) #whole january missing
     
     # Kosovo gets the same load curve as Serbia
     # scaled by energy consumption ratio from IEA 2012
