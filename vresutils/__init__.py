@@ -22,9 +22,10 @@ Varying Renewable Energy System Utilities
 
 from __future__ import absolute_import
 
-__version__ = "0.3.1"
 __author__ = "Jonas Hoersch (FIAS), David Schlachtberger (FIAS), Sarah Becker (FIAS)"
 __copyright__ = "Copyright 2015-2017 Frankfurt Institute for Advanced Studies"
+
+from .version import version as __version__
 
 import numpy as np
 import os.path

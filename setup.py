@@ -1,14 +1,13 @@
 from __future__ import absolute_import
 
 from setuptools import setup, find_packages
-from codecs import open
+from io import open
 
 with open('README.rst', encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
     name='vresutils',
-    version='0.3.1',
     author='Jonas Hoersch (KIT,FIAS), David Schlachtberger (FIAS), Sarah Becker (FIAS)',
     author_email='jonas.hoersch@posteo.de',
     description='Varying Renewable Energy System Utilities',
@@ -16,6 +15,8 @@ setup(
     url='https://github.com/FRESNA/vresutils',
     license='GPLv3',
     packages=find_packages(exclude=['doc', 'test']),
+    use_scm_version={'write_to': 'vresutils/version.py'},
+    setup_requires=['setuptools_scm'],
     install_requires=['countrycode', 'fiona', 'matplotlib',
                       'memory_profiler',
                       'networkx>=2', 'numpy', 'pandas>=0.19.0',
