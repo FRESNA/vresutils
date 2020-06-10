@@ -1,0 +1,15 @@
+language: python
+dist: bionic
+python: "3.8"
+install: pip install .
+script: pytest
+
+# deploy new tags to pypi automatically
+deploy:
+  provider: pypi
+  username: __token__
+  # the token is set as the env var PYPI_PASSWORD on travis
+  edge: true # opt in to dpl v2
+  skip_existing: true
+  on:
+    tags: true
