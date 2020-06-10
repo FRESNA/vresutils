@@ -1,15 +1,20 @@
 from __future__ import absolute_import
 
+import pytest
 import unittest
 
 import numpy as np, scipy as sp
 import scipy.sparse
 from numpy.testing import assert_allclose
 
-from .gurobi import GbVec, GbVecConstr, GbVecVar, GbVecExpr, gbdot
-from .array import spdiag
+try:
+    import gurobipy as gb
+except ImportError:
+    pytest.skip("gurobipy package not available", allow_module_level=True)
 
-import gurobipy as gb
+from vresutils.gurobi import GbVec, GbVecConstr, GbVecVar, GbVecExpr, gbdot
+from vresutils.array import spdiag
+
 
 class GbVecVarTest(unittest.TestCase):
     def setUp(self):
