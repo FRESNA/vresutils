@@ -1,6 +1,17 @@
 vresutils Package
 =================
 
+.. image:: https://img.shields.io/pypi/v/vresutils.svg
+    :target: https://pypi.python.org/pypi/vresutils
+    :alt: PyPI version
+
+.. image:: https://img.shields.io/travis/FRESNA/vresutils/master.svg
+    :target: https://travis-ci.org/FRESNA/vresutils
+    :alt: Build status
+
+.. image:: https://img.shields.io/pypi/l/vresutils.svg
+    :target: License
+
 collects various small helpers, which make your programming life easier
 (or arguably harder, as long you still have to figure out, how to use
 them).
