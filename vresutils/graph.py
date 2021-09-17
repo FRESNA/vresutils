@@ -481,6 +481,12 @@ def voronoi_partition_pts(points, outline, no_multipolygons=False,
     outline : Polygon
     no_multipolygons : bool (default: False)
         If true, replace each MultiPolygon by its largest component
+    add_bounds_shape : bool (default: True)
+        If true, the maximum size of the Voronoi cell is extended
+        to possibly match the outline shape
+    multiplier : float (default: 5)
+        default of the multiplier to choose the size of the Voronoi cell
+        with respect to the points and the polygon considered
 
     Returns
     -------
