@@ -469,7 +469,8 @@ def get_voronoi_regions(G, outline=None):
         G = voronoi_partition(G, Polygon(outline))
     return list(get_node_attributes(G, 'region').values())
 
-def voronoi_partition_pts(points, outline, no_multipolygons=False):
+def voronoi_partition_pts(points, outline, no_multipolygons=False,
+        add_bounds_shape=True, multiplier=5):
     """
     Compute the polygons of a voronoi partition of `points` within the
     polygon `outline`
@@ -496,13 +497,21 @@ def voronoi_partition_pts(points, outline, no_multipolygons=False):
         xspan = xmax - xmin
         yspan = ymax - ymin
 
+        if add_bounds_shape:
+            # check bounds of the shape
+            minx_o, miny_o, maxx_o, maxy_o = outline.boundary.bounds
+            xmin = min(xmin, minx_o)
+            ymin = min(ymin, miny_o)
+            xmax = min(xmax, maxx_o)
+            ymax = min(ymax, maxy_o)
+
         # to avoid any network positions outside all Voronoi cells, append
         # the corners of a rectangle framing these points
         vor = Voronoi(np.vstack((points,
-                                 [[xmin-3.*xspan, ymin-3.*yspan],
-                                  [xmin-3.*xspan, ymax+3.*yspan],
-                                  [xmax+3.*xspan, ymin-3.*yspan],
-                                  [xmax+3.*xspan, ymax+3.*yspan]])))
+                                 [[xmin-multiplier*xspan, ymin-multiplier*yspan],
+                                  [xmin-multiplier*xspan, ymax+multiplier*yspan],
+                                  [xmax+multiplier*xspan, ymin-multiplier*yspan],
+                                  [xmax+multiplier*xspan, ymax+multiplier*yspan]])))
 
         polygons = []
         for i in range(len(points)):
