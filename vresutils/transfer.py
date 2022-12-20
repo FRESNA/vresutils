@@ -39,7 +39,7 @@ def Points2Points(orig, dest, surjective=False):
     the N-dim vector at the points in `dest`.
     """
 
-    transfer = sparse.lil_matrix((len(dest), len(orig)), dtype=np.float)
+    transfer = sparse.lil_matrix((len(dest), len(orig)), dtype=float)
 
     _, indy = KDTree(dest).query(orig)
     transfer[indy, list(range(len(indy)))] = 1
