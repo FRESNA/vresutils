@@ -483,7 +483,7 @@ def voronoi_partition_pts(points, outline, no_multipolygons=False):
 
     Returns
     -------
-    polygons : N - ndarray[dtype=Polygon|MultiPolygon]
+    polygons : list[dtype=Polygon|MultiPolygon]
     """
 
     points = np.asarray(points)
@@ -525,9 +525,7 @@ def voronoi_partition_pts(points, outline, no_multipolygons=False):
             return poly
         polygons = [demultipolygon(poly) for poly in polygons]
 
-    polygons_arr = np.empty((len(polygons),), 'object')
-    polygons_arr[:] = polygons
-    return polygons_arr
+    return polygons
 
 def voronoi_partition(G, outline):
     """
