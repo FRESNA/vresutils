@@ -76,7 +76,7 @@ try:
         else:
             orig_prepped = orig
 
-        transfer = sparse.lil_matrix((len(dest), len(orig)), dtype=np.float)
+        transfer = sparse.lil_matrix((len(dest), len(orig)), dtype=float)
         for i,j in product(range(len(dest)), range(len(orig))):
             if orig_prepped[j].intersects(dest[i]):
                 area = orig[j].intersection(dest[i]).area
